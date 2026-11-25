@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Info, LockKeyhole, ShieldCheck } from 'lucide-react';
 import { Button, Input } from '../components/ui.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
-import { supabaseConfigurado } from '../lib/supabase.js';
+import { apiFetch } from '../lib/api.js';
+import { mantenerSesionActiva, supabaseConfigurado } from '../lib/supabase.js';
 
 function Emblema({ className = 'h-16 w-16' }) {
   return (
@@ -23,6 +24,22 @@ export default function Login() {
   const [mostrarClave, setMostrarClave] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState('');
+  const [mantenerSesion, setMantenerSesion] = useState(mantenerSesionActiva);
+  const [permitirMantener, setPermitirMantener] = useState(true);
+
+  useEffect(() => {
+    let activo = true;
+    apiFetch('/auth/configuracion-sesion')
+      .then((datos) => {
+        if (activo) setPermitirMantener(datos?.permitir_mantener_sesion !== false);
+      })
+      .catch(() => {
+        // Sin backend no bloqueamos el ingreso: se aplica la configuración local.
+      });
+    return () => {
+      activo = false;
+    };
+  }, []);
 
   const enviar = async (evento) => {
     evento.preventDefault();
@@ -35,7 +52,7 @@ export default function Login() {
 
     try {
       setCargando(true);
-      await signIn({ usuario, password: clave });
+      await signIn({ usuario, password: clave, mantenerSesion });
       navigate('/', { replace: true });
     } catch (errorIngreso) {
       setError(errorIngreso.message || 'No se pudo iniciar sesión. Intenta de nuevo.');
@@ -163,6 +180,25 @@ export default function Login() {
                   {mostrarClave ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}
                 </button>
               </div>
+
+              {permitirMantener && (
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <input
+                    type="checkbox"
+                    checked={mantenerSesion}
+                    onChange={(evento) => setMantenerSesion(evento.target.checked)}
+                    disabled={cargando}
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-brand-600 accent-brand-600 focus:ring-brand-500"
+                  />
+                  <span className="text-sm leading-relaxed text-slate-600">
+                    <span className="font-semibold text-slate-800">Mantener la sesión activa</span>
+                    <span className="block text-xs text-slate-500">
+                      No vuelvas a escribir tu clave en este dispositivo. Si lo desactivas, la sesión
+                      termina al cerrar el navegador.
+                    </span>
+                  </span>
+                </label>
+              )}
 
               <div className="flex items-center justify-end">
                 <Link

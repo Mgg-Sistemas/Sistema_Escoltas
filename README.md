@@ -22,7 +22,7 @@ Sistema web para **control, manejo, permisos, distribución y pago de nómina de
 | **Usuarios** | Creación de cuentas con clave temporal, roles, restablecimiento y desbloqueo. |
 | **Roles y permisos** | Matriz de lectura/escritura/control total por módulo (solo administradores). |
 | **Ajustes** | Identidad visual, moneda, zona horaria y reglas de seguridad. |
-| **Acceso** | Login con **usuario y clave** (sin correo), emblema institucional, recuperación por usuario y cambio obligatorio de contraseña. |
+| **Acceso** | Login con **usuario y clave** (sin correo), opción **Mantener la sesión activa**, emblema institucional, recuperación por usuario y cambio obligatorio de contraseña. |
 | **Ayuda** | Guía didáctica por rol y glosario. |
 | **Tiempo real** | Cambios de otros usuarios se reflejan solos, respetando RLS. |
 
@@ -56,7 +56,7 @@ supabase db seed   # opcional: catálogos y datos de ejemplo
 ```
 
 **B) Dashboard (más fácil):** pega completo [`supabase/APLICAR_TODO.sql`](supabase/APLICAR_TODO.sql)
-en el SQL Editor y ejecuta. Ya trae las cuatro migraciones en orden.
+en el SQL Editor y ejecuta. Ya trae las cinco migraciones en orden.
 
 **B) Dashboard (por archivos):** abre el SQL Editor de tu proyecto `rznkopetlmitfxcixjcr` y ejecuta, **en este orden**:
 
@@ -64,10 +64,11 @@ en el SQL Editor y ejecuta. Ya trae las cuatro migraciones en orden.
 2. `supabase/migrations/20261125000100_realtime.sql`
 3. `supabase/migrations/20261125000200_usuarios_roles_ajustes.sql`
 4. `supabase/migrations/20261126000000_login_por_usuario.sql`
+5. `supabase/migrations/20261126010000_sesion_activa.sql`
 
 Después, si quieres datos de ejemplo, ejecuta `supabase/seed.sql`.
 
-Después aplica las cuatro migraciones y crea el primer administrador:
+Después aplica las cinco migraciones y crea el primer administrador:
 
 ```powershell
 cd backend

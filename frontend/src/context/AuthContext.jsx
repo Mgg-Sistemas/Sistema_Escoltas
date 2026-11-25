@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { supabase } from '../lib/supabase.js';
+import { configurarMantenerSesion, supabase } from '../lib/supabase.js';
 import { apiFetch } from '../lib/api.js';
 import { mensajeError } from '../lib/data.js';
 import { ROLES_LABELS, ROLES_POR_MODULO } from '../lib/constants.js';
@@ -125,9 +125,10 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const signIn = useCallback(async ({ usuario, password }) => {
+  const signIn = useCallback(async ({ usuario, password, mantenerSesion = true }) => {
     setError(null);
     claveCambiadaRef.current = false;
+    configurarMantenerSesion(mantenerSesion !== false);
     const nombreUsuario = String(usuario || '').trim();
     const clave = String(password || '');
 

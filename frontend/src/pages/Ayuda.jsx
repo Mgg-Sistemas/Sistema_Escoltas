@@ -40,6 +40,10 @@ const GLOSARIO = [
 
 const FAQ = [
   {
+    pregunta: '¿Qué hace "Mantener la sesión activa"?',
+    respuesta: 'Si la dejas marcada, el sistema recuerda tu ingreso en este dispositivo y no te pedirá la clave cada vez. Si la desactivas, la sesión se cierra al cerrar el navegador. Esta opción no cambia tus permisos: siguen siendo los de tu rol.',
+  },
+  {
     pregunta: '¿Necesito un correo para entrar?',
     respuesta: 'No. Ingresas con el usuario que te asignó el administrador y tu contraseña. El correo existe sólo de forma interna para enviar los enlaces de recuperación.',
   },

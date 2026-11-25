@@ -65,6 +65,10 @@ La service_role key **nunca** se envía al navegador.
 ## Autenticación y contraseñas
 
 - El login usa el emblema de `public/logo-escoltas.png` y la paleta naranja/negro/blanco derivada del emblema.
+- **Mantener la sesión activa**: marcada, el token de Supabase se guarda en `localStorage` (sobrevive al cierre
+  del navegador); desmarcada, en `sessionStorage` (termina al cerrar la pestaña). El backend publica
+  `GET /api/auth/configuracion-sesion` desde el ajuste `permitir_mantener_sesion`. Esto no cambia RLS ni
+  extiende la validez del refresh token más allá de la configuración de Supabase Auth.
 - **Se ingresa con usuario y clave, no con correo.** `profiles.usuario` es visible y único
   (case-insensitive); la RPC `auth_usuario_a_email` lo resuelve al correo interno que exige Supabase Auth.
 - El primer administrador se crea con `npm run bootstrap:admin`: usuario `ADMINISTRADOR` / clave `123456`.
