@@ -65,6 +65,15 @@ authPublicRouter.post(
   }),
 );
 
+/** Configuración pública para mostrar u ocultar "Mantener la sesión activa". */
+authPublicRouter.get(
+  '/configuracion-sesion',
+  asyncHandler(async (_req, res) => {
+    const permitido = await ajusteBooleano('permitir_mantener_sesion', true);
+    return ok(res, { permitir_mantener_sesion: permitido });
+  }),
+);
+
 authPublicRouter.post(
   '/recuperar',
   validate(esquemaRecuperarClave),

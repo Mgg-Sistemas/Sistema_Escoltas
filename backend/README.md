@@ -96,6 +96,8 @@ Base: `/api`.
 
 ### Usuarios, contraseñas, roles y ajustes
 
+- `GET /auth/configuracion-sesion` — público; devuelve `{ permitir_mantener_sesion }`. Permite ocultar la
+  casilla "Mantener la sesión activa" del login. Lee el ajuste con service-role; `anon` no accede a la tabla.
 - `POST /auth/resolver-usuario` — público; cuerpo `{ usuario }`. Devuelve `{ email }` interno.
   Usa la RPC `auth_usuario_a_email`; si la migración aún no se aplicó, busca por `usuario`/`full_name`
   en `profiles` y, como último respaldo, en los usuarios de Supabase Auth.

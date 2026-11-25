@@ -2,7 +2,7 @@
 
 **Proyecto:** `rznkopetlmitfxcixjcr` (slug / `project_id` de Supabase).
 
-Esta carpeta contiene toda la definición de la base de datos: tablas, seguridad a nivel de fila (RLS), triggers, vistas, buckets de Storage, publicación Realtime y datos semilla. Se aplican **cuatro migraciones** (estructura, tiempo real, usuarios/roles/ajustes y login por usuario) y luego se carga el seed las veces que se necesite.
+Esta carpeta contiene toda la definición de la base de datos: tablas, seguridad a nivel de fila (RLS), triggers, vistas, buckets de Storage, publicación Realtime y datos semilla. Se aplican **cinco migraciones** (estructura, tiempo real, usuarios/roles/ajustes, login por usuario y sesión activa) y luego se carga el seed las veces que se necesite.
 
 ## Archivos
 
@@ -12,7 +12,8 @@ Esta carpeta contiene toda la definición de la base de datos: tablas, seguridad
 | `migrations/20261125000100_realtime.sql` | Publica 13 tablas en `supabase_realtime` y ajusta `REPLICA IDENTITY` para eventos UPDATE/DELETE. No relaja RLS. |
 | `migrations/20261125000200_usuarios_roles_ajustes.sql` | Añade catálogos de roles/permisos, matriz estilo GT, ajustes, bandera de cambio de clave y RPC de bloqueo de intentos. Publica las tablas nuevas en Realtime. |
 | `migrations/20261126000000_login_por_usuario.sql` | Añade `profiles.usuario` (único, case-insensitive), la RPC `auth_usuario_a_email` y actualiza `handle_new_user`. Permite ingresar con usuario en lugar de correo. |
-| `APLICAR_TODO.sql` | Las cuatro migraciones concatenadas en orden. Pegar completo en el SQL Editor del dashboard. |
+| `migrations/20261126010000_sesion_activa.sql` | Añade el ajuste público `permitir_mantener_sesion`. Define si el login muestra "Mantener la sesión activa". No cambia RLS. |
+| `APLICAR_TODO.sql` | Las cinco migraciones concatenadas en orden. Pegar completo en el SQL Editor del dashboard. |
 | `seed.sql` | Catálogos (grados, turnos, tipos de permiso), 3 clientes, 3 escoltas de ejemplo y un periodo de nómina abierto con sus detalles. No crea usuarios de Auth. |
 | `config.toml` | Configuración mínima de Supabase CLI con `project_id = "rznkopetlmitfxcixjcr"`. |
 
@@ -27,9 +28,9 @@ supabase link --project-ref rznkopetlmitfxcixjcr
 supabase db push
 ```
 
-`db push` aplica las cuatro migraciones al proyecto remoto (estructura, tiempo real, usuarios/roles/ajustes y login por usuario) en orden. Son idempotentes: si las vuelves a ejecutar, no duplican datos ni fallan por objetos ya existentes.
+`db push` aplica las cinco migraciones al proyecto remoto (estructura, tiempo real, usuarios/roles/ajustes, login por usuario y sesión activa) en orden. Son idempotentes: si las vuelves a ejecutar, no duplican datos ni fallan por objetos ya existentes.
 
-Si ya habías aplicado las primeras migraciones, ejecuta en el SQL Editor `20261125000200_usuarios_roles_ajustes.sql` (si falta) y después `20261126000000_login_por_usuario.sql`.
+Si ya habías aplicado las primeras migraciones, ejecuta en el SQL Editor `20261125000200_usuarios_roles_ajustes.sql` (si falta), después `20261126000000_login_por_usuario.sql` y por último `20261126010000_sesion_activa.sql`.
 
 > No ejecutes `supabase db reset` contra el proyecto remoto: borra y reconstruye la base de datos local/remota según el contexto. Úsalo sólo en local.
 
@@ -44,7 +45,8 @@ Si prefieres aplicarlas una por una:
 4. Repite con `supabase/migrations/20261125000100_realtime.sql` (habilita tiempo real).
 5. Repite con `supabase/migrations/20261125000200_usuarios_roles_ajustes.sql` (usuarios/roles/ajustes).
 6. Repite con `supabase/migrations/20261126000000_login_por_usuario.sql` (login por usuario).
-7. Los cuatro deben terminar sin errores (`Success. No rows returned`).
+7. Repite con `supabase/migrations/20261126010000_sesion_activa.sql` (sesión activa).
+8. Los cinco deben terminar sin errores (`Success. No rows returned`).
 
 ## 2. Cargar los datos semilla
 
