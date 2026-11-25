@@ -26,10 +26,19 @@ for (const paquete of paquetes) {
   if (!necesitaInstalar(paquete)) continue;
 
   console.log(`[setup] Instalando dependencias (${paquete.nombre})...`);
-  const comando = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-  const resultado = spawnSync(comando, ['install', '--no-audit', '--no-fund'], {
+
+  // Desde un script de npm, npm_execpath apunta a npm-cli.js: usamos el mismo
+  // binario de Node para evitar spawn de .cmd (prohibido en Node >= 22 en Windows).
+  const cliNpm = process.env.npm_execpath;
+  const usaNode = Boolean(cliNpm && cliNpm.endsWith('.js'));
+  const comando = usaNode ? process.execPath : cliNpm ?? (process.platform === 'win32' ? 'npm.cmd' : 'npm');
+  const argumentos = usaNode
+    ? [cliNpm, 'install', '--no-audit', '--no-fund']
+    : ['install', '--no-audit', '--no-fund'];
+  const resultado = spawnSync(comando, argumentos, {
     cwd: paquete.dir,
     stdio: 'inherit',
+    shell: !usaNode && process.platform === 'win32',
   });
 
   if (resultado.error) throw resultado.error;
