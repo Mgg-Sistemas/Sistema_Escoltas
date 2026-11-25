@@ -119,4 +119,7 @@ GRANT EXECUTE ON FUNCTION public.auth_usuario_a_email(text) TO anon, authenticat
 -- profiles ya está publicado en supabase_realtime desde la migración de tiempo real.
 ALTER TABLE public.profiles REPLICA IDENTITY FULL;
 
+-- Fuerza a PostgREST a recargar el esquema para ver tablas/columnas nuevas de inmediato.
+NOTIFY pgrst, 'reload schema';
+
 -- Fin de la migración de login por usuario.

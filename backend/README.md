@@ -97,7 +97,8 @@ Base: `/api`.
 ### Usuarios, contraseñas, roles y ajustes
 
 - `POST /auth/resolver-usuario` — público; cuerpo `{ usuario }`. Devuelve `{ email }` interno.
-  Usa la RPC `auth_usuario_a_email` y, si la migración aún no se aplicó, busca por `usuario`/`full_name`.
+  Usa la RPC `auth_usuario_a_email`; si la migración aún no se aplicó, busca por `usuario`/`full_name`
+  en `profiles` y, como último respaldo, en los usuarios de Supabase Auth.
 - `POST /auth/recuperar` — público; cuerpo `{ correo }`. Envía el enlace a
   `APP_URL/restablecer-clave?origen=recuperacion`. Siempre responde de forma neutra.
 - `POST /auth/cambiar-clave` — cuerpo `{ clave, confirmacion }` (mínimo 8 caracteres, doble validación).
