@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Info, KeyRound, LogOut, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, Info, KeyRound, LogOut, RefreshCw, ShieldCheck } from 'lucide-react';
 import { Button, Input, useToast } from '../components/ui.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -32,7 +32,7 @@ function CampoClave({ etiqueta, valor, onChange, deshabilitado, autoComplete }) 
 }
 
 export default function CambiarClave() {
-  const { cambiarClave, debeCambiarClave, signOut } = useAuth();
+  const { cambiarClave, confirmarClave, debeCambiarClave, signOut } = useAuth();
   const navegar = useNavigate();
   const ubicacion = useLocation();
   const toast = useToast();
@@ -43,6 +43,7 @@ export default function CambiarClave() {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState('');
   const [lista, setLista] = useState(false);
+  const [confirmacionPendiente, setConfirmacionPendiente] = useState(false);
 
   const enviar = async (evento) => {
     evento.preventDefault();
@@ -63,7 +64,24 @@ export default function CambiarClave() {
       toast.success('Contraseña actualizada', mensaje);
       navegar('/', { replace: true });
     } catch (errorCambio) {
+      // Si falló la confirmación, la clave ya quedó guardada en Supabase:
+      // ofrecemos reintentar solo ese paso sin pedir la clave otra vez.
+      setConfirmacionPendiente(errorCambio?.code === 'RED_NO_DISPONIBLE');
       setError(errorCambio.message || 'No se pudo actualizar la contraseña. Intenta de nuevo.');
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  const reintentarConfirmacion = async () => {
+    setError('');
+    setCargando(true);
+    try {
+      await confirmarClave();
+      toast.success('Contraseña actualizada', 'La contraseña quedó confirmada. Ya puedes usar el sistema.');
+      navegar('/', { replace: true });
+    } catch (errorConfirmacion) {
+      setError(errorConfirmacion.message || 'No se pudo confirmar. Revisa el servidor e intenta de nuevo.');
     } finally {
       setCargando(false);
     }
@@ -102,6 +120,26 @@ export default function CambiarClave() {
             <div role="alert" className="mt-5 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-medium text-rose-800">
               <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
               <p>{error}</p>
+            </div>
+          )}
+
+          {confirmacionPendiente && (
+            <div className="mt-3 rounded-xl border border-brand-300 bg-brand-50 p-4 text-sm text-brand-900">
+              <p className="font-semibold">Tu contraseña ya se guardó.</p>
+              <p className="mt-1 leading-relaxed">
+                Solo falta confirmarla con el servidor. Comprueba que el backend esté activo y
+                reintenta; no tienes que escribir la clave otra vez.
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                className="mt-3"
+                loading={cargando}
+                leftIcon={RefreshCw}
+                onClick={reintentarConfirmacion}
+              >
+                Reintentar confirmación
+              </Button>
             </div>
           )}
 

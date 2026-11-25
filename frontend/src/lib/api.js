@@ -1,14 +1,28 @@
 import { supabase } from './supabase.js';
 
 const origenConfigurado = (import.meta.env.VITE_API_URL || '').trim();
-// Los valores de plantilla no sirven en local: si el frontend se abre desde
-// otra IP de la red, `localhost` apunta a ese dispositivo y no a este servidor.
-const esOrigenPlantilla = !origenConfigurado || /tu-dominio|REEMPLAZAR/i.test(origenConfigurado);
-const origenLocal = typeof window === 'undefined'
-  ? 'http://localhost:4000'
-  : `http://${window.location.hostname}:4000`;
+const esPlantilla = !origenConfigurado || /tu-dominio|REEMPLAZAR/i.test(origenConfigurado);
+const esOrigenLocal = (valor) =>
+  /^https?:\/\/(?:localhost|127\.0\.0\.1|\d{1,3}(?:\.\d{1,3}){3})(?::\d+)?\/?$/i.test(valor);
 
-export const API_URL = (esOrigenPlantilla ? origenLocal : origenConfigurado).replace(/\/$/, '');
+// Si el frontend se abre desde otro equipo (por ejemplo, un celular),
+// `localhost` apunta a ese dispositivo. Se deriva el backend del mismo host
+// siempre que la configuración sea local, aunque haya cambiado la IP de la PC.
+const navegador = typeof window === 'undefined' ? null : window;
+const mismoHost = Boolean(
+  navegador
+    && navegador.location.protocol === 'http:'
+    && navegador.location.hostname !== 'localhost'
+    && !/^127\./.test(navegador.location.hostname),
+);
+const origenDerivado = navegador
+  ? `http://${navegador.location.hostname}:4000`
+  : 'http://localhost:4000';
+const origenEfectivo = esPlantilla || (mismoHost && esOrigenLocal(origenConfigurado))
+  ? origenDerivado
+  : origenConfigurado || origenDerivado;
+
+export const API_URL = origenEfectivo.replace(/\/$/, '');
 
 export class ApiError extends Error {
   constructor(message, code, status) {
@@ -35,16 +49,30 @@ export async function apiFetch(ruta, { method = 'GET', body, senal } = {}) {
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (token) headers.Authorization = `Bearer ${token}`;
 
+  // Las lecturas y la confirmación de clave son idempotentes: se reintentan
+  // ante una caída breve del backend. Nunca se reintentan pagos ni altas.
+  const reintentable = method === 'GET' || method === 'HEAD'
+    || (method === 'POST' && ruta === '/auth/clave-confirmada');
+  const intentos = reintentable ? 3 : 1;
   let respuesta;
-  try {
-    respuesta = await fetch(`${API_URL}/api${ruta}`, {
-      method,
-      headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-      signal: senal,
-    });
-  } catch (error) {
-    if (error?.name === 'AbortError') throw error;
+
+  for (let intento = 0; intento < intentos; intento += 1) {
+    try {
+      respuesta = await fetch(`${API_URL}/api${ruta}`, {
+        method,
+        headers,
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+        signal: senal,
+      });
+      break;
+    } catch (error) {
+      if (error?.name === 'AbortError') throw error;
+      if (intento + 1 === intentos) break;
+      await new Promise((resolver) => setTimeout(resolver, 350 * (intento + 1)));
+    }
+  }
+
+  if (!respuesta) {
     throw new ApiError(
       `No se pudo conectar con el servidor (${API_URL}). Revisa que el backend esté activo y la URL configurada.`,
       'RED_NO_DISPONIBLE',
