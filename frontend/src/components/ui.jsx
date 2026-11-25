@@ -17,7 +17,7 @@ import { TONES } from '../lib/constants.js';
 
 export function buttonClasses({ variant = 'primary', size = 'md', fullWidth = false } = {}) {
   const variantes = {
-    primary: 'bg-brand-700 text-white hover:bg-brand-800 shadow-sm disabled:bg-brand-300',
+    primary: 'bg-naranja-cromado text-white shadow-cromado hover:brightness-110 disabled:bg-chrome-400 disabled:shadow-none',
     secondary: 'bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:text-slate-400',
     outline: 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:text-slate-400',
     ghost: 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 disabled:text-slate-400',

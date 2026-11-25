@@ -64,16 +64,16 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-slate-50 lg:grid lg:grid-cols-[1.05fr_1fr]">
       {/* Panel institucional / escritorio */}
-      <div className="relative hidden overflow-hidden bg-ink-950 px-12 py-14 text-white lg:flex lg:flex-col lg:justify-between">
-        <div className="pointer-events-none absolute -right-32 -top-40 h-[28rem] w-[28rem] rounded-full bg-brand-500/25 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-48 -left-32 h-[30rem] w-[30rem] rounded-full bg-brand-700/30 blur-3xl" />
+      <div className="relative hidden overflow-hidden bg-metal-oscuro px-12 py-14 text-white ring-1 ring-white/10 lg:flex lg:flex-col lg:justify-between">
+        <div className="pointer-events-none absolute -right-32 -top-40 h-[28rem] w-[28rem] rounded-full bg-gold-500/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-48 -left-32 h-[30rem] w-[30rem] rounded-full bg-brand-500/20 blur-3xl" />
         <div className="relative flex items-center gap-4">
           <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20">
             <Emblema className="h-14 w-14" />
           </div>
           <div>
             <p className="text-lg font-extrabold tracking-tight">Sistema de Escoltas</p>
-            <p className="text-xs uppercase tracking-[0.2em] text-brand-300">Seguridad institucional</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-gold-400">Seguridad institucional</p>
           </div>
         </div>
 
@@ -118,7 +118,7 @@ export default function Login() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-panel sm:p-8">
+          <div className="rounded-2xl border border-slate-200 bg-metal-claro p-6 shadow-panel sm:p-8">
             <div className="mb-6 flex items-center gap-2 lg:hidden">
               <span className="h-1 w-10 rounded-full bg-brand-500" aria-hidden="true" />
               <p className="text-xs font-bold uppercase tracking-widest text-brand-700">Bienvenido</p>
