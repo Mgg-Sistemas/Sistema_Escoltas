@@ -236,6 +236,17 @@ export function AuthProvider({ children }) {
   }, [resolverEmail]);
 
   /**
+   * Confirmación idempotente: libera la bandera de clave temporal en el backend.
+   * Se expone por separado para reintentarla sin volver a escribir la clave si
+   * el backend estaba caído cuando Supabase ya había guardado el cambio.
+   */
+  const confirmarClave = useCallback(async () => {
+    await apiFetch('/auth/clave-confirmada', { method: 'POST' });
+    claveCambiadaRef.current = true;
+    await recargarPerfil();
+  }, [recargarPerfil]);
+
+  /**
    * Cambia la contraseña validando dos veces. Funciona tanto para el primer
    * ingreso con clave temporal como para el enlace de restablecimiento.
    */
@@ -248,12 +259,10 @@ export function AuthProvider({ children }) {
       const { error: updateError } = await supabase.auth.updateUser({ password: clave });
       if (updateError) throw new Error(mensajeError(updateError));
 
-      await apiFetch('/auth/clave-confirmada', { method: 'POST' });
-      claveCambiadaRef.current = true;
-      await recargarPerfil();
+      await confirmarClave();
       return 'Contraseña actualizada. Ya puedes usar el sistema.';
     },
-    [recargarPerfil],
+    [confirmarClave],
   );
 
   const role = profile?.role || 'escolta';
@@ -279,10 +288,11 @@ export function AuthProvider({ children }) {
       debeCambiarClave: Boolean(profile?.must_change_password),
       recuperarClave,
       cambiarClave,
+      confirmarClave,
     }),
     [
       session, profile, role, loading, error, signIn, signOut, recargarPerfil, puede,
-      recuperarClave, cambiarClave,
+      recuperarClave, cambiarClave, confirmarClave,
     ],
   );
 
