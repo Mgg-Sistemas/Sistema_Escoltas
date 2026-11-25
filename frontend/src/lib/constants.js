@@ -1,10 +1,12 @@
-export const ROLES = ['admin', 'supervisor', 'contador', 'escolta'];
+export const ROLES = ['admin', 'supervisor', 'contador', 'escolta', 'chofer', 'rrhh'];
 
 export const ROLES_LABELS = {
   admin: 'Administrador',
   supervisor: 'Supervisor',
   contador: 'Contador',
   escolta: 'Escolta',
+  chofer: 'Chofer / Conductor',
+  rrhh: 'Recursos Humanos',
 };
 
 export const ROLES_DESCRIPCION = {
@@ -12,11 +14,15 @@ export const ROLES_DESCRIPCION = {
   supervisor: 'Distribución de escoltas, asistencias y revisión de permisos.',
   contador: 'Periodos de nómina, cálculo de pagos y cierre de nómina.',
   escolta: 'Consultar tus datos, registrar asistencia y solicitar permisos.',
+  chofer: 'Consultar viajes asignados, rutas y viáticos en carretera.',
+  rrhh: 'Gestión de expedientes de personal, contratos y descansos.',
 };
 
 // Permisos de navegación por módulo (el backend/RLS sigue siendo la fuente de verdad).
 export const ROLES_POR_MODULO = {
   escoltas: ['admin', 'supervisor', 'escolta'],
+  choferes: ['admin', 'supervisor', 'chofer'],
+  rrhh: ['admin', 'rrhh', 'contador'],
   distribucion: ['admin', 'supervisor'],
   permisos: ROLES,
   asistencias: ['admin', 'supervisor', 'escolta'],
@@ -32,6 +38,8 @@ export const ROLES_POR_MODULO = {
 export const MODULOS_SISTEMA = [
   { key: 'dashboard', label: 'Inicio', descripcion: 'Resumen general del sistema.' },
   { key: 'escoltas', label: 'Escoltas', descripcion: 'Fichas del personal.' },
+  { key: 'choferes', label: 'Choferes', descripcion: 'Conductores, rutas y viajes.' },
+  { key: 'rrhh', label: 'Recursos Humanos', descripcion: 'Expedientes, anticipos y vacaciones.' },
   { key: 'distribucion', label: 'Distribución', descripcion: 'Asignaciones y turnos.' },
   { key: 'permisos', label: 'Permisos', descripcion: 'Solicitudes y aprobaciones.' },
   { key: 'asistencias', label: 'Asistencias', descripcion: 'Check-in y check-out.' },

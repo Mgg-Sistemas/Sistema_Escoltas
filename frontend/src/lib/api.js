@@ -124,4 +124,25 @@ export const api = {
   guardarAjustes: (cambios) => apiFetch('/ajustes', { method: 'PATCH', body: { cambios } }),
   cambiarClave: (clave, confirmacion) =>
     apiFetch('/auth/cambiar-clave', { method: 'POST', body: { clave, confirmacion } }),
+  // Choferes
+  listarConductores: () => apiFetch('/choferes/conductores'),
+  crearConductor: (datos) => apiFetch('/choferes/conductores', { method: 'POST', body: datos }),
+  listarViajes: () => apiFetch('/choferes/viajes'),
+  crearViaje: (datos) => apiFetch('/choferes/viajes', { method: 'POST', body: datos }),
+  cambiarEstadoViaje: (id, estado) => apiFetch(`/choferes/viajes/${id}/estado`, { method: 'PATCH', body: { estado } }),
+  listarViaticos: () => apiFetch('/choferes/viaticos'),
+  crearViatico: (datos) => apiFetch('/choferes/viaticos', { method: 'POST', body: datos }),
+  listarPagosChoferes: () => apiFetch('/choferes/pagos'),
+  crearPagoChofer: (datos) => apiFetch('/choferes/pagos', { method: 'POST', body: datos }),
+  resumenChoferes: () => apiFetch('/choferes/resumen'),
+  // RRHH
+  listarPersonalRrhh: () => apiFetch('/rrhh/personal'),
+  crearPersonalRrhh: (datos) => apiFetch('/rrhh/personal', { method: 'POST', body: datos }),
+  listarCargos: () => apiFetch('/rrhh/cargos'),
+  crearCargo: (datos) => apiFetch('/rrhh/cargos', { method: 'POST', body: datos }),
+  listarAnticipos: () => apiFetch('/rrhh/anticipos'),
+  crearAnticipo: (datos) => apiFetch('/rrhh/anticipos', { method: 'POST', body: datos }),
+  abonarAnticipo: (id, monto_abono) => apiFetch(`/rrhh/anticipos/${id}/abonar`, { method: 'PATCH', body: { monto_abono } }),
+  listarEventosRrhh: () => apiFetch('/rrhh/eventos'),
+  crearEventoRrhh: (datos) => apiFetch('/rrhh/eventos', { method: 'POST', body: datos }),
 };

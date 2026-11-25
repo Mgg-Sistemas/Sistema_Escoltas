@@ -14,6 +14,8 @@ import Permisos from './pages/Permisos.jsx';
 import Asistencias from './pages/Asistencias.jsx';
 import Nomina from './pages/Nomina.jsx';
 import Pagos from './pages/Pagos.jsx';
+import Choferes from './pages/Choferes.jsx';
+import Rrhh from './pages/Rrhh.jsx';
 import Usuarios from './pages/Usuarios.jsx';
 import RolesPermisos from './pages/RolesPermisos.jsx';
 import Ajustes from './pages/Ajustes.jsx';
@@ -96,6 +98,8 @@ export default function App() {
         <Route path="distribucion" element={<Distribucion />} />
         <Route path="permisos" element={<Permisos />} />
         <Route path="asistencias" element={<Asistencias />} />
+        <Route path="choferes" element={<RoleRoute roles={['admin', 'supervisor', 'chofer']} modulo="Choferes"><Choferes /></RoleRoute>} />
+        <Route path="rrhh" element={<RoleRoute roles={['admin', 'rrhh', 'contador']} modulo="RRHH"><Rrhh /></RoleRoute>} />
         <Route path="nomina" element={<RoleRoute roles={['admin', 'contador']} modulo="Nómina"><Nomina /></RoleRoute>} />
         <Route path="pagos" element={<RoleRoute roles={['admin', 'contador']} modulo="Pagos"><Pagos /></RoleRoute>} />
         <Route path="usuarios" element={<RoleRoute roles={['admin']} modulo="Usuarios"><Usuarios /></RoleRoute>} />

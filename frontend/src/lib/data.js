@@ -13,6 +13,16 @@ export const TABLAS = {
   periodosNomina: 'periodos_nomina',
   detallesNomina: 'nomina_detalles',
   pagos: 'pagos',
+  personal: 'personal',
+  cargos: 'cargos',
+  anticipos: 'anticipos_prestamos',
+  eventosRrhh: 'rrhh_eventos',
+  conductores: 'choferes_conductores',
+  viajes: 'choferes_viajes',
+  guias: 'choferes_guias',
+  viaticos: 'choferes_viaticos',
+  pagosChoferes: 'choferes_pagos',
+  customRoles: 'custom_roles',
 };
 
 /** Traduce errores comunes de Postgres/Supabase a mensajes comprensibles. */
