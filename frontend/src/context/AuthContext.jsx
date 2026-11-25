@@ -10,7 +10,7 @@ const BLOQUEADO_MSG =
   'Tu cuenta está bloqueada por 3 intentos fallidos. Pídele al administrador que la desbloquee.';
 const INHABILITADO_MSG = 'Tu cuenta está deshabilitada. Contacta al administrador para que la reactive.';
 
-function perfilFallback(user) {
+function perfilFallback(user, claveCambiada = false) {
   return {
     id: user?.id,
     usuario: user?.user_metadata?.usuario || user?.user_metadata?.full_name || user?.email?.split('@')?.[0] || 'Usuario',
@@ -18,7 +18,7 @@ function perfilFallback(user) {
     email: user?.email || '',
     role: user?.user_metadata?.role || 'escolta',
     active: true,
-    must_change_password: true,
+    must_change_password: !claveCambiada,
   };
 }
 
@@ -28,6 +28,8 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const idCargadoRef = useRef(null);
+  // Evita volver a exigir el cambio de clave si la tabla de perfiles aún no existe.
+  const claveCambiadaRef = useRef(false);
 
   const cargarPerfil = useCallback(async (user) => {
     try {
@@ -40,12 +42,15 @@ export function AuthProvider({ children }) {
       if (dbError) throw dbError;
       setProfile(
         data
-          ? { ...data, must_change_password: data.must_change_password !== false }
-          : perfilFallback(user),
+          ? {
+              ...data,
+              must_change_password: data.must_change_password !== false && !claveCambiadaRef.current,
+            }
+          : perfilFallback(user, claveCambiadaRef.current),
       );
     } catch (dbError) {
       setError(mensajeError(dbError));
-      setProfile(perfilFallback(user));
+      setProfile(perfilFallback(user, claveCambiadaRef.current));
     } finally {
       setLoading(false);
     }
@@ -58,6 +63,7 @@ export function AuthProvider({ children }) {
 
       if (!user) {
         idCargadoRef.current = null;
+        claveCambiadaRef.current = false;
         setProfile(null);
         setLoading(false);
         return;
@@ -121,6 +127,7 @@ export function AuthProvider({ children }) {
 
   const signIn = useCallback(async ({ usuario, password }) => {
     setError(null);
+    claveCambiadaRef.current = false;
     const nombreUsuario = String(usuario || '').trim();
     const clave = String(password || '');
 
@@ -241,6 +248,7 @@ export function AuthProvider({ children }) {
       if (updateError) throw new Error(mensajeError(updateError));
 
       await apiFetch('/auth/clave-confirmada', { method: 'POST' });
+      claveCambiadaRef.current = true;
       await recargarPerfil();
       return 'Contraseña actualizada. Ya puedes usar el sistema.';
     },
