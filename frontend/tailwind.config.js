@@ -23,6 +23,10 @@ export default {
           900: '#141414',
           800: '#232323',
         },
+        // Gris claro tomado del emblema, legible sobre el panel negro.
+        emblem: {
+          gray: '#a8a8b0',
+        },
       },
       fontFamily: {
         sans: [

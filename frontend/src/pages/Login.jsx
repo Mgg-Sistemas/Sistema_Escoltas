@@ -78,7 +78,7 @@ export default function Login() {
         </div>
 
         <div className="relative max-w-xl">
-          <h1 className="text-4xl font-extrabold leading-tight xl:text-5xl">
+          <h1 className="text-4xl font-extrabold leading-tight text-emblem-gray xl:text-5xl">
             Control total de tus escoltas, en un solo lugar
           </h1>
           <p className="mt-5 text-base leading-relaxed text-slate-300">
