@@ -1,0 +1,35 @@
+# Dependencias
+node_modules/
+**/node_modules/
+
+# Variables de entorno (nunca versionar secretos)
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+**/.env.example
+
+# Builds
+dist/
+build/
+.vite/
+coverage/
+
+# Supabase local
+supabase/.branches/
+supabase/.temp/
+supabase/seed.local.sql
+
+# Logs y sistema
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Temporal
+tmp/
+.tmp/

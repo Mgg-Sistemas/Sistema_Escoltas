@@ -1,0 +1,60 @@
+# Despliegue en DigitalOcean (Droplet) con dominio propio.
+# Uso desde la raíz del repo:
+#   docker compose --env-file .env -f deploy/docker-compose.yml up -d --build
+name: sistema-escoltas
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.backend
+    container_name: escoltas-api
+    env_file:
+      - ../.env
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      APP_URL: ${APP_URL}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      PASSWORD_INICIAL_ADMIN: ${PASSWORD_INICIAL_ADMIN}
+      PASSWORD_INICIAL_USUARIO: ${PASSWORD_INICIAL_USUARIO}
+    expose:
+      - "4000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:4000/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.frontend
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+        VITE_API_URL: ${VITE_API_URL}
+    container_name: escoltas-web
+    depends_on:
+      api:
+        condition: service_healthy
+    # Solo accesible desde el propio servidor; el Nginx del host hace el SSL.
+    ports:
+      - "127.0.0.1:8080:80"
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

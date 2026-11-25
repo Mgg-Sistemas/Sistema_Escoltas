@@ -1,0 +1,18 @@
+# Backend del Sistema de Escoltas
+# Construir desde la raíz del repositorio:
+#   docker build -f deploy/Dockerfile.backend -t escoltas-api .
+FROM node:20-alpine
+
+ENV NODE_ENV=production
+WORKDIR /app
+
+# Instalar dependencias primero para aprovechar la caché de Docker
+COPY backend/package*.json ./
+RUN npm install --omit=dev --no-audit --no-fund
+
+COPY backend/ ./
+
+# El backend escucha en 0.0.0.0 (configurable con PORT)
+EXPOSE 4000
+
+CMD ["node", "src/server.js"]

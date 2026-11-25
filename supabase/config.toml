@@ -1,0 +1,42 @@
+# Configuración mínima para Supabase CLI.
+# El proyecto remoto se identifica con el slug / project_id indicado abajo.
+project_id = "rznkopetlmitfxcixjcr"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+# Sustituye tu-dominio.com por el dominio real antes de desplegar.
+additional_redirect_urls = [
+  "http://localhost:5173/**",
+  "https://tu-dominio.com/**",
+  "https://www.tu-dominio.com/**",
+]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+[storage]
+file_size_limit = "50MiB"
+
+[analytics]
+enabled = false
