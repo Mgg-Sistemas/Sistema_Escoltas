@@ -26,6 +26,9 @@ VITE_SUPABASE_ANON_KEY=tu_clave_anon_publica
 VITE_API_URL=http://localhost:4000
 ```
 
+Si abres el frontend desde otra IP de la red, cambia la última línea a
+`VITE_API_URL=http://IP_DE_LA_PC:4000` (o déjala vacía para que se detecte sola).
+
 > Nunca coloques la clave `service_role` en el frontend: la clave anon trabaja junto a RLS.
 
 Luego:

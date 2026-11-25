@@ -1,6 +1,14 @@
 import { supabase } from './supabase.js';
 
-export const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000').replace(/\/$/, '');
+const origenConfigurado = (import.meta.env.VITE_API_URL || '').trim();
+// Los valores de plantilla no sirven en local: si el frontend se abre desde
+// otra IP de la red, `localhost` apunta a ese dispositivo y no a este servidor.
+const esOrigenPlantilla = !origenConfigurado || /tu-dominio|REEMPLAZAR/i.test(origenConfigurado);
+const origenLocal = typeof window === 'undefined'
+  ? 'http://localhost:4000'
+  : `http://${window.location.hostname}:4000`;
+
+export const API_URL = (esOrigenPlantilla ? origenLocal : origenConfigurado).replace(/\/$/, '');
 
 export class ApiError extends Error {
   constructor(message, code, status) {
@@ -38,7 +46,7 @@ export async function apiFetch(ruta, { method = 'GET', body, senal } = {}) {
   } catch (error) {
     if (error?.name === 'AbortError') throw error;
     throw new ApiError(
-      'No se pudo conectar con el servidor. Revisa que el backend esté activo y la URL configurada.',
+      `No se pudo conectar con el servidor (${API_URL}). Revisa que el backend esté activo y la URL configurada.`,
       'RED_NO_DISPONIBLE',
     );
   }
