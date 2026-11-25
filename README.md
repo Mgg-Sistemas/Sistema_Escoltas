@@ -22,7 +22,7 @@ Sistema web para **control, manejo, permisos, distribución y pago de nómina de
 | **Usuarios** | Creación de cuentas con clave temporal, roles, restablecimiento y desbloqueo. |
 | **Roles y permisos** | Matriz de lectura/escritura/control total por módulo (solo administradores). |
 | **Ajustes** | Identidad visual, moneda, zona horaria y reglas de seguridad. |
-| **Acceso** | Login con el emblema, recuperación y cambio obligatorio de contraseña. |
+| **Acceso** | Login con **usuario y clave** (sin correo), emblema institucional, recuperación por usuario y cambio obligatorio de contraseña. |
 | **Ayuda** | Guía didáctica por rol y glosario. |
 | **Tiempo real** | Cambios de otros usuarios se reflejan solos, respetando RLS. |
 
@@ -55,23 +55,29 @@ supabase db push
 supabase db seed   # opcional: catálogos y datos de ejemplo
 ```
 
-**B) Dashboard:** abre el SQL Editor de tu proyecto `rznkopetlmitfxcixjcr` y ejecuta, **en este orden**:
+**B) Dashboard (más fácil):** pega completo [`supabase/APLICAR_TODO.sql`](supabase/APLICAR_TODO.sql)
+en el SQL Editor y ejecuta. Ya trae las cuatro migraciones en orden.
+
+**B) Dashboard (por archivos):** abre el SQL Editor de tu proyecto `rznkopetlmitfxcixjcr` y ejecuta, **en este orden**:
 
 1. `supabase/migrations/20261125000000_init.sql`
 2. `supabase/migrations/20261125000100_realtime.sql`
 3. `supabase/migrations/20261125000200_usuarios_roles_ajustes.sql`
+4. `supabase/migrations/20261126000000_login_por_usuario.sql`
 
 Después, si quieres datos de ejemplo, ejecuta `supabase/seed.sql`.
 
-Después aplica la migración de usuarios/roles/ajustes (paso 3) y crea el primer administrador:
+Después aplica las cuatro migraciones y crea el primer administrador:
 
 ```powershell
 cd backend
 npm run bootstrap:admin
 ```
 
-Crea `ADMINISTRADOR` con correo `administrador@escoltas.local` y clave temporal `123456`.
-El primer ingreso obliga a cambiarla. En producción cambia `ADMIN_EMAIL` en `.env` antes de ejecutarlo.
+Crea el usuario visible `ADMINISTRADOR` con clave temporal `123456`. El correo
+`administrador@escoltas.local` queda como identificador interno de Supabase Auth: **no se usa para
+entrar**. El primer ingreso obliga a cambiar la clave (`ADMINISTRADOR` / `123456`). En producción
+cambia `ADMIN_EMAIL` en `.env` antes de ejecutarlo.
 
 ### 2. Un solo comando (recomendado)
 
