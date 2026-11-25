@@ -18,7 +18,7 @@ function Emblema({ className = 'h-16 w-16' }) {
 export default function Login() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
-  const [correo, setCorreo] = useState('');
+  const [usuario, setUsuario] = useState('');
   const [clave, setClave] = useState('');
   const [mostrarClave, setMostrarClave] = useState(false);
   const [cargando, setCargando] = useState(false);
@@ -28,14 +28,14 @@ export default function Login() {
     evento.preventDefault();
     setError('');
 
-    if (!correo.trim() || !clave) {
-      setError('Escribe tu correo y tu contraseña para continuar.');
+    if (!usuario.trim() || !clave) {
+      setError('Escribe tu usuario y tu contraseña para continuar.');
       return;
     }
 
     try {
       setCargando(true);
-      await signIn({ email: correo, password: clave });
+      await signIn({ usuario, password: clave });
       navigate('/', { replace: true });
     } catch (errorIngreso) {
       setError(errorIngreso.message || 'No se pudo iniciar sesión. Intenta de nuevo.');
@@ -109,8 +109,8 @@ export default function Login() {
 
             <h2 className="text-2xl font-bold text-slate-900">Inicia sesión</h2>
             <p className="mt-2 text-sm leading-relaxed text-slate-500">
-              Ingresa con la cuenta que te dio el administrador. Si es tu primera vez, te pediremos
-              cambiar la contraseña temporal.
+              Ingresa con el usuario que te dio el administrador, sin correo. Si es tu primera vez,
+              te pediremos cambiar la contraseña temporal.
             </p>
 
             {!supabaseConfigurado && (
@@ -132,13 +132,13 @@ export default function Login() {
 
             <form onSubmit={enviar} className="mt-6 space-y-5">
               <Input
-                label="Correo electrónico"
-                type="email"
-                autoComplete="email"
-                inputMode="email"
-                placeholder="nombre@empresa.com"
-                value={correo}
-                onChange={(evento) => setCorreo(evento.target.value)}
+                label="Usuario"
+                type="text"
+                autoComplete="username"
+                inputMode="text"
+                placeholder="ADMINISTRADOR"
+                value={usuario}
+                onChange={(evento) => setUsuario(evento.target.value)}
                 required
                 disabled={cargando}
               />

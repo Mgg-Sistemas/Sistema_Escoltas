@@ -40,12 +40,16 @@ const GLOSARIO = [
 
 const FAQ = [
   {
+    pregunta: '¿Necesito un correo para entrar?',
+    respuesta: 'No. Ingresas con el usuario que te asignó el administrador y tu contraseña. El correo existe sólo de forma interna para enviar los enlaces de recuperación.',
+  },
+  {
     pregunta: 'No puedo ver Nómina ni Pagos, ¿es un error?',
     respuesta: 'No. Esos módulos son exclusivos de administradores y contadores. Si crees que te falta acceso, pide al administrador que revise tu rol en Usuarios.',
   },
   {
     pregunta: 'Olvidé mi contraseña, ¿qué hago?',
-    respuesta: 'En la pantalla de ingreso toca «¿Olvidaste tu contraseña?», escribe tu correo y abre el enlace que recibas. Allí crea la nueva clave y confírmala dos veces. Si el correo no llega, pide al administrador que te envíe un restablecimiento desde Usuarios.',
+    respuesta: 'En la pantalla de ingreso toca «¿Olvidaste tu contraseña?», escribe tu usuario y abre el enlace que llegue a tu correo interno. Allí crea la nueva clave y confírmala dos veces. Si no llega, pide al administrador que te envíe un restablecimiento desde Usuarios.',
   },
   {
     pregunta: 'Me pidieron cambiar la clave al entrar, ¿por qué?',

@@ -65,13 +65,15 @@ La service_role key **nunca** se envía al navegador.
 ## Autenticación y contraseñas
 
 - El login usa el emblema de `public/logo-escoltas.png` y la paleta naranja/negro/blanco derivada del emblema.
-- El primer administrador se crea con `npm run bootstrap:admin`: `ADMINISTRADOR` / `123456`.
+- **Se ingresa con usuario y clave, no con correo.** `profiles.usuario` es visible y único
+  (case-insensitive); la RPC `auth_usuario_a_email` lo resuelve al correo interno que exige Supabase Auth.
+- El primer administrador se crea con `npm run bootstrap:admin`: usuario `ADMINISTRADOR` / clave `123456`.
 - Los usuarios nuevos se crean desde **Usuarios** con la clave temporal `es-123` (configurable en **Ajustes**).
 - `profiles.must_change_password` obliga a ir a **Cambiar clave**; la contraseña se escribe dos veces
   y debe coincidir. Solo el backend con service-role desactiva la bandera.
-- **Olvidé mi contraseña** envía un enlace de Supabase Auth a `/restablecer-clave?origen=recuperacion`.
-  La respuesta es neutra para no revelar si el correo existe. El admin también puede enviar el
-  restablecimiento y desbloquear cuentas desde **Usuarios**.
+- **Olvidé mi contraseña** pide el usuario (no el correo), lo resuelve internamente y envía el enlace
+  de Supabase Auth a `/restablecer-clave?origen=recuperacion`. La respuesta es neutra para no revelar
+  si la cuenta existe. El admin también puede enviar el restablecimiento y desbloquear cuentas desde **Usuarios**.
 - La base funcional de usuarios, roles/permisos y ajustes se tomó de `Mgg-Sistemas/Golden-Touch-1127-CA`
   (“Sistema GT”), adaptada a los roles y módulos de escoltas; `Mgg-Sistemas/MGG` sirvió de complemento
   para el esquema SQL de la matriz de permisos.

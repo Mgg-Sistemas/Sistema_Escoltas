@@ -43,7 +43,7 @@ async function main() {
       email: EMAIL,
       password: config.passwordInicialAdmin,
       email_confirm: true,
-      user_metadata: { full_name: NOMBRE, role: 'admin' },
+      user_metadata: { usuario: NOMBRE, full_name: NOMBRE, role: 'admin' },
     });
     if (error) throw error;
     id = data.user.id;
@@ -51,23 +51,34 @@ async function main() {
   }
 
   const { data: roleRow } = await supabase.from('roles').select('id').eq('nombre', 'admin').maybeSingle();
-  const { error: upsertError } = await supabase.from('profiles').upsert(
-    {
-      id,
-      email: EMAIL,
-      full_name: NOMBRE,
-      role: 'admin',
-      role_id: roleRow?.id ?? null,
-      active: true,
-      must_change_password: creado ? true : perfil?.must_change_password !== false,
-    },
-    { onConflict: 'id' },
-  );
+  const datosPerfil = {
+    id,
+    usuario: NOMBRE,
+    email: EMAIL,
+    full_name: NOMBRE,
+    role: 'admin',
+    role_id: roleRow?.id ?? null,
+    active: true,
+    must_change_password: creado ? true : perfil?.must_change_password !== false,
+  };
+
+  let { error: upsertError } = await supabase
+    .from('profiles')
+    .upsert(datosPerfil, { onConflict: 'id' });
+
+  // Si la migración de login por usuario aún no se aplicó, seguimos sin esa columna.
+  if (upsertError && /usuario|column/i.test(upsertError.message ?? '')) {
+    delete datosPerfil.usuario;
+    ({ error: upsertError } = await supabase
+      .from('profiles')
+      .upsert(datosPerfil, { onConflict: 'id' }));
+  }
   if (upsertError) throw upsertError;
 
   if (creado) {
     console.log('[BOOTSTRAP] Administrador creado correctamente.');
-    console.log(`  Correo: ${EMAIL}`);
+    console.log(`  Usuario: ${NOMBRE}`);
+    console.log(`  Correo interno: ${EMAIL}`);
     console.log(`  Clave temporal: ${config.passwordInicialAdmin}`);
     console.log('  El sistema exigirá cambiar la contraseña en el primer ingreso.');
   } else {
