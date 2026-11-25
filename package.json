@@ -4,8 +4,13 @@
   "private": true,
   "type": "module",
   "description": "Orquestador local del Sistema de Escoltas: backend Node/Express + frontend React/Vite",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
   "scripts": {
     "setup": "node scripts/setupDeps.js",
+    "postinstall": "npm --prefix backend install && npm --prefix frontend install",
     "predev": "npm run setup",
     "dev": "concurrently -k -n BACKEND,FRONTEND -c yellow,cyan \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "npm --prefix backend run dev",

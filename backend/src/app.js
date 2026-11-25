@@ -1,6 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
 import { authenticate } from './middleware/auth.js';
 import { errorHandler, notFoundHandler } from './middleware/error.js';
@@ -25,7 +28,10 @@ import auditoriaRoutes from './routes/auditoria.js';
 const app = express();
 
 app.disable('x-powered-by');
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+}));
 
 const origenes = config.corsOrigin === '*'
   ? '*'
@@ -84,6 +90,19 @@ app.use('/api/permisos', permisosRoutes);
 app.use('/api/nominas', nominasRoutes);
 app.use('/api/pagos', pagosRoutes);
 app.use('/api/auditoria', auditoriaRoutes);
+
+// Servir frontend compilado (Single Page Application) si existe
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const distFrontend = path.resolve(__dirname, '../../frontend/dist');
+
+if (fs.existsSync(distFrontend)) {
+  app.use(express.static(distFrontend));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(distFrontend, 'index.html'));
+  });
+}
 
 app.use(notFoundHandler);
 app.use(errorHandler);
