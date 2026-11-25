@@ -43,10 +43,18 @@ reconstruir (`npm run build` o `deploy.sh up`).
 | `VITE_SUPABASE_ANON_KEY` | clave `anon` | Misma clave `anon` |
 | `VITE_API_URL` | `http://localhost:4000` o `http://IP_DE_LA_PC:4000` | `https://tu-dominio.com` (sin `/api`) |
 
-Si `VITE_API_URL` está vacío o contiene una plantilla (`tu-dominio`, `REEMPLAZAR`), el frontend
-derive automáticamente `http://<IP_desde_la_que_se_abre>:4000`. El backend acepta ese origen
-cuando `CORS_ORIGIN` incluye `http://localhost:5173`, así que basta con abrir el frontend con la
-IP de la PC para usar el sistema desde un celular.
+Si `VITE_API_URL` está vacío, contiene una plantilla (`tu-dominio`, `REEMPLAZAR`) o es una URL
+local (`localhost` o una IP privada) mientras el frontend se abre desde otra IP, el frontend
+derive automáticamente `http://<IP_desde_la_que_se_abre>:4000`. Así no hay que recompilar si
+cambia la IP de la PC. El backend acepta ese origen cuando `CORS_ORIGIN` incluye
+`http://localhost:5173`, así que basta con abrir el frontend con la IP de la PC para usar el
+sistema desde un celular.
+
+Las peticiones de solo lectura y la confirmación de clave (`POST /auth/clave-confirmada`) se
+reintentan hasta 3 veces ante una caída breve del backend. Si aun así falla, la pantalla de
+cambio de clave ofrece **Reintentar confirmación**: la contraseña ya quedó guardada en Supabase
+y no hay que volver a escribirla. Las operaciones no idempotentes (pagos, altas) **nunca** se
+reintentan automáticamente.
 
 ## Dominio y DigitalOcean
 
