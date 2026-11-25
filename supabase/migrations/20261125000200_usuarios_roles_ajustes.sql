@@ -443,8 +443,8 @@ BEGIN
     INSERT INTO public.rol_permisos (rol_id, permiso_id, concedido)
     SELECT r.id, ps.id, true
     FROM public.roles AS r
-    CROSS JOIN unnest(v_permisos) AS codigo
-    JOIN public.permisos_sistema AS ps ON ps.codigo = codigo
+    CROSS JOIN unnest(v_permisos) AS p(codigo)
+    JOIN public.permisos_sistema AS ps ON ps.codigo = p.codigo
     WHERE r.nombre = v_rol
     ON CONFLICT (rol_id, permiso_id) DO UPDATE SET concedido = true;
   END LOOP;
