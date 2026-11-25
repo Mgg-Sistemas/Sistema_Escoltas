@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 
 export default function RecuperarClave() {
   const { recuperarClave } = useAuth();
-  const [correo, setCorreo] = useState('');
+  const [usuario, setUsuario] = useState('');
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState('');
   const [enviado, setEnviado] = useState(false);
@@ -14,13 +14,13 @@ export default function RecuperarClave() {
   const enviar = async (evento) => {
     evento.preventDefault();
     setError('');
-    if (!correo.trim()) {
-      setError('Escribe tu correo electrónico para continuar.');
+    if (!usuario.trim()) {
+      setError('Escribe tu usuario para continuar.');
       return;
     }
     try {
       setCargando(true);
-      const mensaje = await recuperarClave(correo);
+      const mensaje = await recuperarClave(usuario);
       setEnviado(true);
       setError(mensaje);
     } catch (errorEnvio) {
@@ -45,8 +45,9 @@ export default function RecuperarClave() {
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-panel sm:p-8">
           <h1 className="text-2xl font-bold text-slate-900">Recupera tu contraseña</h1>
           <p className="mt-2 text-sm leading-relaxed text-slate-500">
-            Escribe el correo con el que ingresas. Te enviaremos un enlace seguro para crear una
-            contraseña nueva. Por seguridad, siempre se te pedirá confirmarla dos veces.
+            Escribe el usuario con el que ingresas. Te enviaremos un enlace seguro a tu correo
+            interno para crear una contraseña nueva. Por seguridad, siempre se te pedirá confirmarla
+            dos veces.
           </p>
 
           {enviado ? (
@@ -68,12 +69,12 @@ export default function RecuperarClave() {
                 </div>
               )}
               <Input
-                label="Correo electrónico"
-                type="email"
-                autoComplete="email"
-                placeholder="nombre@empresa.com"
-                value={correo}
-                onChange={(evento) => setCorreo(evento.target.value)}
+                label="Usuario"
+                type="text"
+                autoComplete="username"
+                placeholder="ADMINISTRADOR"
+                value={usuario}
+                onChange={(evento) => setUsuario(evento.target.value)}
                 required
                 disabled={cargando}
               />

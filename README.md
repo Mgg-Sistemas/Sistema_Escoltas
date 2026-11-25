@@ -22,7 +22,7 @@ Sistema web para **control, manejo, permisos, distribución y pago de nómina de
 | **Usuarios** | Creación de cuentas con clave temporal, roles, restablecimiento y desbloqueo. |
 | **Roles y permisos** | Matriz de lectura/escritura/control total por módulo (solo administradores). |
 | **Ajustes** | Identidad visual, moneda, zona horaria y reglas de seguridad. |
-| **Acceso** | Login con el emblema, recuperación y cambio obligatorio de contraseña. |
+| **Acceso** | Login con **usuario y clave** (sin correo), opción **Mantener la sesión activa**, emblema institucional, recuperación por usuario y cambio obligatorio de contraseña. |
 | **Ayuda** | Guía didáctica por rol y glosario. |
 | **Tiempo real** | Cambios de otros usuarios se reflejan solos, respetando RLS. |
 
@@ -55,46 +55,65 @@ supabase db push
 supabase db seed   # opcional: catálogos y datos de ejemplo
 ```
 
-**B) Dashboard:** abre el SQL Editor de tu proyecto `rznkopetlmitfxcixjcr` y ejecuta, **en este orden**:
+**B) Dashboard (más fácil):** pega completo [`supabase/APLICAR_TODO.sql`](supabase/APLICAR_TODO.sql)
+en el SQL Editor y ejecuta. Ya trae las cinco migraciones en orden.
+
+**B) Dashboard (por archivos):** abre el SQL Editor de tu proyecto `rznkopetlmitfxcixjcr` y ejecuta, **en este orden**:
 
 1. `supabase/migrations/20261125000000_init.sql`
 2. `supabase/migrations/20261125000100_realtime.sql`
 3. `supabase/migrations/20261125000200_usuarios_roles_ajustes.sql`
+4. `supabase/migrations/20261126000000_login_por_usuario.sql`
+5. `supabase/migrations/20261126010000_sesion_activa.sql`
 
 Después, si quieres datos de ejemplo, ejecuta `supabase/seed.sql`.
 
-Después aplica la migración de usuarios/roles/ajustes (paso 3) y crea el primer administrador:
+Después aplica las cinco migraciones y crea el primer administrador:
 
 ```powershell
 cd backend
 npm run bootstrap:admin
 ```
 
-Crea `ADMINISTRADOR` con correo `administrador@escoltas.local` y clave temporal `123456`.
-El primer ingreso obliga a cambiarla. En producción cambia `ADMIN_EMAIL` en `.env` antes de ejecutarlo.
+Crea el usuario visible `ADMINISTRADOR` con clave temporal `123456`. El correo
+`administrador@escoltas.local` queda como identificador interno de Supabase Auth: **no se usa para
+entrar**. El primer ingreso obliga a cambiar la clave (`ADMINISTRADOR` / `123456`). En producción
+cambia `ADMIN_EMAIL` en `.env` antes de ejecutarlo.
 
-### 2. Backend
+### 2. Un solo comando (recomendado)
+
+Desde la raíz del repositorio, con los `.env` configurados:
 
 ```powershell
-cd backend
-npm install
-Copy-Item .env.example .env    # edita las variables
 npm run dev
 ```
 
-### 3. Frontend
+Instala lo que falte y levanta **backend** (`http://localhost:4000`) y
+**frontend** (`http://localhost:5173`) en la misma terminal. Presiona `Ctrl+C` para detener ambos.
+
+Si aún no copiaste las plantillas de entorno, hazlo una vez:
 
 ```powershell
-cd frontend
-npm install
-Copy-Item .env.example .env    # edita las variables
-npm run dev
+Copy-Item .env.example .env
+Copy-Item backend\.env.example backend\.env
+Copy-Item frontend\.env.example frontend\.env
 ```
+
+> `npm run dev` ejecuta `predev` → `scripts/setupDeps.js`, que sólo instala cuando falta algún
+> `node_modules` o cambió un `package.json`. También puedes usar
+> `powershell -File scripts/setup.ps1`.
+
+### 3. Comandos útiles desde la raíz
+
+| Comando | Qué hace |
+| --- | --- |
+| `npm run dev` | Backend + frontend a la vez. |
+| `npm run build` | Compila el frontend. |
+| `npm start` | Solo backend en producción. |
+| `npm run bootstrap:admin` | Crea el primer administrador. |
+| `npm run setup` | Instala dependencias de raíz, backend y frontend. |
 
 Abre `http://localhost:5173`.
-
-> También puedes ejecutar `powershell -File scripts/setup.ps1` para instalar ambas dependencias
-> y copiar los `.env.example` automáticamente.
 
 ## Roles y permisos
 

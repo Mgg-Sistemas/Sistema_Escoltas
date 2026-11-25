@@ -96,12 +96,19 @@ Base: `/api`.
 
 ### Usuarios, contraseñas, roles y ajustes
 
+- `GET /auth/configuracion-sesion` — público; devuelve `{ permitir_mantener_sesion }`. Permite ocultar la
+  casilla "Mantener la sesión activa" del login. Lee el ajuste con service-role; `anon` no accede a la tabla.
+- `POST /auth/resolver-usuario` — público; cuerpo `{ usuario }`. Devuelve `{ email }` interno.
+  Usa la RPC `auth_usuario_a_email`; si la migración aún no se aplicó, busca por `usuario`/`full_name`
+  en `profiles` y, como último respaldo, en los usuarios de Supabase Auth.
 - `POST /auth/recuperar` — público; cuerpo `{ correo }`. Envía el enlace a
   `APP_URL/restablecer-clave?origen=recuperacion`. Siempre responde de forma neutra.
 - `POST /auth/cambiar-clave` — cuerpo `{ clave, confirmacion }` (mínimo 8 caracteres, doble validación).
 - `POST /auth/clave-confirmada` — desactiva `must_change_password` tras un restablecimiento por correo.
-- `GET /usuarios`, `POST /usuarios`, `PATCH /usuarios/:id` — solo admin. La creación usa la clave
-  temporal de `ajustes_sistema` (o `PASSWORD_INICIAL_USUARIO`) y fuerza el cambio en el primer ingreso.
+- `GET /usuarios`, `POST /usuarios`, `PATCH /usuarios/:id` — solo admin. La creación recibe
+  `{ usuario, nombre, apellido?, telefono?, role }`, genera el correo interno
+  `<usuario>@escoltas.local` y usa la clave temporal de `ajustes_sistema` (o
+  `PASSWORD_INICIAL_USUARIO`). El primer ingreso obliga a cambiarla.
 - `POST /usuarios/:id/restablecer-clave` — envía correo y vuelve a exigir cambio de clave.
 - `POST /usuarios/:id/desbloquear` — borra los intentos fallidos tras 3 errores.
 - `GET /roles` — catálogos, matriz estilo GT y códigos granulares.

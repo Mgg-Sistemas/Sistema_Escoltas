@@ -29,7 +29,7 @@ import { ROLES, ROLES_DESCRIPCION, ROLES_LABELS } from '../lib/constants.js';
 import { listar, TABLAS } from '../lib/data.js';
 
 const FORMULARIO_VACIO = {
-  correo: '',
+  usuario: '',
   nombre: '',
   apellido: '',
   telefono: '',
@@ -77,7 +77,7 @@ export default function Usuarios() {
     const texto = busqueda.trim().toLowerCase();
     if (!texto) return perfiles;
     return perfiles.filter((perfil) =>
-      [perfil.full_name, perfil.email, ROLES_LABELS[perfil.role]]
+      [perfil.usuario, perfil.full_name, ROLES_LABELS[perfil.role]]
         .some((valor) => String(valor || '').toLowerCase().includes(texto)),
     );
   }, [perfiles, busqueda]);
@@ -87,14 +87,14 @@ export default function Usuarios() {
 
   const crear = async (evento) => {
     evento.preventDefault();
-    if (!formulario.correo.trim() || !formulario.nombre.trim()) {
-      toast.error('Faltan datos', 'El correo y el nombre son obligatorios.');
+    if (!formulario.usuario.trim() || !formulario.nombre.trim()) {
+      toast.error('Faltan datos', 'El usuario y el nombre son obligatorios.');
       return;
     }
     try {
       setGuardando(true);
       const datos = await api.crearUsuario({
-        correo: formulario.correo.trim(),
+        usuario: formulario.usuario.trim(),
         nombre: formulario.nombre.trim(),
         apellido: formulario.apellido.trim() || undefined,
         telefono: formulario.telefono.trim() || undefined,
@@ -160,8 +160,8 @@ export default function Usuarios() {
       primary: true,
       render: (fila) => (
         <div className="min-w-0">
-          <p className="truncate font-bold text-slate-900">{fila.full_name || 'Sin nombre'}</p>
-          <p className="truncate text-xs text-slate-500">{fila.email || 'Sin correo'}</p>
+          <p className="truncate font-bold text-slate-900">{fila.usuario || 'Sin usuario'}</p>
+          <p className="truncate text-xs text-slate-500">{fila.full_name || 'Sin nombre'}</p>
         </div>
       ),
     },
@@ -229,7 +229,7 @@ export default function Usuarios() {
             type="search"
             value={busqueda}
             onChange={(evento) => setBusqueda(evento.target.value)}
-            placeholder="Buscar por nombre, correo o rol…"
+            placeholder="Buscar por usuario, nombre o rol…"
             aria-label="Buscar usuarios"
             className="min-h-11 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
           />
@@ -331,12 +331,12 @@ export default function Usuarios() {
       >
         <form id="formulario-usuario" onSubmit={crear} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Input
-            label="Correo electrónico"
-            type="email"
-            autoComplete="email"
-            placeholder="nombre@empresa.com"
-            value={formulario.correo}
-            onChange={(evento) => actualizarCampo('correo', evento.target.value)}
+            label="Usuario"
+            type="text"
+            autoComplete="username"
+            placeholder="Ej. JUAN.PEREZ"
+            value={formulario.usuario}
+            onChange={(evento) => actualizarCampo('usuario', evento.target.value)}
             required
           />
           <Input
@@ -400,7 +400,7 @@ export default function Usuarios() {
         }
       >
         <div className="space-y-3 rounded-xl bg-slate-50 p-4 text-sm">
-          <p><span className="font-semibold text-slate-500">Correo:</span> {credencial?.email}</p>
+          <p><span className="font-semibold text-slate-500">Usuario:</span> {credencial?.usuario}</p>
           <p>
             <span className="font-semibold text-slate-500">Clave temporal:</span>{' '}
             <code className="rounded bg-white px-2 py-1 font-bold text-brand-700 ring-1 ring-slate-200">
@@ -435,8 +435,8 @@ export default function Usuarios() {
         title={accion?.tipo === 'restablecer' ? '¿Enviar enlace de restablecimiento?' : '¿Desbloquear la cuenta?'}
         description={accion ? (
           accion.tipo === 'restablecer'
-            ? `Se enviará un correo a ${accion.perfil.email} con un enlace para crear una contraseña nueva. La clave temporal seguirá vigente hasta que se complete el cambio.`
-            : `Se reiniciarán los intentos fallidos de ${accion.perfil.full_name || accion.perfil.email}.`
+            ? `Se enviará el enlace al correo interno de ${accion.perfil.usuario || accion.perfil.full_name}. La clave temporal seguirá vigente hasta que se complete el cambio.`
+            : `Se reiniciarán los intentos fallidos de ${accion.perfil.usuario || accion.perfil.full_name}.`
         ) : ''}
         confirmLabel={accion?.tipo === 'restablecer' ? 'Enviar correo' : 'Desbloquear'}
         onConfirm={ejecutarAccion}

@@ -15,7 +15,20 @@ const router = Router();
 router.use(requireRole('admin'));
 
 const SELECCION =
-  'id,full_name,email,role,active,must_change_password,phone,role_id,avatar_url,created_at,cambio_clave_at,ultimo_acceso';
+  'id,usuario,full_name,email,role,active,must_change_password,phone,role_id,avatar_url,created_at,cambio_clave_at,ultimo_acceso';
+
+/** Genera un correo interno válido a partir del usuario visible. */
+function correoInternoDesdeUsuario(usuario) {
+  const local = String(usuario)
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9._-]+/g, '.')
+    .replace(/\.{2,}/g, '.')
+    .replace(/^\.|\.$/g, '');
+  return `${local || `usuario-${Date.now()}`}@escoltas.local`;
+}
 
 router.get(
   '/',
@@ -35,6 +48,7 @@ router.post(
   validate(esquemaUsuarioCrear),
   asyncHandler(async (req, res) => {
     const {
+      usuario,
       correo,
       nombre,
       apellido,
@@ -42,7 +56,9 @@ router.post(
       role,
       escolta_id: escoltaId,
     } = req.body;
-    const email = correo.trim().toLowerCase();
+    const usuarioVisible = usuario.trim();
+    const nombreCompleto = [nombre, apellido].filter(Boolean).join(' ').trim();
+    const email = correo?.trim().toLowerCase() || correoInternoDesdeUsuario(usuarioVisible);
     const claveTemporal =
       (await valorAjuste('password_inicial_usuario', null)) || config.passwordInicialUsuario;
 
@@ -51,7 +67,8 @@ router.post(
       password: claveTemporal,
       email_confirm: true,
       user_metadata: {
-        full_name: [nombre, apellido].filter(Boolean).join(' ').trim(),
+        usuario: usuarioVisible,
+        full_name: nombreCompleto,
         role,
         phone: telefono ?? null,
       },
@@ -59,7 +76,7 @@ router.post(
 
     if (crearError) {
       if (/already registered|already exists|duplicate/i.test(crearError.message)) {
-        throw new ApiError(409, 'Ya existe una cuenta con ese correo electrónico.', 'CONFLICTO');
+        throw new ApiError(409, 'Ya existe una cuenta con ese usuario o correo interno.', 'CONFLICTO');
       }
       throw new ApiError(400, crearError.message, 'VALIDACION');
     }
@@ -70,7 +87,8 @@ router.post(
     const { error: perfilError } = await supabase
       .from('profiles')
       .update({
-        full_name: [nombre, apellido].filter(Boolean).join(' ').trim(),
+        usuario: usuarioVisible,
+        full_name: nombreCompleto,
         email,
         role,
         role_id: roleRow?.id ?? null,
@@ -95,13 +113,13 @@ router.post(
       tabla: 'profiles',
       operacion: 'INSERT',
       registro_id: id,
-      cambios: { email, role, must_change_password: true },
+      cambios: { usuario: usuarioVisible, email, role, must_change_password: true },
       usuario_id: req.user.id,
     });
 
     return created(res, {
       id,
-      email,
+      usuario: usuarioVisible,
       role,
       clave_temporal: claveTemporal,
       mensaje: 'Usuario creado. Debe cambiar la contraseña en su primer ingreso.',
@@ -119,6 +137,7 @@ router.patch(
     }
 
     const cambios = { ...req.body };
+    const metadata = {};
     if (cambios.role) {
       const { data: roleRow } = await supabase
         .from('roles')
@@ -126,7 +145,11 @@ router.patch(
         .eq('nombre', cambios.role)
         .maybeSingle();
       cambios.role_id = roleRow?.id ?? null;
-      await supabase.auth.admin.updateUserById(id, { user_metadata: { role: cambios.role } });
+      metadata.role = cambios.role;
+    }
+    if (cambios.usuario) metadata.usuario = cambios.usuario;
+    if (Object.keys(metadata).length > 0) {
+      await supabase.auth.admin.updateUserById(id, { user_metadata: metadata });
     }
 
     const { data, error } = await supabase

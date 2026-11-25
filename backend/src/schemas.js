@@ -291,6 +291,11 @@ export const esquemaRecuperarClave = z.object({
   correo: z.string().trim().email('Escribe un correo electrónico válido.').max(255),
 });
 
+/** Resuelve el usuario visible al correo interno usado por Supabase Auth. */
+export const esquemaResolverUsuario = z.object({
+  usuario: texto(120),
+});
+
 export const esquemaClaveNueva = z
   .object({
     clave: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres.').max(128),
@@ -308,7 +313,9 @@ export const rolesSistema = z.enum(['admin', 'supervisor', 'contador', 'escolta'
 });
 
 export const esquemaUsuarioCrear = z.object({
-  correo: z.string().trim().email('Escribe un correo electrónico válido.').max(255),
+  usuario: texto(120),
+  // Opcional: si no se envía, se genera un correo interno desde el usuario.
+  correo: z.string().trim().email('Escribe un correo electrónico válido.').max(255).optional(),
   nombre: texto(150),
   apellido: textoOpcional(150),
   telefono: textoOpcional(50),
@@ -317,6 +324,7 @@ export const esquemaUsuarioCrear = z.object({
 });
 
 export const esquemaUsuarioActualizar = z.object({
+  usuario: texto(120).optional(),
   nombre: texto(150).optional(),
   apellido: textoOpcional(150),
   telefono: textoOpcional(50),

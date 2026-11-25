@@ -37,32 +37,45 @@ $fn$;
 -- SECURITY DEFINER + search_path fijo evita recursión en RLS: la consulta
 -- interna a public.profiles se ejecuta como el dueño de la función, que
 -- omite las políticas (los superusuarios y service_role siempre omiten RLS).
+-- Se define en plpgsql, no en SQL: el cuerpo de una función SQL se valida
+-- al crearla y estas tablas todavía no existen en este punto de la migración.
 CREATE OR REPLACE FUNCTION public.get_my_role()
 RETURNS text
-LANGUAGE sql
+LANGUAGE plpgsql
 STABLE
 SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $fn$
-  SELECT COALESCE(
-    (SELECT p.role FROM public.profiles AS p WHERE p.id = auth.uid() LIMIT 1),
-    'anon'
-  );
+DECLARE
+  v_rol text;
+BEGIN
+  SELECT p.role INTO v_rol
+  FROM public.profiles AS p
+  WHERE p.id = auth.uid()
+  LIMIT 1;
+  RETURN COALESCE(v_rol, 'anon');
+END;
 $fn$;
 
 -- Devuelve el id de la fila de "escoltas" vinculada al usuario actual,
--- o NULL si el usuario no tiene ficha de escolta.
+-- o NULL si el usuario no tiene ficha de escolta. También usa plpgsql
+-- para no exigir que la tabla exista antes de crear la función.
 CREATE OR REPLACE FUNCTION public.get_my_escort_id()
 RETURNS uuid
-LANGUAGE sql
+LANGUAGE plpgsql
 STABLE
 SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $fn$
-  SELECT e.id
+DECLARE
+  v_escolta_id uuid;
+BEGIN
+  SELECT e.id INTO v_escolta_id
   FROM public.escoltas AS e
   WHERE e.user_id = auth.uid()
   LIMIT 1;
+  RETURN v_escolta_id;
+END;
 $fn$;
 
 -- Atajos de rol. Se usan en las políticas para no repetir literales.
@@ -94,20 +107,26 @@ AS $fn$ SELECT public.get_my_role() IN ('admin', 'supervisor'); $fn$;
 
 -- Permite al escolta ver únicamente los periodos en los que tiene un
 -- detalle de nómina. Se implementa como función para evitar ambigüedad
--- de columnas dentro de una política RLS.
+-- de columnas dentro de una política RLS. plpgsql permite crearla antes
+-- de las tablas que consulta.
 CREATE OR REPLACE FUNCTION public.tengo_detalle_en_periodo(p_periodo_id uuid)
 RETURNS boolean
-LANGUAGE sql
+LANGUAGE plpgsql
 STABLE
 SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $fn$
+DECLARE
+  v_existe boolean := false;
+BEGIN
   SELECT EXISTS (
     SELECT 1
     FROM public.nomina_detalles AS nd
     WHERE nd.periodo_id = p_periodo_id
       AND nd.escolta_id = public.get_my_escort_id()
-  );
+  ) INTO v_existe;
+  RETURN COALESCE(v_existe, false);
+END;
 $fn$;
 
 -- Alta automática de perfil cuando se crea un usuario en auth.users.

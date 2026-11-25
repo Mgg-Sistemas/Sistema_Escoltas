@@ -1,11 +1,25 @@
 import dotenv from 'dotenv';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const raizBackend = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const archivoBackend = path.join(raizBackend, '.env');
+const archivoRaiz = path.join(raizBackend, '..', '.env');
 
-// Se carga primero backend/.env y después el .env del directorio de ejecución.
-dotenv.config({ path: path.join(raizBackend, '.env') });
+// Se carga primero backend/.env y después el .env de la raíz. Un valor vacío en
+// backend/.env no debe impedir usar la raíz como respaldo (dotenv no sobrescribe).
+dotenv.config({ path: archivoBackend });
+
+if (fs.existsSync(archivoRaiz)) {
+  const valoresRaiz = dotenv.parse(fs.readFileSync(archivoRaiz));
+  for (const [clave, valor] of Object.entries(valoresRaiz)) {
+    if (!process.env[clave]?.trim() && valor?.trim()) {
+      process.env[clave] = valor;
+    }
+  }
+}
+
 dotenv.config();
 
 const requeridas = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_ANON_KEY'];
