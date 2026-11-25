@@ -27,8 +27,34 @@ const app = express();
 app.disable('x-powered-by');
 app.use(helmet());
 
-const origenes = config.corsOrigin === '*' ? '*' : config.corsOrigin.split(',').map((origen) => origen.trim());
-app.use(cors({ origin: origenes, credentials: origenes !== '*' }));
+const origenes = config.corsOrigin === '*'
+  ? '*'
+  : config.corsOrigin.split(',').map((origen) => origen.trim()).filter(Boolean);
+
+// En desarrollo se abre el frontend desde la IP de la PC (por ejemplo, desde
+// un celular). `localhost:5173` apunta al dispositivo que navega, así que se
+// permiten también los orígenes de red en ese mismo puerto.
+function esOrigenLocal(origen) {
+  try {
+    const url = new URL(origen);
+    return url.port === '5173'
+      && /^(localhost|127\.0\.0\.1|\d{1,3}(?:\.\d{1,3}){3})$/.test(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+function origenPermitido(origen, callback) {
+  if (!origen || origenes === '*' || origenes.includes(origen)) {
+    return callback(null, true);
+  }
+  if (origenes.includes('http://localhost:5173') && esOrigenLocal(origen)) {
+    return callback(null, true);
+  }
+  return callback(new Error('Origen no permitido por CORS'));
+}
+
+app.use(cors({ origin: origenPermitido, credentials: origenes !== '*' }));
 app.use(express.json({ limit: '2mb' }));
 
 // Rutas públicas: salud y recuperación de contraseña (antes de autenticación).
