@@ -26,7 +26,7 @@ Todas las variables están documentadas en la plantilla única de la raíz:
 | --- | --- | --- |
 | `PORT` | `4000` | `4000` (interno) |
 | `NODE_ENV` | `development` | `production` |
-| `CORS_ORIGIN` | `http://localhost:5173` | `https://tu-dominio.com` |
+| `CORS_ORIGIN` | `http://localhost:5173` (agrega `http://IP_DE_LA_PC:5173` si entras desde otro dispositivo) | `https://tu-dominio.com` |
 | `APP_URL` | `http://localhost:5173` | `https://tu-dominio.com` (enlace de restablecimiento) |
 | `ADMIN_EMAIL` | `administrador@escoltas.local` | Correo real del primer administrador |
 | `PASSWORD_INICIAL_ADMIN` | `123456` | Solo para `npm run bootstrap:admin`; cámbialo en producción |
@@ -41,7 +41,12 @@ reconstruir (`npm run build` o `deploy.sh up`).
 | --- | --- | --- |
 | `VITE_SUPABASE_URL` | `https://rznkopetlmitfxcixjcr.supabase.co` | Igual |
 | `VITE_SUPABASE_ANON_KEY` | clave `anon` | Misma clave `anon` |
-| `VITE_API_URL` | `http://localhost:4000` | `https://tu-dominio.com` (sin `/api`) |
+| `VITE_API_URL` | `http://localhost:4000` o `http://IP_DE_LA_PC:4000` | `https://tu-dominio.com` (sin `/api`) |
+
+Si `VITE_API_URL` está vacío o contiene una plantilla (`tu-dominio`, `REEMPLAZAR`), el frontend
+derive automáticamente `http://<IP_desde_la_que_se_abre>:4000`. El backend acepta ese origen
+cuando `CORS_ORIGIN` incluye `http://localhost:5173`, así que basta con abrir el frontend con la
+IP de la PC para usar el sistema desde un celular.
 
 ## Dominio y DigitalOcean
 
