@@ -1,0 +1,23 @@
+{
+  "name": "sistema-escoltas",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Orquestador local del Sistema de Escoltas: backend Node/Express + frontend React/Vite",
+  "scripts": {
+    "setup": "node scripts/setupDeps.js",
+    "predev": "npm run setup",
+    "dev": "concurrently -k -n BACKEND,FRONTEND -c yellow,cyan \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "start": "npm --prefix backend run start",
+    "bootstrap:admin": "npm --prefix backend run bootstrap:admin"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

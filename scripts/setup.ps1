@@ -11,10 +11,12 @@ $repo = Split-Path -Parent $root
 
 Write-Host "[setup] Repositorio: $repo" -ForegroundColor Cyan
 
-foreach ($folder in @("backend", "frontend")) {
-    $path = Join-Path $repo $folder
+foreach ($folder in @(".", "backend", "frontend")) {
+    $path = if ($folder -eq ".") { $repo } else { Join-Path $repo $folder }
+    $nombre = if ($folder -eq ".") { "raíz" } else { $folder }
+
     if (-not (Test-Path $path)) {
-        Write-Host "[setup] Falta la carpeta $folder" -ForegroundColor Red
+        Write-Host "[setup] Falta la carpeta $nombre" -ForegroundColor Red
         continue
     }
 
@@ -22,12 +24,12 @@ foreach ($folder in @("backend", "frontend")) {
     $envFile = Join-Path $path ".env"
     if ((Test-Path $example) -and -not (Test-Path $envFile)) {
         Copy-Item $example $envFile
-        Write-Host "[setup] Creado $folder/.env (edítalo con tus valores)" -ForegroundColor Green
+        Write-Host "[setup] Creado $nombre/.env (edítalo con tus valores)" -ForegroundColor Green
     }
 
-    Write-Host "[setup] Instalando dependencias de $folder..." -ForegroundColor Cyan
+    Write-Host "[setup] Instalando dependencias de $nombre..." -ForegroundColor Cyan
     Push-Location $path
     try { npm install } finally { Pop-Location }
 }
 
-Write-Host "[setup] Listo. Configura tus variables y ejecuta npm run dev en cada carpeta." -ForegroundColor Green
+Write-Host "[setup] Listo. Configura tus variables y ejecuta npm run dev desde la raíz." -ForegroundColor Green

@@ -73,28 +73,40 @@ npm run bootstrap:admin
 Crea `ADMINISTRADOR` con correo `administrador@escoltas.local` y clave temporal `123456`.
 El primer ingreso obliga a cambiarla. En producción cambia `ADMIN_EMAIL` en `.env` antes de ejecutarlo.
 
-### 2. Backend
+### 2. Un solo comando (recomendado)
+
+Desde la raíz del repositorio, con los `.env` configurados:
 
 ```powershell
-cd backend
-npm install
-Copy-Item .env.example .env    # edita las variables
 npm run dev
 ```
 
-### 3. Frontend
+Instala lo que falte y levanta **backend** (`http://localhost:4000`) y
+**frontend** (`http://localhost:5173`) en la misma terminal. Presiona `Ctrl+C` para detener ambos.
+
+Si aún no copiaste las plantillas de entorno, hazlo una vez:
 
 ```powershell
-cd frontend
-npm install
-Copy-Item .env.example .env    # edita las variables
-npm run dev
+Copy-Item .env.example .env
+Copy-Item backend\.env.example backend\.env
+Copy-Item frontend\.env.example frontend\.env
 ```
+
+> `npm run dev` ejecuta `predev` → `scripts/setupDeps.js`, que sólo instala cuando falta algún
+> `node_modules` o cambió un `package.json`. También puedes usar
+> `powershell -File scripts/setup.ps1`.
+
+### 3. Comandos útiles desde la raíz
+
+| Comando | Qué hace |
+| --- | --- |
+| `npm run dev` | Backend + frontend a la vez. |
+| `npm run build` | Compila el frontend. |
+| `npm start` | Solo backend en producción. |
+| `npm run bootstrap:admin` | Crea el primer administrador. |
+| `npm run setup` | Instala dependencias de raíz, backend y frontend. |
 
 Abre `http://localhost:5173`.
-
-> También puedes ejecutar `powershell -File scripts/setup.ps1` para instalar ambas dependencias
-> y copiar los `.env.example` automáticamente.
 
 ## Roles y permisos
 
