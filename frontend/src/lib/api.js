@@ -16,7 +16,9 @@ const mismoHost = Boolean(
     && !/^127\./.test(navegador.location.hostname),
 );
 const origenDerivado = navegador
-  ? `http://${navegador.location.hostname}:4000`
+  ? (navegador.location.protocol === 'https:'
+      ? navegador.location.origin
+      : `http://${navegador.location.hostname}:4000`)
   : 'http://localhost:4000';
 const origenEfectivo = esPlantilla || (mismoHost && esOrigenLocal(origenConfigurado))
   ? origenDerivado
