@@ -7,8 +7,9 @@
    Tema descansado a la vista · gris carbón neutro + acento naranja
    ============================================================ */
 
-:root {
-  /* Paleta base · gris carbón neutro de Golden Touch (suave a la vista) */
+:root,
+html[data-paleta="grafito"] {
+  /* Paleta 1 · Grafito Oscuro (Equilibrado descansado) */
   --bg-0: #1c1f24;
   --bg-1: #20242a;
   --bg-2: #262a31;
@@ -24,7 +25,7 @@
   --text-muted: #9aa6b5;
   --text-dim: #6a7585;
 
-  /* Acentos oficiales GT */
+  /* Acentos oficiales GT / Escoltas Control 360 */
   --primary: #ff8a00;
   --primary-2: #ffa733;
   --primary-3: #ffd07a;
@@ -48,6 +49,60 @@
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
   --shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.55);
 
+  color-scheme: dark;
+}
+
+html[data-paleta="carbon"] {
+  /* Paleta 2 · Carbón Profundo (Mate de alto contraste con acentos naranja) */
+  --bg-0: #0d1117;
+  --bg-1: #13171e;
+  --bg-2: #181d26;
+  --bg-3: #21262d;
+  --surface: #161b22;
+  --surface-2: #21262d;
+  --surface-3: #30363d;
+  --border: #30363d;
+  --border-strong: #484f58;
+
+  --text: #f0f6fc;
+  --text-muted: #8b949e;
+  --text-dim: #6e7681;
+
+  --primary: #ff7000;
+  --primary-2: #ff8c26;
+  --primary-3: #ffaa55;
+  --gold: #ffd54a;
+  --silver: #c9d1d9;
+
+  --grad-primary: linear-gradient(135deg, #ff7000 0%, #ffab00 100%);
+  --grad-surface: linear-gradient(180deg, #21262d 0%, #161b22 100%);
+  color-scheme: dark;
+}
+
+html[data-paleta="noche"] {
+  /* Paleta 3 · Noche Titanio (Pizarra oscuro profundo con detalles dorados) */
+  --bg-0: #0a0f1d;
+  --bg-1: #0f1629;
+  --bg-2: #141c33;
+  --bg-3: #1f293d;
+  --surface: #111827;
+  --surface-2: #1f2937;
+  --surface-3: #374151;
+  --border: #374151;
+  --border-strong: #4b5563;
+
+  --text: #f3f4f6;
+  --text-muted: #9ca3af;
+  --text-dim: #6b7280;
+
+  --primary: #f59e0b;
+  --primary-2: #fbbf24;
+  --primary-3: #fde68a;
+  --gold: #fcd34d;
+  --silver: #d1d5db;
+
+  --grad-primary: linear-gradient(135deg, #f59e0b 0%, #fcd34d 100%);
+  --grad-surface: linear-gradient(180deg, #1f2937 0%, #111827 100%);
   color-scheme: dark;
 }
 
@@ -242,6 +297,27 @@ tbody tr:hover {
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* Identidad Corporativa ESCOLTAS CONTROL 360 */
+  .text-metalico {
+    background: linear-gradient(135deg, #ffffff 0%, #d8e2ec 35%, #94a3b8 70%, #ffffff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .text-oro {
+    color: var(--gold) !important;
+  }
+
+  .badge-cromo {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.02) 50%, rgba(255, 255, 255, 0.08) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 6px rgba(0, 0, 0, 0.35);
+  }
+
+  .gold-glow {
+    text-shadow: 0 0 14px rgba(255, 213, 74, 0.45);
   }
 }
 

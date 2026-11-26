@@ -6,6 +6,7 @@ import { asyncHandler, ok } from '../lib/http.js';
 import { requireRole } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { esquemaRolPermisos } from '../schemas.js';
+import { modulosStore } from '../lib/modulosStore.js';
 
 const router = Router();
 
@@ -110,7 +111,12 @@ router.get(
       .select('*')
       .order('created_at');
 
-    if (error) throw mapSupabaseError(error, 'No fue posible consultar roles personalizados.');
+    if (error) {
+      if (modulosStore.esErrorTablaInexistente(error)) {
+        return ok(res, modulosStore.listar('custom_roles'));
+      }
+      throw mapSupabaseError(error, 'No fue posible consultar roles personalizados.');
+    }
     return ok(res, data ?? []);
   }),
 );
@@ -123,20 +129,28 @@ router.post(
     if (!key || !label) throw new ApiError(400, 'Clave y etiqueta son obligatorias.');
 
     const claveLimpa = key.trim().toLowerCase().replace(/\s+/g, '_');
+    const rolObj = {
+      key: claveLimpa,
+      label: label.trim(),
+      descripcion: descripcion?.trim() || null,
+      color: color || '#cc4400',
+      sistema: false,
+      created_by: req.user.id,
+    };
+
     const { data, error } = await supabase
       .from('custom_roles')
-      .upsert({
-        key: claveLimpa,
-        label: label.trim(),
-        descripcion: descripcion?.trim() || null,
-        color: color || '#cc4400',
-        sistema: false,
-        created_by: req.user.id,
-      })
+      .upsert(rolObj)
       .select('*')
       .single();
 
-    if (error) throw mapSupabaseError(error, 'No fue posible guardar el rol personalizado.');
+    if (error) {
+      if (modulosStore.esErrorTablaInexistente(error)) {
+        const item = modulosStore.insertar('custom_roles', rolObj);
+        return ok(res, item);
+      }
+      throw mapSupabaseError(error, 'No fue posible guardar el rol personalizado.');
+    }
 
     // Asegura registro en roles_permisos
     await supabase
@@ -146,7 +160,8 @@ router.post(
         permisos: {},
         vistas_telefono: [],
         solo_telefono: false,
-      });
+      })
+      .catch(() => {});
 
     return ok(res, data);
   }),
@@ -160,9 +175,12 @@ router.delete(
     const { data: role } = await supabase.from('custom_roles').select('*').eq('key', key).single();
     if (role?.sistema) throw new ApiError(400, 'No se pueden eliminar roles base del sistema.');
 
-    await supabase.from('roles_permisos').delete().eq('role', key);
+    await supabase.from('roles_permisos').delete().eq('role', key).catch(() => {});
     const { error } = await supabase.from('custom_roles').delete().eq('key', key);
-    if (error) throw mapSupabaseError(error, 'No fue posible eliminar el rol.');
+    if (error && !modulosStore.esErrorTablaInexistente(error)) {
+      throw mapSupabaseError(error, 'No fue posible eliminar el rol.');
+    }
+    modulosStore.eliminar('custom_roles', key);
 
     return ok(res, { mensaje: 'Rol eliminado con éxito.' });
   }),
@@ -177,7 +195,12 @@ router.get(
       .select('*, usuario:profiles(id, full_name, email, role, usuario)')
       .order('created_at');
 
-    if (error) throw mapSupabaseError(error, 'No fue posible consultar autorizados.');
+    if (error) {
+      if (modulosStore.esErrorTablaInexistente(error)) {
+        return ok(res, modulosStore.listar('autorizados'));
+      }
+      throw mapSupabaseError(error, 'No fue posible consultar autorizados.');
+    }
     return ok(res, data ?? []);
   }),
 );
@@ -189,19 +212,27 @@ router.post(
     const { usuario_id, modulo, accion = 'aprobar' } = req.body;
     if (!usuario_id || !modulo) throw new ApiError(400, 'Usuario y módulo requeridos.');
 
+    const autorizObj = {
+      usuario_id,
+      modulo,
+      accion,
+      activo: true,
+      created_by: req.user.id,
+    };
+
     const { data, error } = await supabase
       .from('usuarios_autorizados')
-      .upsert({
-        usuario_id,
-        modulo,
-        accion,
-        activo: true,
-        created_by: req.user.id,
-      })
+      .upsert(autorizObj)
       .select('*, usuario:profiles(id, full_name, email, role, usuario)')
       .single();
 
-    if (error) throw mapSupabaseError(error, 'No fue posible autorizar al usuario.');
+    if (error) {
+      if (modulosStore.esErrorTablaInexistente(error)) {
+        const item = modulosStore.insertar('autorizados', autorizObj);
+        return ok(res, item);
+      }
+      throw mapSupabaseError(error, 'No fue posible autorizar al usuario.');
+    }
     return ok(res, data);
   }),
 );

@@ -68,32 +68,36 @@ export default function Login() {
         <div className="pointer-events-none absolute -right-32 -top-40 h-[28rem] w-[28rem] rounded-full bg-gold-500/20 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-48 -left-32 h-[30rem] w-[30rem] rounded-full bg-brand-500/20 blur-3xl" />
         <div className="relative flex items-center gap-4">
-          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20">
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20 shadow-lg">
             <Emblema className="h-14 w-14" />
           </div>
           <div>
-            <p className="text-lg font-extrabold tracking-tight">Sistema de Escoltas</p>
-            <p className="text-xs uppercase tracking-[0.2em] text-gold-400">Seguridad institucional</p>
+            <p className="text-xl font-extrabold tracking-tight text-metalico">ESCOLTAS CONTROL 360</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-oro">Seguridad · Vigilancia · Nómina</p>
           </div>
         </div>
 
         <div className="relative max-w-xl">
-          <h1 className="text-4xl font-extrabold leading-tight text-emblem-gray xl:text-5xl">
-            Control total de tus escoltas, en un solo lugar
+          <div className="inline-flex items-center gap-2 rounded-full badge-cromo px-3 py-1 text-xs font-semibold text-slate-200 mb-4">
+            <span className="h-2 w-2 rounded-full bg-[#ff8a00]" />
+            Multiempresa · Multisede · Multimoneda
+          </div>
+          <h1 className="text-4xl font-extrabold leading-tight text-emblem-gray xl:text-5xl text-metalico">
+            Control integral de escoltas y seguridad 360°
           </h1>
           <p className="mt-5 text-base leading-relaxed text-slate-300">
-            Registra personal, distribuye turnos, revisa permisos, controla la asistencia y cierra la
-            nómina con claridad y trazabilidad. Los cambios se ven al instante en todos los dispositivos.
+            Centraliza el control de personal, expedientes digitales, turnos, descansos reglamentarios,
+            servicios de vigilancia y nómina en bolívares y dólares con total trazabilidad.
           </p>
           <ul className="mt-9 space-y-4 text-sm text-slate-200">
             {[
-              'Fichas y asignaciones siempre actualizadas',
-              'Permisos con aprobación guiada y alertas',
-              'Nómina y pagos con totales automáticos',
-              'Acceso por rol y contraseñas temporales',
+              'Expediente individual y distribución en tiempo real',
+              'Gestión de descansos acumulados y rotaciones',
+              'Cálculo automático de nómina en Bs y USD (Tasa BCV)',
+              'Acceso administrativo PC y portal ágil móvil',
             ].map((texto) => (
               <li key={texto} className="flex items-center gap-3">
-                <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-500 text-xs font-bold text-white">
+                <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#ff8a00] text-xs font-bold text-white shadow">
                   ✓
                 </span>
                 {texto}
@@ -103,7 +107,7 @@ export default function Login() {
         </div>
 
         <p className="relative text-xs text-slate-400">
-          Uso autorizado exclusivamente para el equipo · Datos protegidos por rol
+          ESCOLTAS CONTROL 360 · Plataforma de alta seguridad · Acceso restringido por rol
         </p>
       </div>
 
@@ -113,8 +117,8 @@ export default function Login() {
           <div className="mb-8 flex flex-col items-center gap-3 text-center lg:hidden">
             <Emblema className="h-20 w-20" />
             <div>
-              <p className="text-lg font-extrabold text-slate-100">Sistema de Escoltas</p>
-              <p className="text-xs text-slate-400">Acceso seguro</p>
+              <p className="text-lg font-extrabold text-metalico">ESCOLTAS CONTROL 360</p>
+              <p className="text-xs text-slate-400">Seguridad & Vigilancia Operativa</p>
             </div>
           </div>
 

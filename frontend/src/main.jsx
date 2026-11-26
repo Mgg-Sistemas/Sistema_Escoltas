@@ -7,6 +7,14 @@ import { ToastProvider } from './components/ui.jsx';
 import { RealtimeProvider } from './context/RealtimeContext.jsx';
 import './index.css';
 
+// Inicializar paleta guardada de ESCOLTAS CONTROL 360
+try {
+  const paletaActiva = localStorage.getItem('escoltas_tema_paleta') || 'grafito';
+  document.documentElement.setAttribute('data-paleta', paletaActiva);
+} catch {
+  // Entorno sin localStorage
+}
+
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);

@@ -30,7 +30,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useRealtimeRecarga } from '../hooks/useRealtime.js';
 import { api } from '../lib/api.js';
 import { MODULOS_SISTEMA, ROLES, ROLES_DESCRIPCION, ROLES_LABELS } from '../lib/constants.js';
-import { listar, TABLAS } from '../lib/data.js';
+import { listar, nombreCompleto, TABLAS } from '../lib/data.js';
 
 const FORMULARIO_VACIO = {
   usuario: '',

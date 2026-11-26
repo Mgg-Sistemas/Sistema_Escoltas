@@ -44,6 +44,12 @@ export default function Ajustes() {
       const mapeo = Object.fromEntries(
         lista.map((a) => [a.clave, a.valor ?? ''])
       );
+      if (!mapeo.empresa_nombre) mapeo.empresa_nombre = 'ESCOLTAS CONTROL 360 · Seguridad y Vigilancia C.A.';
+      if (!mapeo.empresa_rif) mapeo.empresa_rif = 'J-50123456-7';
+      if (!mapeo.tasa_dolar_referencia) mapeo.tasa_dolar_referencia = '60.00';
+      if (!mapeo.dias_descanso_semanal) mapeo.dias_descanso_semanal = '2';
+      if (!mapeo.tema_interfaz) mapeo.tema_interfaz = 'oscuro';
+      if (!mapeo.notificaciones_sonido) mapeo.notificaciones_sonido = 'true';
       setValores(mapeo);
     } catch (err) {
       toast.error('Error al cargar configuración: ' + (err.message || 'Error'));
@@ -54,6 +60,8 @@ export default function Ajustes() {
 
   useEffect(() => {
     cargar();
+    const paletaGuardada = localStorage.getItem('escoltas_tema_paleta') || 'grafito';
+    document.documentElement.setAttribute('data-paleta', paletaGuardada);
   }, [cargar]);
 
   const handleChange = (clave, valor) => {
@@ -65,6 +73,7 @@ export default function Ajustes() {
     try {
       await api.guardarAjustes(valores);
       localStorage.setItem('escoltas_tema_paleta', paletaSeleccionada);
+      document.documentElement.setAttribute('data-paleta', paletaSeleccionada);
       toast.success('Configuración y preferencias de tema guardadas.');
     } catch (err) {
       toast.error(err.message || 'Error al guardar ajustes');
@@ -76,8 +85,9 @@ export default function Ajustes() {
   const handleSeleccionarPaleta = (id) => {
     setPaletaSeleccionada(id);
     localStorage.setItem('escoltas_tema_paleta', id);
+    document.documentElement.setAttribute('data-paleta', id);
     handleChange('tema_paleta', id);
-    toast.success(`Paleta "${PALETAS.find((p) => p.id === id)?.label}" aplicada.`);
+    toast.success(`Paleta "${PALETAS.find((p) => p.id === id)?.label}" aplicada en tiempo real.`);
   };
 
   return (
@@ -146,7 +156,7 @@ export default function Ajustes() {
             <div className="border-t border-slate-700/60 pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Select
                 label="Tema por Defecto de Sesión"
-                value={valores.tema_interfaz || 'oscuro'}
+                value={valores.tema_interfaz ?? 'oscuro'}
                 onChange={(e) => handleChange('tema_interfaz', e.target.value)}
                 options={[
                   { value: 'oscuro', label: 'Modo Oscuro (Recomendado descansado)' },
@@ -155,7 +165,7 @@ export default function Ajustes() {
               />
               <Select
                 label="Notificaciones y Sonidos"
-                value={valores.notificaciones_sonido || 'true'}
+                value={valores.notificaciones_sonido ?? 'true'}
                 onChange={(e) => handleChange('notificaciones_sonido', e.target.value)}
                 options={[
                   { value: 'true', label: 'Sonido Habilitado' },
@@ -182,13 +192,13 @@ export default function Ajustes() {
                 label="Tasa de Referencia Oficial BCV (USD / Bs)"
                 type="number"
                 step="0.01"
-                value={valores.tasa_dolar_referencia || '60.00'}
+                value={valores.tasa_dolar_referencia ?? ''}
                 onChange={(e) => handleChange('tasa_dolar_referencia', e.target.value)}
               />
               <Input
                 label="Días de Descanso Reglamentarios por Ciclo"
                 type="number"
-                value={valores.dias_descanso_semanal || '2'}
+                value={valores.dias_descanso_semanal ?? ''}
                 onChange={(e) => handleChange('dias_descanso_semanal', e.target.value)}
               />
             </div>
@@ -202,20 +212,22 @@ export default function Ajustes() {
                 <span>Identidad de la Organización</span>
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                Datos fiscales que aparecen en reportes, nóminas y órdenes de ruta VJ.
+                Datos fiscales que aparecen en reportes, nóminas y órdenes de servicio de seguridad y custodia.
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 label="Razón Social / Nombre"
-                value={valores.empresa_nombre || 'Golden Touch 1127 C.A. / Sistema de Escoltas'}
+                value={valores.empresa_nombre ?? ''}
                 onChange={(e) => handleChange('empresa_nombre', e.target.value)}
+                placeholder="ESCOLTAS CONTROL 360 · Seguridad y Vigilancia C.A."
               />
               <Input
                 label="RIF Fiscal"
-                value={valores.empresa_rif || 'J-50123456-7'}
+                value={valores.empresa_rif ?? ''}
                 onChange={(e) => handleChange('empresa_rif', e.target.value)}
+                placeholder="J-50123456-7"
               />
             </div>
           </Card>

@@ -27,31 +27,31 @@ import { iniciales } from '../lib/data.js';
 
 const SECCIONES_NAVEGACION = [
   {
-    titulo: 'Operación',
+    titulo: 'Operación 360',
     items: [
-      { to: '/', label: 'Inicio', icon: LayoutDashboard, descripcion: 'Resumen general', exacto: true },
-      { to: '/escoltas', label: 'Escoltas', icon: UsersRound, descripcion: 'Personal y fichas', modulo: 'escoltas' },
-      { to: '/choferes', label: 'Choferes', icon: Truck, descripcion: 'Rutas, viajes y flota', modulo: 'choferes' },
-      { to: '/distribucion', label: 'Distribución', icon: CalendarRange, descripcion: 'Asignaciones y turnos', modulo: 'distribucion' },
-      { to: '/permisos', label: 'Permisos', icon: ClipboardCheck, descripcion: 'Solicitudes y revisiones', modulo: 'permisos' },
-      { to: '/asistencias', label: 'Asistencias', icon: CalendarCheck2, descripcion: 'Entradas y salidas', modulo: 'asistencias' },
+      { to: '/', label: 'Dashboard', icon: LayoutDashboard, descripcion: 'Centro de control 360', exacto: true },
+      { to: '/escoltas', label: 'Personal', icon: UsersRound, descripcion: 'Expediente digital y fichas', modulo: 'escoltas' },
+      { to: '/distribucion', label: 'Turnos y Distribución', icon: CalendarRange, descripcion: 'Asignaciones y cobertura', modulo: 'distribucion' },
+      { to: '/permisos', label: 'Descansos y Permisos', icon: ClipboardCheck, descripcion: 'Rotaciones y reposos', modulo: 'permisos' },
+      { to: '/asistencias', label: 'Disponibilidad y Asistencia', icon: CalendarCheck2, descripcion: 'Entradas, salidas y guardias', modulo: 'asistencias' },
+      { to: '/choferes', label: 'Flota y Servicios', icon: Truck, descripcion: 'Rutas, traslados y vehículos', modulo: 'choferes' },
     ],
   },
   {
-    titulo: 'Gestión',
+    titulo: 'Finanzas y Gestión',
     items: [
-      { to: '/rrhh', label: 'RRHH', icon: Briefcase, descripcion: 'Personal, contratos y anticipos', modulo: 'rrhh' },
-      { to: '/nomina', label: 'Nómina', icon: WalletCards, descripcion: 'Periodos y cálculos', modulo: 'nomina' },
-      { to: '/pagos', label: 'Pagos', icon: CreditCard, descripcion: 'Pagos y comprobantes', modulo: 'pagos' },
+      { to: '/rrhh', label: 'Recursos Humanos', icon: Briefcase, descripcion: 'Tabulador y contratos', modulo: 'rrhh' },
+      { to: '/nomina', label: 'Nómina', icon: WalletCards, descripcion: 'Cálculos y períodos en Bs/$', modulo: 'nomina' },
+      { to: '/pagos', label: 'Pagos y Recibos', icon: CreditCard, descripcion: 'Comprobantes y transferencias', modulo: 'pagos' },
     ],
   },
   {
-    titulo: 'Sistema y Acceso',
+    titulo: 'Sistema y Seguridad',
     items: [
-      { to: '/usuarios', label: 'Usuarios', icon: UserCog, descripcion: 'Cuentas y claves', modulo: 'usuarios' },
-      { to: '/roles-permisos', label: 'Roles y permisos', icon: KeyRound, descripcion: 'Matriz de acceso', modulo: 'roles-permisos' },
-      { to: '/ajustes', label: 'Ajustes', icon: Settings2, descripcion: 'Configuración general', modulo: 'ajustes' },
-      { to: '/ayuda', label: 'Ayuda', icon: CircleHelp, descripcion: 'Guía y preguntas', modulo: 'ayuda' },
+      { to: '/usuarios', label: 'Usuarios y Cuentas', icon: UserCog, descripcion: 'Directorio y accesos', modulo: 'usuarios' },
+      { to: '/roles-permisos', label: 'Roles y Permisos', icon: KeyRound, descripcion: 'Matriz de control', modulo: 'roles-permisos' },
+      { to: '/ajustes', label: 'Configuración', icon: Settings2, descripcion: 'Ajustes y temas visuales', modulo: 'ajustes' },
+      { to: '/ayuda', label: 'Ayuda', icon: CircleHelp, descripcion: 'Manuales y soporte', modulo: 'ayuda' },
     ],
   },
 ];
@@ -180,7 +180,7 @@ export default function Layout() {
           </button>
 
           <div className="flex min-w-0 items-center gap-3">
-            <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#2b3038] border border-[#333944] shadow-inner">
+            <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#2b3038] border border-[#ff8a00]/30 shadow-inner">
               <img
                 src="/logo-escoltas.png"
                 alt="Emblema de Seguridad Escoltas"
@@ -189,12 +189,14 @@ export default function Layout() {
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <p className="truncate text-sm font-extrabold leading-tight text-[#e7ecf3] sm:text-base">Sistema de Escoltas</p>
-                <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-[#ff8a00]/15 border border-[#ff8a00]/30 px-2 py-0.5 text-[10px] font-bold text-[#ff8a00]">
-                  <Moon className="h-2.5 w-2.5" /> GT Dark
+                <p className="truncate text-sm font-extrabold leading-tight sm:text-base text-metalico">
+                  ESCOLTAS CONTROL 360
+                </p>
+                <span className="hidden sm:inline-flex items-center gap-1 rounded-full badge-cromo px-2 py-0.5 text-[10px] font-bold text-[#ff8a00]">
+                  <Moon className="h-2.5 w-2.5 text-oro" /> Multiempresa
                 </span>
               </div>
-              <p className="hidden text-xs text-[#9aa6b5] sm:block">Control · RRHH · Choferes · Nómina · Roles</p>
+              <p className="hidden text-xs text-[#9aa6b5] sm:block">Seguridad & Vigilancia Operativa · 360°</p>
             </div>
           </div>
 
@@ -304,8 +306,8 @@ export default function Layout() {
                   />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-[#e7ecf3]">Sistema de Escoltas</p>
-                  <p className="text-xs text-[#9aa6b5]">Menú principal</p>
+                  <p className="text-sm font-bold text-metalico">ESCOLTAS CONTROL 360</p>
+                  <p className="text-xs text-[#9aa6b5]">Seguridad y Vigilancia</p>
                 </div>
               </div>
               <button
