@@ -31,6 +31,7 @@ export default function Ajustes() {
   const [valores, setValores] = useState({});
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
+  const [tasasEnVivo, setTasasEnVivo] = useState(null);
   const [paletaSeleccionada, setPaletaSeleccionada] = useState(
     localStorage.getItem('escoltas_tema_paleta') || 'grafito'
   );
@@ -38,19 +39,27 @@ export default function Ajustes() {
   const cargar = useCallback(async () => {
     setCargando(true);
     try {
-      const datos = await api.listarAjustes();
-      const lista = datos || [];
+      const [datos, tasas] = await Promise.allSettled([
+        api.listarAjustes(),
+        api.obtenerTasas(),
+      ]);
+
+      const lista = datos.status === 'fulfilled' ? datos.value || [] : [];
       setAjustes(lista);
       const mapeo = Object.fromEntries(
         lista.map((a) => [a.clave, a.valor ?? ''])
       );
-      if (!mapeo.empresa_nombre) mapeo.empresa_nombre = 'ESCOLTAS CONTROL 360 · Seguridad y Vigilancia C.A.';
+      if (!mapeo.empresa_nombre) mapeo.empresa_nombre = 'Golden Touch 1127 C.A. / Seguridad y Escoltas';
       if (!mapeo.empresa_rif) mapeo.empresa_rif = 'J-50123456-7';
       if (!mapeo.tasa_dolar_referencia) mapeo.tasa_dolar_referencia = '60.00';
       if (!mapeo.dias_descanso_semanal) mapeo.dias_descanso_semanal = '2';
       if (!mapeo.tema_interfaz) mapeo.tema_interfaz = 'oscuro';
       if (!mapeo.notificaciones_sonido) mapeo.notificaciones_sonido = 'true';
       setValores(mapeo);
+
+      if (tasas.status === 'fulfilled' && tasas.value) {
+        setTasasEnVivo(tasas.value);
+      }
     } catch (err) {
       toast.error('Error al cargar configuración: ' + (err.message || 'Error'));
     } finally {
@@ -71,7 +80,11 @@ export default function Ajustes() {
   const handleGuardar = async () => {
     setGuardando(true);
     try {
-      await api.guardarAjustes(valores);
+      const listaCambios = Object.entries(valores).map(([clave, valor]) => ({
+        clave,
+        valor: valor != null ? String(valor) : '',
+      }));
+      await api.guardarAjustes(listaCambios);
       localStorage.setItem('escoltas_tema_paleta', paletaSeleccionada);
       document.documentElement.setAttribute('data-paleta', paletaSeleccionada);
       toast.success('Configuración y preferencias de tema guardadas.');
@@ -202,6 +215,57 @@ export default function Ajustes() {
                 onChange={(e) => handleChange('dias_descanso_semanal', e.target.value)}
               />
             </div>
+
+            {/* Tasas del Mercado en Vivo: BCV, Euro, PMP Binance */}
+            {tasasEnVivo && (
+              <div className="rounded-xl border border-slate-700/60 bg-slate-900/40 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-200 text-xs flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-[#29c081] animate-pulse" />
+                    Tasas del Mercado Oficial y P2P en Tiempo Real
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-mono">Actualización automática</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  {/* Tasa Dólar BCV */}
+                  <div className="rounded-xl border border-slate-700/60 bg-[#1c1f24] p-3 shadow-sm">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">🇺🇸 Dólar Oficial BCV</span>
+                    <p className="text-lg font-black text-slate-100 mt-1">
+                      Bs. {Number(tasasEnVivo.bcv_usd).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleChange('tasa_dolar_referencia', String(tasasEnVivo.bcv_usd));
+                        toast.success('Tasa BCV aplicada a los parámetros operacionales.');
+                      }}
+                      className="mt-2 text-[11px] font-bold text-[#ff8a00] hover:underline flex items-center gap-1"
+                    >
+                      Aplicar esta tasa BCV →
+                    </button>
+                  </div>
+
+                  {/* Tasa Euro BCV */}
+                  <div className="rounded-xl border border-slate-700/60 bg-[#1c1f24] p-3 shadow-sm">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">🇪🇺 Euro Oficial BCV</span>
+                    <p className="text-lg font-black text-oro mt-1">
+                      Bs. {Number(tasasEnVivo.bcv_eur).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                    <span className="text-[10px] text-slate-500 mt-2 block">Banco Central de Venezuela</span>
+                  </div>
+
+                  {/* Tasa PMP Binance */}
+                  <div className="rounded-xl border border-slate-700/60 bg-[#1c1f24] p-3 shadow-sm">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">🟡 PMP Binance P2P</span>
+                    <p className="text-lg font-black text-amber-400 mt-1">
+                      Bs. {Number(tasasEnVivo.pmp_binance).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                    <span className="text-[10px] text-slate-500 mt-2 block">Promedio Ponderado USDT</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </Card>
 
           {/* DATOS DE LA EMPRESA */}
@@ -221,7 +285,7 @@ export default function Ajustes() {
                 label="Razón Social / Nombre"
                 value={valores.empresa_nombre ?? ''}
                 onChange={(e) => handleChange('empresa_nombre', e.target.value)}
-                placeholder="ESCOLTAS CONTROL 360 · Seguridad y Vigilancia C.A."
+                placeholder="Golden Touch 1127 C.A. / Seguridad y Escoltas"
               />
               <Input
                 label="RIF Fiscal"

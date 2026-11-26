@@ -87,7 +87,7 @@ export default function Dashboard() {
   // Matriz interactiva de turnos y descansos (D / N / L) estilo docs/escoltas.html
   const [turnosMatriz, setTurnosMatriz] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem('esc360_turnos_matriz')) || {};
+      return JSON.parse(localStorage.getItem('escoltas_turnos_matriz')) || {};
     } catch {
       return {};
     }
@@ -101,7 +101,7 @@ export default function Dashboard() {
     const nuevo = orden[actual] || 'D';
     setTurnosMatriz((prev) => {
       const act = { ...prev, [clave]: nuevo };
-      localStorage.setItem('esc360_turnos_matriz', JSON.stringify(act));
+      localStorage.setItem('escoltas_turnos_matriz', JSON.stringify(act));
       return act;
     });
   };
@@ -382,18 +382,18 @@ export default function Dashboard() {
     );
   }
 
-  // VISTA ADMINISTRATIVA Y OPERATIVA COMPLETA (Dashboard 360 para Administradores y Supervisores)
+  // VISTA ADMINISTRATIVA Y OPERATIVA COMPLETA (para Administradores y Supervisores)
   return (
     <div className="space-y-6">
-      {/* Encabezado General del Panel 360 */}
+      {/* Encabezado General del Panel Operativo */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-black tracking-tight text-slate-100 sm:text-3xl text-metalico">
-              Dashboard Operativo 360
+              Dashboard Operativo
             </h1>
             <span className="rounded-full badge-cromo px-2.5 py-0.5 text-[11px] font-extrabold text-[#ff8a00]">
-              CONTROL 360°
+              SEGURIDAD Y VIGILANCIA
             </span>
           </div>
           <p className="mt-1 text-sm text-slate-400">
@@ -622,7 +622,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-[#ff8a00]" />
               <h2 className="text-base font-bold text-slate-100">
-                Matriz Semanal de Turnos y Descansos (Interactivo 360)
+                Matriz Semanal de Turnos y Descansos (Interactivo)
               </h2>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">

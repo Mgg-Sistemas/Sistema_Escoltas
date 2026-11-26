@@ -121,7 +121,16 @@ export const api = {
   obtenerRoles: () => apiFetch('/roles'),
   guardarPermisosRol: (datos) => apiFetch('/roles/permisos', { method: 'PUT', body: datos }),
   listarAjustes: () => apiFetch('/ajustes'),
-  guardarAjustes: (cambios) => apiFetch('/ajustes', { method: 'PATCH', body: { cambios } }),
+  guardarAjustes: (cambios) => {
+    const lista = Array.isArray(cambios)
+      ? cambios
+      : Object.entries(cambios || {}).map(([clave, valor]) => ({
+          clave,
+          valor: valor != null ? String(valor) : '',
+        }));
+    return apiFetch('/ajustes', { method: 'PATCH', body: { cambios: lista } });
+  },
+  obtenerTasas: () => apiFetch('/tasas'),
   cambiarClave: (clave, confirmacion) =>
     apiFetch('/auth/cambiar-clave', { method: 'POST', body: { clave, confirmacion } }),
 

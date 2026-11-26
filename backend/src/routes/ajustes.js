@@ -31,6 +31,15 @@ router.get(
 router.patch(
   '/',
   requireRole('admin'),
+  (req, res, next) => {
+    if (req.body?.cambios && !Array.isArray(req.body.cambios) && typeof req.body.cambios === 'object') {
+      req.body.cambios = Object.entries(req.body.cambios).map(([clave, valor]) => ({
+        clave,
+        valor: valor != null ? String(valor) : '',
+      }));
+    }
+    next();
+  },
   validate(esquemaAjustesActualizar),
   asyncHandler(async (req, res) => {
     const cambios = req.body.cambios;

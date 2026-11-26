@@ -27,6 +27,7 @@ import pagosRoutes from './routes/pagos.js';
 import auditoriaRoutes from './routes/auditoria.js';
 import rrhhRoutes from './routes/rrhh.js';
 import choferesRoutes from './routes/choferes.js';
+import tasasRoutes from './routes/tasas.js';
 
 const app = express();
 
@@ -70,6 +71,7 @@ app.use(express.json({ limit: '2mb' }));
 app.use(['/health', '/api/health'], healthRoutes);
 app.get('/healthz', (req, res) => res.status(200).send('OK'));
 app.use('/api/auth', authPublicRouter);
+app.use(['/api/tasas', '/tasas'], tasasRoutes);
 
 app.get(['/version.json', '/api/version'], (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');

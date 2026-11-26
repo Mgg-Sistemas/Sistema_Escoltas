@@ -72,18 +72,18 @@ export default function Login() {
             <Emblema className="h-14 w-14" />
           </div>
           <div>
-            <p className="text-xl font-extrabold tracking-tight text-metalico">ESCOLTAS CONTROL 360</p>
-            <p className="text-xs uppercase tracking-[0.2em] text-oro">Seguridad · Vigilancia · Nómina</p>
+            <p className="text-xl font-extrabold tracking-tight text-metalico">ESCOLTAS</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-oro">Seguridad y Vigilancia</p>
           </div>
         </div>
 
         <div className="relative max-w-xl">
           <div className="inline-flex items-center gap-2 rounded-full badge-cromo px-3 py-1 text-xs font-semibold text-slate-200 mb-4">
             <span className="h-2 w-2 rounded-full bg-[#ff8a00]" />
-            Multiempresa · Multisede · Multimoneda
+            Control de Personal · Servicios · Nómina
           </div>
           <h1 className="text-4xl font-extrabold leading-tight text-emblem-gray xl:text-5xl text-metalico">
-            Control integral de escoltas y seguridad 360°
+            Control integral de escoltas y seguridad
           </h1>
           <p className="mt-5 text-base leading-relaxed text-slate-300">
             Centraliza el control de personal, expedientes digitales, turnos, descansos reglamentarios,
@@ -107,7 +107,7 @@ export default function Login() {
         </div>
 
         <p className="relative text-xs text-slate-400">
-          ESCOLTAS CONTROL 360 · Plataforma de alta seguridad · Acceso restringido por rol
+          ESCOLTAS · Seguridad y Vigilancia · Acceso restringido por rol
         </p>
       </div>
 
@@ -117,7 +117,7 @@ export default function Login() {
           <div className="mb-8 flex flex-col items-center gap-3 text-center lg:hidden">
             <Emblema className="h-20 w-20" />
             <div>
-              <p className="text-lg font-extrabold text-metalico">ESCOLTAS CONTROL 360</p>
+              <p className="text-lg font-extrabold text-metalico">ESCOLTAS</p>
               <p className="text-xs text-slate-400">Seguridad & Vigilancia Operativa</p>
             </div>
           </div>

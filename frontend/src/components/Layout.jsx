@@ -24,12 +24,13 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useRealtime } from '../context/RealtimeContext.jsx';
 import { Badge, Button } from './ui.jsx';
 import { iniciales } from '../lib/data.js';
+import { api } from '../lib/api.js';
 
 const SECCIONES_NAVEGACION = [
   {
-    titulo: 'Operación 360',
+    titulo: 'Operación',
     items: [
-      { to: '/', label: 'Dashboard', icon: LayoutDashboard, descripcion: 'Centro de control 360', exacto: true },
+      { to: '/', label: 'Dashboard', icon: LayoutDashboard, descripcion: 'Centro de control operativo', exacto: true },
       { to: '/escoltas', label: 'Personal', icon: UsersRound, descripcion: 'Expediente digital y fichas', modulo: 'escoltas' },
       { to: '/distribucion', label: 'Turnos y Distribución', icon: CalendarRange, descripcion: 'Asignaciones y cobertura', modulo: 'distribucion' },
       { to: '/permisos', label: 'Descansos y Permisos', icon: ClipboardCheck, descripcion: 'Rotaciones y reposos', modulo: 'permisos' },
@@ -119,6 +120,24 @@ export default function Layout() {
   const navigate = useNavigate();
   const [drawerAbierto, setDrawerAbierto] = useState(false);
   const [cerrandoSesion, setCerrandoSesion] = useState(false);
+  const [tasas, setTasas] = useState(null);
+
+  useEffect(() => {
+    let activo = true;
+    const consultar = () => {
+      api.obtenerTasas()
+        .then((t) => {
+          if (activo && t) setTasas(t);
+        })
+        .catch(() => {});
+    };
+    consultar();
+    const timer = setInterval(consultar, 60_000);
+    return () => {
+      activo = false;
+      clearInterval(timer);
+    };
+  }, []);
 
   // Filtramos por permisos respetando las secciones GT
   const seccionesFiltradas = useMemo(() => {
@@ -190,13 +209,34 @@ export default function Layout() {
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <p className="truncate text-sm font-extrabold leading-tight sm:text-base text-metalico">
-                  ESCOLTAS CONTROL 360
+                  ESCOLTAS
                 </p>
                 <span className="hidden sm:inline-flex items-center gap-1 rounded-full badge-cromo px-2 py-0.5 text-[10px] font-bold text-[#ff8a00]">
-                  <Moon className="h-2.5 w-2.5 text-oro" /> Multiempresa
+                  <Moon className="h-2.5 w-2.5 text-oro" /> Seguridad y Vigilancia
                 </span>
               </div>
-              <p className="hidden text-xs text-[#9aa6b5] sm:block">Seguridad & Vigilancia Operativa · 360°</p>
+              <p className="hidden text-xs text-[#9aa6b5] sm:block">Control de Personal, Servicios, Turnos y Nómina</p>
+            </div>
+          </div>
+
+          {/* Ticker de Tasas Oficiales BCV, Euro y PMP Binance en Vivo */}
+          <div className="hidden lg:flex items-center gap-2 rounded-xl bg-[#1c1f24] border border-[#333944] px-3 py-1 shadow-inner ml-2">
+            <span className="h-2 w-2 rounded-full bg-[#29c081] animate-pulse" />
+            <div className="flex items-center gap-3 font-mono text-[11px]">
+              <span title="Dólar Oficial Banco Central de Venezuela">
+                <span className="text-slate-400 font-sans font-semibold mr-1">BCV:</span>
+                <strong className="text-slate-100">Bs. {tasas ? Number(tasas.bcv_usd).toFixed(2) : '924.35'}</strong>
+              </span>
+              <span className="text-[#333944]">|</span>
+              <span title="Euro Oficial Banco Central de Venezuela">
+                <span className="text-slate-400 font-sans font-semibold mr-1">EUR:</span>
+                <strong className="text-oro">Bs. {tasas ? Number(tasas.bcv_eur).toFixed(2) : '1,011.73'}</strong>
+              </span>
+              <span className="text-[#333944]">|</span>
+              <span title="Promedio Ponderado Binance P2P USDT/VES">
+                <span className="text-slate-400 font-sans font-semibold mr-1">Binance:</span>
+                <strong className="text-amber-400">Bs. {tasas ? Number(tasas.pmp_binance).toFixed(2) : '1,094.00'}</strong>
+              </span>
             </div>
           </div>
 
@@ -306,7 +346,7 @@ export default function Layout() {
                   />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-metalico">ESCOLTAS CONTROL 360</p>
+                  <p className="text-sm font-bold text-metalico">ESCOLTAS</p>
                   <p className="text-xs text-[#9aa6b5]">Seguridad y Vigilancia</p>
                 </div>
               </div>
