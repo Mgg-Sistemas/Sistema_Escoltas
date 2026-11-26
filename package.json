@@ -15,7 +15,7 @@
     "dev": "concurrently -k -n BACKEND,FRONTEND -c yellow,cyan \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "npm --prefix backend run dev",
     "dev:frontend": "npm --prefix frontend run dev",
-    "build": "npm --prefix frontend run build",
+    "build": "npm --prefix frontend install && npm --prefix frontend run build",
     "start": "npm --prefix backend run start",
     "bot:update": "node scripts/update-bot.js",
     "bootstrap:admin": "npm --prefix backend run bootstrap:admin"
