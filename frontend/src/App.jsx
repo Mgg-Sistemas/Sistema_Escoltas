@@ -18,15 +18,17 @@ import Usuarios from './pages/Usuarios.jsx';
 import RolesPermisos from './pages/RolesPermisos.jsx';
 import Ajustes from './pages/Ajustes.jsx';
 import Ayuda from './pages/Ayuda.jsx';
+import Rrhh from './pages/Rrhh.jsx';
+import Choferes from './pages/Choferes.jsx';
 
 function PantallaCarga() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50 px-6 text-center">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#0e1217] px-6 text-center text-slate-200">
       <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-700 text-white shadow-card">
         <ShieldCheck className="h-7 w-7" aria-hidden="true" />
       </div>
-      <Loader2 className="h-6 w-6 animate-spin text-brand-600" aria-hidden="true" />
-      <p className="text-sm font-medium text-slate-600">Preparando tu espacio de trabajo…</p>
+      <Loader2 className="h-6 w-6 animate-spin text-brand-500" aria-hidden="true" />
+      <p className="text-sm font-medium text-slate-400">Preparando tu espacio de trabajo…</p>
     </div>
   );
 }
@@ -34,13 +36,13 @@ function PantallaCarga() {
 export function SinPermiso({ modulo = 'este módulo' }) {
   const { roleLabel } = useAuth();
   return (
-    <div className="mx-auto flex max-w-xl flex-col items-center rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center shadow-card">
-      <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
+    <div className="mx-auto flex max-w-xl flex-col items-center rounded-2xl border border-slate-700/60 bg-[#161b22] px-6 py-12 text-center shadow-card text-slate-200">
+      <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
         <ShieldAlert className="h-8 w-8" aria-hidden="true" />
       </div>
-      <h1 className="mt-5 text-2xl font-bold text-slate-900">No tienes acceso a {modulo}</h1>
-      <p className="mt-3 text-sm leading-relaxed text-slate-600">
-        Tu perfil actual es <strong className="text-slate-800">{roleLabel}</strong> y este módulo está
+      <h1 className="mt-5 text-2xl font-bold text-slate-100">No tienes acceso a {modulo}</h1>
+      <p className="mt-3 text-sm leading-relaxed text-slate-400">
+        Tu perfil actual es <strong className="text-slate-200">{roleLabel}</strong> y este módulo está
         reservado a otros roles. No es un error de tu cuenta: simplemente tus permisos no incluyen
         esta sección. Si necesitas acceder, pide al administrador que revise tu rol.
       </p>
@@ -96,6 +98,8 @@ export default function App() {
         <Route path="distribucion" element={<Distribucion />} />
         <Route path="permisos" element={<Permisos />} />
         <Route path="asistencias" element={<Asistencias />} />
+        <Route path="rrhh" element={<RoleRoute roles={['admin', 'supervisor', 'contador', 'rrhh']} modulo="Recursos Humanos"><Rrhh /></RoleRoute>} />
+        <Route path="choferes" element={<RoleRoute roles={['admin', 'supervisor', 'contador', 'chofer']} modulo="Choferes"><Choferes /></RoleRoute>} />
         <Route path="nomina" element={<RoleRoute roles={['admin', 'contador']} modulo="Nómina"><Nomina /></RoleRoute>} />
         <Route path="pagos" element={<RoleRoute roles={['admin', 'contador']} modulo="Pagos"><Pagos /></RoleRoute>} />
         <Route path="usuarios" element={<RoleRoute roles={['admin']} modulo="Usuarios"><Usuarios /></RoleRoute>} />

@@ -1,11 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  CheckCheck,
   KeyRound,
   LockKeyhole,
   RotateCcw,
   Search,
+  Shield,
   ShieldAlert,
+  ShieldCheck,
   Unlock,
+  UserCheck,
   UserCog,
   UserPlus,
   UsersRound,
@@ -25,7 +29,7 @@ import {
 import { useAuth } from '../context/AuthContext.jsx';
 import { useRealtimeRecarga } from '../hooks/useRealtime.js';
 import { api } from '../lib/api.js';
-import { ROLES, ROLES_DESCRIPCION, ROLES_LABELS } from '../lib/constants.js';
+import { MODULOS_SISTEMA, ROLES, ROLES_DESCRIPCION, ROLES_LABELS } from '../lib/constants.js';
 import { listar, TABLAS } from '../lib/data.js';
 
 const FORMULARIO_VACIO = {
@@ -40,6 +44,7 @@ const FORMULARIO_VACIO = {
 export default function Usuarios() {
   const { user: usuarioActual } = useAuth();
   const toast = useToast();
+  const [vista, setVista] = useState('usuarios'); // 'usuarios', 'roles', 'autorizados'
   const [perfiles, setPerfiles] = useState([]);
   const [escoltas, setEscoltas] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -48,20 +53,52 @@ export default function Usuarios() {
   const [formulario, setFormulario] = useState(FORMULARIO_VACIO);
   const [guardando, setGuardando] = useState(false);
   const [credencial, setCredencial] = useState(null);
-  const [cambio, setCambio] = useState(null);
-  const [accion, setAccion] = useState(null);
+
+  // Roles y Permisos (Estilo GT)
+  const [roles, setRoles] = useState([]);
+  const [matrices, setMatrices] = useState({});
+  const [rolActivo, setRolActivo] = useState('admin');
+  const [guardandoPermisos, setGuardandoPermisos] = useState(false);
+
+  // Usuarios Autorizados
+  const [autorizados, setAutorizados] = useState([]);
+  const [modalAutorizado, setModalAutorizado] = useState(false);
+  const [formAutorizado, setFormAutorizado] = useState({ usuario_id: '', modulo: 'pagos', accion: 'aprobar' });
+
+  // Dialogo de confirmación
+  const [dialogo, setDialogo] = useState({
+    abierto: false,
+    titulo: '',
+    mensaje: '',
+    peligro: false,
+    accion: null,
+  });
 
   const cargar = useCallback(async () => {
     setCargando(true);
     try {
-      const [listaUsuarios, listaEscoltas] = await Promise.all([
+      const [listaPerfiles, listaEscoltas, datosRoles, listaAut] = await Promise.all([
         api.listarUsuarios(),
-        listar(TABLAS.escoltas, { ordenarPor: 'nombre_completo', ascendente: true }),
+        listar(TABLAS.escoltas, { orden: { columna: 'nombre_completo', ascendente: true } }).catch(() => []),
+        api.obtenerRoles().catch(() => ({ roles: [], matriz: [] })),
+        api.listarAutorizados().catch(() => []),
       ]);
-      setPerfiles(Array.isArray(listaUsuarios) ? listaUsuarios : []);
-      setEscoltas(Array.isArray(listaEscoltas) ? listaEscoltas : []);
+
+      setPerfiles(listaPerfiles || []);
+      setEscoltas(listaEscoltas || []);
+      setAutorizados(listaAut || []);
+
+      if (datosRoles?.matriz) {
+        const porRol = Object.fromEntries(
+          datosRoles.matriz.map((fila) => [fila.role, fila.permisos ?? {}]),
+        );
+        setMatrices(porRol);
+      }
+      if (datosRoles?.roles) {
+        setRoles(datosRoles.roles);
+      }
     } catch (error) {
-      toast.error('No se pudo cargar la lista de usuarios', error.message);
+      toast.error(error.message || 'No fue posible cargar los datos de usuarios.');
     } finally {
       setCargando(false);
     }
@@ -71,377 +108,546 @@ export default function Usuarios() {
     cargar();
   }, [cargar]);
 
-  useRealtimeRecarga(cargar, { tablas: ['profiles', 'escoltas'] });
+  useRealtimeRecarga(TABLAS.profiles, cargar);
 
-  const filtrados = useMemo(() => {
-    const texto = busqueda.trim().toLowerCase();
-    if (!texto) return perfiles;
-    return perfiles.filter((perfil) =>
-      [perfil.usuario, perfil.full_name, ROLES_LABELS[perfil.role]]
-        .some((valor) => String(valor || '').toLowerCase().includes(texto)),
+  const perfilesFiltrados = useMemo(() => {
+    if (!busqueda) return perfiles;
+    const termino = busqueda.toLowerCase();
+    return perfiles.filter(
+      (perfil) =>
+        perfil.nombre_completo?.toLowerCase().includes(termino) ||
+        perfil.email?.toLowerCase().includes(termino) ||
+        perfil.username?.toLowerCase().includes(termino) ||
+        perfil.role?.toLowerCase().includes(termino),
     );
   }, [perfiles, busqueda]);
 
-  const actualizarCampo = (campo, valor) =>
-    setFormulario((actual) => ({ ...actual, [campo]: valor }));
-
-  const crear = async (evento) => {
+  const handleCrearUsuario = async (evento) => {
     evento.preventDefault();
-    if (!formulario.usuario.trim() || !formulario.nombre.trim()) {
-      toast.error('Faltan datos', 'El usuario y el nombre son obligatorios.');
-      return;
-    }
+    setGuardando(true);
     try {
-      setGuardando(true);
-      const datos = await api.crearUsuario({
+      const payload = {
         usuario: formulario.usuario.trim(),
         nombre: formulario.nombre.trim(),
-        apellido: formulario.apellido.trim() || undefined,
-        telefono: formulario.telefono.trim() || undefined,
+        apellido: formulario.apellido.trim(),
+        telefono: formulario.telefono.trim(),
         role: formulario.role,
-        escolta_id: formulario.escolta_id || undefined,
-      });
-      setCredencial(datos);
+        escolta_id: formulario.role === 'escolta' && formulario.escolta_id ? formulario.escolta_id : null,
+      };
+
+      const creado = await api.crearUsuario(payload);
+      toast.success(`Usuario @${creado.usuario.username} creado exitosamente.`);
+      setCredencial(creado.credencial_inicial);
       setCreando(false);
       setFormulario(FORMULARIO_VACIO);
       await cargar();
-      toast.success('Usuario creado', 'Entrega la clave temporal al usuario de forma privada.');
     } catch (error) {
-      toast.error('No se pudo crear el usuario', error.message);
+      toast.error(error.message || 'No fue posible crear el usuario.');
     } finally {
       setGuardando(false);
     }
   };
 
-  const aplicarCambio = async () => {
-    if (!cambio) return;
-    try {
-      setGuardando(true);
-      await api.actualizarUsuario(cambio.perfil.id, { [cambio.campo]: cambio.valor });
-      toast.success(
-        cambio.campo === 'role' ? 'Rol actualizado' : 'Estado del usuario actualizado',
-        `${cambio.perfil.full_name || cambio.perfil.email} ahora es ${
-          cambio.campo === 'role' ? ROLES_LABELS[cambio.valor] : cambio.valor ? 'activo' : 'inactivo'
-        }.`,
-      );
-      setCambio(null);
-      await cargar();
-    } catch (error) {
-      toast.error('No se pudo actualizar el usuario', error.message);
-    } finally {
-      setGuardando(false);
-    }
+  const handleRestablecerClave = (perfil) => {
+    setDialogo({
+      abierto: true,
+      titulo: 'Restablecer contraseña',
+      mensaje: `Se generará una clave temporal para @${perfil.username} y se obligará al cambio en el próximo inicio.`,
+      peligro: false,
+      accion: async () => {
+        try {
+          const resultado = await api.restablecerClaveUsuario(perfil.id);
+          toast.success('Contraseña restablecida con éxito.');
+          setCredencial(resultado.credencial_temporal);
+        } catch (error) {
+          toast.error(error.message || 'No fue posible restablecer la contraseña.');
+        }
+      },
+    });
   };
 
-  const ejecutarAccion = async () => {
-    if (!accion) return;
-    try {
-      setGuardando(true);
-      if (accion.tipo === 'restablecer') {
-        await api.restablecerClaveUsuario(accion.perfil.id);
-        toast.success('Correo enviado', 'El usuario recibirá un enlace para crear una contraseña nueva.');
-      } else {
-        await api.desbloquearUsuario(accion.perfil.id);
-        toast.success('Cuenta desbloqueada', 'Los intentos fallidos se reiniciaron.');
+  const handleDesbloquear = (perfil) => {
+    setDialogo({
+      abierto: true,
+      titulo: 'Desbloquear acceso',
+      mensaje: `¿Deseas reactivar el acceso y limpiar intentos fallidos de @${perfil.username}?`,
+      peligro: false,
+      accion: async () => {
+        try {
+          await api.desbloquearUsuario(perfil.id);
+          toast.success(`Usuario @${perfil.username} desbloqueado.`);
+          await cargar();
+        } catch (error) {
+          toast.error(error.message || 'No fue posible desbloquear al usuario.');
+        }
+      },
+    });
+  };
+
+  const handleTogglePermiso = (moduloKey, nivel) => {
+    setMatrices((actuales) => {
+      const actualRol = actuales[rolActivo] ?? {};
+      const actualModulo = actualRol[moduloKey] ?? { lectura: false, escritura: false, full: false };
+      const nuevoValor = !actualModulo[nivel];
+      const actualizado = { ...actualModulo, [nivel]: nuevoValor };
+
+      if (nivel === 'full' && nuevoValor) {
+        actualizado.lectura = true;
+        actualizado.escritura = true;
       }
-      setAccion(null);
-      await cargar();
+      if (nivel === 'escritura' && nuevoValor) {
+        actualizado.lectura = true;
+      }
+      if (nivel === 'lectura' && !nuevoValor) {
+        actualizado.escritura = false;
+        actualizado.full = false;
+      }
+
+      return {
+        ...actuales,
+        [rolActivo]: {
+          ...actualRol,
+          [moduloKey]: actualizado,
+        },
+      };
+    });
+  };
+
+  const handleGuardarPermisos = async () => {
+    setGuardandoPermisos(true);
+    try {
+      await api.guardarPermisosRol({
+        role: rolActivo,
+        permisos: matrices[rolActivo] ?? {},
+      });
+      toast.success(`Matriz de permisos de "${ROLES_LABELS[rolActivo] || rolActivo}" guardada.`);
     } catch (error) {
-      toast.error('No se pudo completar la acción', error.message);
+      toast.error(error.message || 'No fue posible guardar la matriz.');
     } finally {
-      setGuardando(false);
+      setGuardandoPermisos(false);
+    }
+  };
+
+  const handleCrearAutorizado = async (e) => {
+    e.preventDefault();
+    try {
+      await api.crearAutorizado(formAutorizado);
+      toast.success('Usuario autorizado registrado');
+      setModalAutorizado(false);
+      const res = await api.listarAutorizados();
+      setAutorizados(res || []);
+    } catch (err) {
+      toast.error(err.message || 'Error al autorizar');
+    }
+  };
+
+  const handleEliminarAutorizado = async (id) => {
+    try {
+      await api.eliminarAutorizado(id);
+      toast.success('Autorización revocada');
+      setAutorizados((prev) => prev.filter((a) => a.id !== id));
+    } catch (err) {
+      toast.error(err.message || 'Error al revocar');
     }
   };
 
   const columnas = [
     {
-      key: 'usuario',
-      label: 'Usuario',
-      primary: true,
+      encabezado: 'Usuario',
+      clave: 'usuario',
       render: (fila) => (
-        <div className="min-w-0">
-          <p className="truncate font-bold text-slate-900">{fila.usuario || 'Sin usuario'}</p>
-          <p className="truncate text-xs text-slate-500">{fila.full_name || 'Sin nombre'}</p>
+        <div>
+          <div className="font-semibold text-slate-100 flex items-center gap-1.5">
+            <span>{fila.nombre_completo || 'Sin nombre'}</span>
+            {fila.id === usuarioActual?.id && (
+              <span className="text-[10px] bg-brand-500/20 text-brand-400 font-bold px-1.5 py-0.2 rounded">TÚ</span>
+            )}
+          </div>
+          <div className="text-xs text-slate-400 font-mono">@{fila.username} · {fila.email}</div>
         </div>
       ),
     },
     {
-      key: 'role',
-      label: 'Rol actual',
-      render: (fila) => <Badge tone="azul">{ROLES_LABELS[fila.role] || fila.role || 'Sin rol'}</Badge>,
+      encabezado: 'Rol del Sistema',
+      clave: 'role',
+      render: (fila) => (
+        <Badge tone={fila.role === 'admin' ? 'naranja' : fila.role === 'contador' ? 'verde' : fila.role === 'supervisor' ? 'azul' : 'morado'}>
+          {ROLES_LABELS[fila.role] || fila.role}
+        </Badge>
+      ),
     },
     {
-      key: 'estado',
-      label: 'Estado',
+      encabezado: 'Estado de Cuenta',
+      clave: 'activo',
       render: (fila) => (
-        <div className="flex flex-wrap gap-1">
-          <Badge tone={fila.active ? 'verde' : 'gris'}>{fila.active ? 'Activo' : 'Inactivo'}</Badge>
-          {fila.must_change_password && <Badge tone="naranja">Clave temporal</Badge>}
+        <div className="flex flex-col gap-1 items-start">
+          <Badge tone={fila.activo ? 'verde' : 'rojo'}>
+            {fila.activo ? 'Activo' : 'Bloqueado'}
+          </Badge>
+          {fila.must_change_password && (
+            <span className="text-[10px] font-medium text-amber-400 flex items-center gap-0.5">
+              <KeyRound className="h-2.5 w-2.5" /> Clave temporal
+            </span>
+          )}
+        </div>
+      ),
+    },
+    {
+      encabezado: 'Acciones',
+      clave: 'acciones',
+      render: (fila) => (
+        <div className="flex items-center gap-2">
+          {!fila.activo ? (
+            <Button size="sm" variant="outline" leftIcon={Unlock} onClick={() => handleDesbloquear(fila)}>
+              Desbloquear
+            </Button>
+          ) : (
+            <Button size="sm" variant="ghost" leftIcon={RotateCcw} onClick={() => handleRestablecerClave(fila)}>
+              Nueva Clave
+            </Button>
+          )}
         </div>
       ),
     },
   ];
 
-  const conteoPorRol = ROLES.map((rol) => ({
-    rol,
-    cantidad: perfiles.filter((perfil) => perfil.role === rol).length,
-  }));
-
   return (
     <div className="space-y-6">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      {/* Encabezado */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Usuarios y roles</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
-            Crea cuentas con una clave temporal, asigna un rol y controla quién puede entrar. En el
-            primer ingreso el usuario deberá cambiar su clave y confirmarla dos veces.
+          <h1 className="text-2xl font-bold tracking-tight text-slate-100">Usuarios y Seguridad</h1>
+          <p className="mt-1 text-sm text-slate-400">
+            Control de cuentas de acceso, roles granulares y matriz de permisos por módulo estilo Golden Touch.
           </p>
         </div>
-        <Button variant="primary" size="lg" leftIcon={UserPlus} onClick={() => setCreando(true)} className="w-full sm:w-auto">
-          Nuevo usuario
-        </Button>
-      </header>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {conteoPorRol.map(({ rol, cantidad }) => (
-          <div key={rol} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-slate-500">{ROLES_LABELS[rol]}</p>
-              <Badge tone={rol === 'admin' ? 'morado' : rol === 'escolta' ? 'verde' : 'azul'}>{cantidad}</Badge>
-            </div>
-            <p className="mt-3 text-xs leading-relaxed text-slate-500">{ROLES_DESCRIPCION[rol]}</p>
-          </div>
-        ))}
+        {vista === 'usuarios' && (
+          <Button variant="primary" leftIcon={UserPlus} onClick={() => setCreando(true)}>
+            Nuevo Usuario
+          </Button>
+        )}
+        {vista === 'autorizados' && (
+          <Button variant="primary" leftIcon={ShieldCheck} onClick={() => setModalAutorizado(true)}>
+            Nueva Autorización
+          </Button>
+        )}
       </div>
 
-      <Card
-        title="Lista de usuarios"
-        subtitle={`${filtrados.length} cuentas registradas`}
-        actions={
-          <HelpTip title="Cambios con cuidado">
-            Un rol incorrecto puede dar acceso a nómina o quitar permisos de revisión. Confirma siempre el cambio.
-          </HelpTip>
-        }
-      >
-        <div className="mb-5 relative max-w-md">
-          <Search className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-slate-400" aria-hidden="true" />
-          <input
-            type="search"
-            value={busqueda}
-            onChange={(evento) => setBusqueda(evento.target.value)}
-            placeholder="Buscar por usuario, nombre o rol…"
-            aria-label="Buscar usuarios"
-            className="min-h-11 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+      {/* Selector de subvista estilo GT */}
+      <div className="flex gap-2 border-b border-slate-700/60 pb-3">
+        <button
+          type="button"
+          onClick={() => setVista('usuarios')}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all ${
+            vista === 'usuarios'
+              ? 'bg-brand-600 text-white shadow-md'
+              : 'bg-slate-800/60 text-slate-300 hover:bg-slate-700/60'
+          }`}
+        >
+          <UsersRound className="h-4 w-4" />
+          <span>Padrón de Usuarios</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setVista('roles')}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all ${
+            vista === 'roles'
+              ? 'bg-brand-600 text-white shadow-md'
+              : 'bg-slate-800/60 text-slate-300 hover:bg-slate-700/60'
+          }`}
+        >
+          <KeyRound className="h-4 w-4" />
+          <span>Matriz de Roles y Permisos</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setVista('autorizados')}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all ${
+            vista === 'autorizados'
+              ? 'bg-brand-600 text-white shadow-md'
+              : 'bg-slate-800/60 text-slate-300 hover:bg-slate-700/60'
+          }`}
+        >
+          <ShieldCheck className="h-4 w-4" />
+          <span>Usuarios Autorizados</span>
+        </button>
+      </div>
+
+      {/* VISTA 1: USUARIOS */}
+      {vista === 'usuarios' && (
+        <Card className="space-y-4">
+          <div className="flex items-center gap-2 max-w-md">
+            <Search className="h-4 w-4 text-slate-400" />
+            <Input
+              placeholder="Buscar por nombre, usuario, correo o rol..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+            />
+          </div>
+
+          <DataTable
+            columnas={columnas}
+            filas={perfilesFiltrados}
+            cargando={cargando}
+            mensajeVacio="No se encontraron usuarios registrados."
           />
-        </div>
+        </Card>
+      )}
 
-        <DataTable
-          columns={columnas}
-          data={filtrados}
-          loading={cargando}
-          emptyTitle="No hay usuarios para mostrar"
-          emptyDescription={busqueda ? 'Prueba con otro texto de búsqueda.' : 'Crea el primer usuario con el botón «Nuevo usuario».'}
-          emptyIcon={UsersRound}
-          actions={(fila) => {
-            const esActual = fila.id === usuarioActual?.id;
-            return (
-              <div className="flex flex-wrap justify-end gap-1.5">
-                <Select
-                  aria-label={`Rol de ${fila.full_name || fila.email}`}
-                  value={fila.role || 'escolta'}
-                  onChange={(evento) =>
-                    setCambio({ perfil: fila, campo: 'role', valor: evento.target.value })
-                  }
-                  className="min-h-9 w-32 px-2 py-1 text-xs"
-                  disabled={esActual}
-                >
-                  {ROLES.map((rol) => (
-                    <option key={rol} value={rol}>{ROLES_LABELS[rol]}</option>
-                  ))}
-                </Select>
-                <Button
-                  variant={fila.active ? 'outline' : 'success'}
-                  size="sm"
-                  onClick={() => setCambio({ perfil: fila, campo: 'active', valor: !fila.active })}
-                  disabled={esActual}
-                >
-                  {fila.active ? 'Desactivar' : 'Activar'}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  title="Restablecer contraseña"
-                  aria-label={`Restablecer contraseña de ${fila.full_name || fila.email}`}
-                  onClick={() => setAccion({ tipo: 'restablecer', perfil: fila })}
-                  disabled={esActual}
-                >
-                  <RotateCcw className="h-4 w-4" aria-hidden="true" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  title="Desbloquear cuenta"
-                  aria-label={`Desbloquear cuenta de ${fila.full_name || fila.email}`}
-                  onClick={() => setAccion({ tipo: 'desbloquear', perfil: fila })}
-                  disabled={esActual}
-                >
-                  <Unlock className="h-4 w-4" aria-hidden="true" />
-                </Button>
-              </div>
-            );
-          }}
-        />
-        <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-slate-500">
-          <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden="true" />
-          No puedes modificar tu propio rol o estado desde esta pantalla para evitar dejar la cuenta sin administrador.
-        </p>
-      </Card>
-
-      <Card title="Qué puede hacer cada rol" subtitle="Guía rápida para decidir un cambio">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          {ROLES.map((rol) => (
-            <div key={rol} className="rounded-xl border border-slate-200 p-4">
-              <div className="flex items-center gap-2">
-                <KeyRound className="h-4 w-4 text-brand-700" aria-hidden="true" />
-                <p className="text-sm font-bold text-slate-800">{ROLES_LABELS[rol]}</p>
-              </div>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">{ROLES_DESCRIPCION[rol]}</p>
+      {/* VISTA 2: ROLES Y PERMISOS */}
+      {vista === 'roles' && (
+        <Card className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-700/60 pb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-100">Matriz de Acceso por Módulo</h2>
+              <p className="text-xs text-slate-400">Lectura, escritura o control total sincronizado con RLS</p>
             </div>
-          ))}
-        </div>
-      </Card>
+            <div className="flex items-center gap-3">
+              <Select
+                value={rolActivo}
+                onChange={(e) => setRolActivo(e.target.value)}
+                options={ROLES.map((r) => ({ value: r, label: ROLES_LABELS[r] || r }))}
+              />
+              <Button variant="primary" onClick={handleGuardarPermisos} disabled={guardandoPermisos}>
+                {guardandoPermisos ? 'Guardando...' : 'Guardar Cambios'}
+              </Button>
+            </div>
+          </div>
 
-      {/* Alta de usuarios */}
-      <Modal
-        open={creando}
-        onClose={() => setCreando(false)}
-        title="Crear usuario"
-        description="Se creará la cuenta con una clave temporal. El usuario deberá cambiarla al ingresar."
-        size="lg"
-        footer={
-          <div className="flex flex-col gap-2 sm:flex-row-reverse">
-            <Button type="submit" form="formulario-usuario" variant="primary" loading={guardando} fullWidth className="sm:w-auto">
-              Crear cuenta
-            </Button>
-            <Button variant="outline" onClick={() => setCreando(false)} disabled={guardando} fullWidth className="sm:w-auto">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm text-slate-300">
+              <thead className="bg-slate-800/80 text-xs uppercase text-slate-400 border-b border-slate-700">
+                <tr>
+                  <th className="py-3 px-4">Módulo del Sistema</th>
+                  <th className="py-3 px-4 text-center">Lectura</th>
+                  <th className="py-3 px-4 text-center">Escritura</th>
+                  <th className="py-3 px-4 text-center">Control Total</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800">
+                {MODULOS_SISTEMA.map((modulo) => {
+                  const perm = (matrices[rolActivo] ?? {})[modulo.key] ?? {};
+                  return (
+                    <tr key={modulo.key} className="hover:bg-slate-800/40">
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-slate-100">{modulo.label}</div>
+                        <div className="text-xs text-slate-400">{modulo.descripcion}</div>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-brand-600 focus:ring-brand-500"
+                          checked={perm.lectura || perm.full}
+                          disabled={rolActivo === 'admin'}
+                          onChange={() => handleTogglePermiso(modulo.key, 'lectura')}
+                        />
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-brand-600 focus:ring-brand-500"
+                          checked={perm.escritura || perm.full}
+                          disabled={rolActivo === 'admin'}
+                          onChange={() => handleTogglePermiso(modulo.key, 'escritura')}
+                        />
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-brand-600 focus:ring-brand-500"
+                          checked={perm.full || rolActivo === 'admin'}
+                          disabled={rolActivo === 'admin'}
+                          onChange={() => handleTogglePermiso(modulo.key, 'full')}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
+      {/* VISTA 3: USUARIOS AUTORIZADOS */}
+      {vista === 'autorizados' && (
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-100">Usuarios con Permiso de Aprobación</h2>
+            <div className="text-xs text-slate-400">Aprobación de pagos, compras y firmas operativas</div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm text-slate-300">
+              <thead className="bg-slate-800/80 text-xs uppercase text-slate-400 border-b border-slate-700">
+                <tr>
+                  <th className="py-3 px-4">Usuario</th>
+                  <th className="py-3 px-4">Módulo Autorizado</th>
+                  <th className="py-3 px-4">Acción</th>
+                  <th className="py-3 px-4">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800">
+                {autorizados.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-8 text-center text-slate-400">
+                      No hay usuarios autorizados registrados.
+                    </td>
+                  </tr>
+                ) : (
+                  autorizados.map((aut) => (
+                    <tr key={aut.id} className="hover:bg-slate-800/40">
+                      <td className="py-3 px-4 font-semibold text-slate-100">
+                        {aut.usuario?.nombre_completo || aut.usuario?.email || 'Usuario'}
+                      </td>
+                      <td className="py-3 px-4 uppercase font-mono font-bold text-brand-400">{aut.modulo}</td>
+                      <td className="py-3 px-4 capitalize">{aut.accion}</td>
+                      <td className="py-3 px-4">
+                        <Button size="sm" variant="danger" onClick={() => handleEliminarAutorizado(aut.id)}>
+                          Revocar
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
+      {/* MODAL CREAR USUARIO */}
+      <Modal abierto={creando} alCerrar={() => setCreando(false)} titulo="Crear Nuevo Usuario">
+        <form onSubmit={handleCrearUsuario} className="space-y-4 text-slate-200">
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Nombre"
+              required
+              value={formulario.nombre}
+              onChange={(e) => setFormulario({ ...formulario, nombre: e.target.value })}
+            />
+            <Input
+              label="Apellido"
+              required
+              value={formulario.apellido}
+              onChange={(e) => setFormulario({ ...formulario, apellido: e.target.value })}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Nombre de Usuario (Login)"
+              required
+              placeholder="ej. jleiva"
+              value={formulario.usuario}
+              onChange={(e) => setFormulario({ ...formulario, usuario: e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, '') })}
+            />
+            <Input
+              label="Teléfono"
+              value={formulario.telefono}
+              onChange={(e) => setFormulario({ ...formulario, telefono: e.target.value })}
+            />
+          </div>
+
+          <Select
+            label="Rol del Sistema"
+            value={formulario.role}
+            onChange={(e) => setFormulario({ ...formulario, role: e.target.value })}
+            options={ROLES.map((r) => ({ value: r, label: `${ROLES_LABELS[r] || r} — ${ROLES_DESCRIPCION[r] || ''}` }))}
+          />
+
+          {formulario.role === 'escolta' && (
+            <Select
+              label="Vincular con Escolta (Opcional)"
+              value={formulario.escolta_id}
+              onChange={(e) => setFormulario({ ...formulario, escolta_id: e.target.value })}
+              options={[
+                { value: '', label: 'Sin vincular' },
+                ...escoltas.map((esc) => ({
+                  value: esc.id,
+                  label: `${esc.nombre_completo} (C.I: ${esc.cedula || 'N/A'})`,
+                })),
+              ]}
+            />
+          )}
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" type="button" onClick={() => setCreando(false)}>
               Cancelar
             </Button>
-          </div>
-        }
-      >
-        <form id="formulario-usuario" onSubmit={crear} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Input
-            label="Usuario"
-            type="text"
-            autoComplete="username"
-            placeholder="Ej. JUAN.PEREZ"
-            value={formulario.usuario}
-            onChange={(evento) => actualizarCampo('usuario', evento.target.value)}
-            required
-          />
-          <Input
-            label="Nombre"
-            placeholder="Nombre del usuario"
-            value={formulario.nombre}
-            onChange={(evento) => actualizarCampo('nombre', evento.target.value)}
-            required
-          />
-          <Input
-            label="Apellido"
-            placeholder="Opcional"
-            value={formulario.apellido}
-            onChange={(evento) => actualizarCampo('apellido', evento.target.value)}
-          />
-          <Input
-            label="Teléfono"
-            placeholder="Opcional"
-            value={formulario.telefono}
-            onChange={(evento) => actualizarCampo('telefono', evento.target.value)}
-          />
-          <Select
-            label="Rol"
-            value={formulario.role}
-            onChange={(evento) => actualizarCampo('role', evento.target.value)}
-          >
-            {ROLES.map((rol) => (
-              <option key={rol} value={rol}>{ROLES_LABELS[rol]}</option>
-            ))}
-          </Select>
-          <Select
-            label="Vincular a escolta (opcional)"
-            value={formulario.escolta_id}
-            onChange={(evento) => actualizarCampo('escolta_id', evento.target.value)}
-          >
-            <option value="">Sin vincular</option>
-            {escoltas.map((escolta) => (
-              <option key={escolta.id} value={escolta.id}>
-                {escolta.nombre_completo || escolta.nombre || 'Escolta'}
-              </option>
-            ))}
-          </Select>
-          <div className="sm:col-span-2 flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
-            <LockKeyhole className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-            <p>La clave inicial por defecto es <strong>es-123</strong>. Puedes cambiarla en Ajustes.</p>
+            <Button variant="primary" type="submit" disabled={guardando}>
+              {guardando ? 'Creando...' : 'Crear Usuario'}
+            </Button>
           </div>
         </form>
       </Modal>
 
-      {/* Credencial temporal */}
-      <Modal
-        open={Boolean(credencial)}
-        onClose={() => setCredencial(null)}
-        title="Cuenta creada"
-        description="Guarda estos datos y entrégalos al usuario por un canal privado."
-        size="sm"
-        footer={
-          <Button variant="primary" onClick={() => setCredencial(null)} fullWidth>
-            Entendido
-          </Button>
-        }
-      >
-        <div className="space-y-3 rounded-xl bg-slate-50 p-4 text-sm">
-          <p><span className="font-semibold text-slate-500">Usuario:</span> {credencial?.usuario}</p>
-          <p>
-            <span className="font-semibold text-slate-500">Clave temporal:</span>{' '}
-            <code className="rounded bg-white px-2 py-1 font-bold text-brand-700 ring-1 ring-slate-200">
-              {credencial?.clave_temporal}
-            </code>
-          </p>
-          <p className="flex items-start gap-2 text-xs leading-relaxed text-slate-500">
-            <UserCog className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-            Al iniciar sesión, el sistema obligará a crear una contraseña nueva y confirmarla dos veces.
-          </p>
+      {/* MODAL CREAR AUTORIZADO */}
+      <Modal abierto={modalAutorizado} alCerrar={() => setModalAutorizado(false)} titulo="Autorizar Usuario para Aprobaciones">
+        <form onSubmit={handleCrearAutorizado} className="space-y-4 text-slate-200">
+          <Select
+            label="Usuario"
+            required
+            value={formAutorizado.usuario_id}
+            onChange={(e) => setFormAutorizado({ ...formAutorizado, usuario_id: e.target.value })}
+            options={[
+              { value: '', label: 'Seleccionar usuario...' },
+              ...perfiles.map((p) => ({
+                value: p.id,
+                label: `${p.nombre_completo} (@${p.username})`,
+              })),
+            ]}
+          />
+          <Select
+            label="Módulo"
+            value={formAutorizado.modulo}
+            onChange={(e) => setFormAutorizado({ ...formAutorizado, modulo: e.target.value })}
+            options={[
+              { value: 'pagos', label: 'Pagos y Comprobantes' },
+              { value: 'nomina', label: 'Cierre de Nómina' },
+              { value: 'choferes', label: 'Liquidación de Choferes' },
+              { value: 'rrhh', label: 'Recursos Humanos y Sueldos' },
+              { value: 'compras', label: 'Órdenes de Compra' },
+            ]}
+          />
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" type="button" onClick={() => setModalAutorizado(false)}>Cancelar</Button>
+            <Button variant="primary" type="submit">Guardar Autorización</Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* MODAL DE CREDENCIAL TEMPORAL */}
+      <Modal abierto={Boolean(credencial)} alCerrar={() => setCredencial(null)} titulo="Credencial Temporal">
+        <div className="space-y-4 text-slate-200">
+          <div className="rounded-xl border border-amber-700/60 bg-amber-950/40 p-4 text-amber-200 space-y-2">
+            <p className="text-sm font-semibold">Copia y entrega estos datos de acceso al usuario:</p>
+            <div className="font-mono text-sm space-y-1 bg-black/40 p-3 rounded-lg border border-amber-800/40">
+              <div>Usuario: <strong className="text-white">@{credencial?.usuario}</strong></div>
+              <div>Correo: <strong className="text-white">{credencial?.email}</strong></div>
+              <div>Contraseña temporal: <strong className="text-emerald-400">{credencial?.password_temporal}</strong></div>
+            </div>
+            <p className="text-xs text-amber-300">El sistema solicitará el cambio de contraseña al iniciar sesión por primera vez.</p>
+          </div>
+          <div className="flex justify-end">
+            <Button variant="primary" onClick={() => setCredencial(null)}>Cerrar y Continuar</Button>
+          </div>
         </div>
       </Modal>
 
+      {/* DIÁLOGO DE CONFIRMACIÓN */}
       <ConfirmDialog
-        open={Boolean(cambio)}
-        onClose={() => setCambio(null)}
-        title={cambio?.campo === 'role' ? '¿Cambiar el rol?' : '¿Cambiar el estado?'}
-        description={cambio ? (
-          cambio.campo === 'role'
-            ? `${cambio.perfil.full_name || cambio.perfil.email} pasará de ${ROLES_LABELS[cambio.perfil.role] || cambio.perfil.role} a ${ROLES_LABELS[cambio.valor]}. Verifica que sea correcto.`
-            : `${cambio.perfil.full_name || cambio.perfil.email} quedará ${cambio.valor ? 'activo' : 'inactivo'}.`
-        ) : ''}
-        confirmLabel="Confirmar cambio"
-        onConfirm={aplicarCambio}
-        loading={guardando}
-        variant={cambio?.campo === 'role' ? 'primary' : 'success'}
-      />
-
-      <ConfirmDialog
-        open={Boolean(accion)}
-        onClose={() => setAccion(null)}
-        title={accion?.tipo === 'restablecer' ? '¿Enviar enlace de restablecimiento?' : '¿Desbloquear la cuenta?'}
-        description={accion ? (
-          accion.tipo === 'restablecer'
-            ? `Se enviará el enlace al correo interno de ${accion.perfil.usuario || accion.perfil.full_name}. La clave temporal seguirá vigente hasta que se complete el cambio.`
-            : `Se reiniciarán los intentos fallidos de ${accion.perfil.usuario || accion.perfil.full_name}.`
-        ) : ''}
-        confirmLabel={accion?.tipo === 'restablecer' ? 'Enviar correo' : 'Desbloquear'}
-        onConfirm={ejecutarAccion}
-        loading={guardando}
-        variant="primary"
+        abierto={dialogo.abierto}
+        alCerrar={() => setDialogo({ ...dialogo, abierto: false })}
+        titulo={dialogo.titulo}
+        mensaje={dialogo.mensaje}
+        peligro={dialogo.peligro}
+        alConfirmar={() => {
+          setDialogo({ ...dialogo, abierto: false });
+          dialogo.accion?.();
+        }}
       />
     </div>
   );

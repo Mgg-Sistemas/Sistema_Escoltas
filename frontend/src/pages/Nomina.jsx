@@ -256,8 +256,8 @@ export default function Nomina() {
     <div className="space-y-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Nómina</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
+          <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Nómina</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">
             Crea periodos, registra sueldo, bonos, descuentos y horas extras. El total se calcula
             automáticamente: sueldo + bonos + horas extras − descuentos.
           </p>
@@ -280,7 +280,7 @@ export default function Nomina() {
         actions={<HelpTip title="Cerrar periodo">El cierre bloquea cambios de ese ciclo y lo deja listo para pagos. Hazlo solo cuando hayas revisado todos los totales.</HelpTip>}
       >
         {cargando ? (
-          <div className="h-24 animate-pulse rounded-xl bg-slate-100" />
+          <div className="h-24 animate-pulse rounded-xl bg-slate-800" />
         ) : periodos.length ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {periodos.map((periodo) => {
@@ -291,17 +291,17 @@ export default function Nomina() {
                   type="button"
                   onClick={() => setPeriodoId(periodo.id)}
                   className={`min-h-24 rounded-xl border p-4 text-left transition-colors ${
-                    activo ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-200' : 'border-slate-200 bg-white hover:border-brand-300'
+                    activo ? 'border-brand-500 bg-brand-950/30 ring-2 ring-brand-500/30' : 'border-slate-800 bg-[#0e1217] hover:border-slate-700'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <p className="truncate text-sm font-bold text-slate-900">{periodo.nombre || 'Periodo sin nombre'}</p>
+                    <p className="truncate text-sm font-bold text-slate-100">{periodo.nombre || 'Periodo sin nombre'}</p>
                     <Badge tone={estadoTone(periodo.estado)}>{estadoLabel(periodo.estado)}</Badge>
                   </div>
-                  <p className="mt-2 text-xs text-slate-600">
+                  <p className="mt-2 text-xs text-slate-400">
                     {formatearFecha(periodo.fecha_inicio)} → {formatearFecha(periodo.fecha_fin)}
                   </p>
-                  <p className="mt-1 text-xs font-semibold text-brand-700">
+                  <p className="mt-1 text-xs font-semibold text-brand-400">
                     {detalles.filter((detalle) => detalle.periodo_id === periodo.id).length} escoltas
                   </p>
                 </button>
@@ -309,10 +309,10 @@ export default function Nomina() {
             })}
           </div>
         ) : (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
-            <FileSpreadsheet className="mx-auto h-8 w-8 text-brand-700" aria-hidden="true" />
-            <h3 className="mt-3 font-bold text-slate-900">Todavía no hay periodos</h3>
-            <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">Crea el primer periodo para empezar a calcular la nómina.</p>
+          <div className="rounded-2xl border border-dashed border-slate-700 bg-[#0e1217]/50 px-6 py-10 text-center">
+            <FileSpreadsheet className="mx-auto h-8 w-8 text-brand-400" aria-hidden="true" />
+            <h3 className="mt-3 font-bold text-slate-100">Todavía no hay periodos</h3>
+            <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">Crea el primer periodo para empezar a calcular la nómina.</p>
             <Button className="mt-5" onClick={abrirPeriodo} leftIcon={Plus}>Crear periodo</Button>
           </div>
         )}
@@ -340,7 +340,7 @@ export default function Nomina() {
           }
         >
           {periodoActivo.estado !== 'abierto' && (
-            <div className="mb-4 flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+            <div className="mb-4 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-950/40 p-3 text-sm text-amber-200">
               <LockKeyhole className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
               Este periodo está {estadoLabel(periodoActivo.estado).toLowerCase()}; verifica con el backend si aún permite cambios.
             </div>
@@ -363,12 +363,12 @@ export default function Nomina() {
           />
 
           {detallesDelPeriodo.length > 0 && (
-            <div className="mt-5 flex flex-col gap-2 rounded-xl bg-brand-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mt-5 flex flex-col gap-2 rounded-xl border border-slate-800 bg-[#0e1217] p-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-semibold text-brand-900">Resumen del periodo</p>
-                <p className="text-xs text-brand-800">{detallesDelPeriodo.length} escoltas · {formatearNumero(detallesDelPeriodo.reduce((s, d) => s + (Number(d.horas_extras) || 0), 0))} en horas extras</p>
+                <p className="text-sm font-semibold text-slate-100">Resumen del periodo</p>
+                <p className="text-xs text-slate-400">{detallesDelPeriodo.length} escoltas · {formatearNumero(detallesDelPeriodo.reduce((s, d) => s + (Number(d.horas_extras) || 0), 0))} en horas extras</p>
               </div>
-              <p className="text-2xl font-extrabold text-brand-800">{formatearMoneda(totalGeneral)}</p>
+              <p className="text-2xl font-extrabold text-brand-400">{formatearMoneda(totalGeneral)}</p>
             </div>
           )}
         </Card>
@@ -457,12 +457,12 @@ export default function Nomina() {
             onChange={(evento) => setFormDetalle((actual) => ({ ...actual, estado: evento.target.value }))}
           />
         </div>
-        <div className="mt-5 flex items-center justify-between rounded-xl bg-brand-50 p-4">
+        <div className="mt-5 flex items-center justify-between rounded-xl border border-brand-500/30 bg-brand-950/40 p-4">
           <div>
-            <p className="text-sm font-semibold text-brand-900">Total calculado</p>
-            <p className="text-xs text-brand-800">Base + bonos + extras − descuentos</p>
+            <p className="text-sm font-semibold text-brand-100">Total calculado</p>
+            <p className="text-xs text-brand-300">Base + bonos + extras − descuentos</p>
           </div>
-          <p className="text-2xl font-extrabold text-brand-800">{formatearMoneda(totalNomina(formDetalle))}</p>
+          <p className="text-2xl font-extrabold text-brand-300">{formatearMoneda(totalNomina(formDetalle))}</p>
         </div>
       </Modal>
 

@@ -4,16 +4,17 @@
 
 @layer base {
   :root {
-    color-scheme: light;
+    color-scheme: dark;
   }
 
   html {
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
+    background-color: #0e1217;
   }
 
   body {
-    @apply bg-chrome-100 text-slate-800 antialiased;
+    @apply bg-[#0e1217] text-slate-100 antialiased;
     min-height: 100vh;
     min-height: 100dvh;
     padding-bottom: env(safe-area-inset-bottom);
@@ -21,13 +22,13 @@
 
   /* Foco visible y consistente para teclado y lectores de pantalla */
   :focus-visible {
-    @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white;
+    @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-[#0e1217];
   }
 
   h1,
   h2,
   h3 {
-    @apply text-slate-900;
+    @apply text-slate-100;
     text-wrap: balance;
   }
 
@@ -46,7 +47,7 @@
   }
 
   ::selection {
-    @apply bg-gold-300 text-chrome-900;
+    @apply bg-brand-600 text-white;
   }
 }
 
@@ -61,7 +62,7 @@
 
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: #c0c0c0 transparent;
+    scrollbar-color: #30363d transparent;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
@@ -74,7 +75,7 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: #c0c0c0;
+    background-color: #30363d;
     border-radius: 9999px;
   }
 

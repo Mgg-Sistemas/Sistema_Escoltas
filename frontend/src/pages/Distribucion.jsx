@@ -199,7 +199,7 @@ export default function Distribucion() {
       value={asignacion.estado || 'activo'}
       onChange={(evento) => cambiarEstado(asignacion, evento.target.value)}
       aria-label={`Estado de la asignación de ${nombreCompleto(mapas.escoltas[asignacion.escolta_id])}`}
-      className="min-h-9 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+      className="min-h-9 rounded-lg border border-slate-700 bg-slate-900 px-2.5 text-xs font-semibold text-slate-200 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
     >
       {OPCIONES_ESTADO_ASIGNACION.map((opcion) => (
         <option key={opcion.value} value={opcion.value}>{opcion.label}</option>
@@ -211,8 +211,8 @@ export default function Distribucion() {
     <div className="space-y-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Distribución</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
+          <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Distribución</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">
             Asigna escoltas a clientes, define el turno y el periodo de cobertura. La vista semanal
             te ayuda a detectar solapes o fechas sin cubrir.
           </p>
@@ -236,7 +236,7 @@ export default function Distribucion() {
               onChange={(evento) => setBusqueda(evento.target.value)}
               placeholder="Buscar escolta, cliente o turno…"
               aria-label="Buscar asignaciones"
-              className="min-h-11 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+              className="min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             />
           </div>
           <div className="relative">
@@ -245,7 +245,7 @@ export default function Distribucion() {
               value={filtroEscolta}
               onChange={(evento) => setFiltroEscolta(evento.target.value)}
               aria-label="Filtrar por escolta"
-              className="min-h-11 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+              className="min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-3 text-sm text-slate-100 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             >
               <option value="todos">Todos los escoltas</option>
               {escoltas.map((escolta) => (
@@ -259,7 +259,7 @@ export default function Distribucion() {
               value={filtroEstado}
               onChange={(evento) => setFiltroEstado(evento.target.value)}
               aria-label="Filtrar por estado"
-              className="min-h-11 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+              className="min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-3 text-sm text-slate-100 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             >
               <option value="todos">Todos los estados</option>
               {OPCIONES_ESTADO_ASIGNACION.map((opcion) => (
@@ -268,18 +268,18 @@ export default function Distribucion() {
             </select>
           </div>
         </div>
-        <div className="mt-4 flex inline-flex rounded-xl bg-slate-100 p-1" role="group" aria-label="Cambiar vista">
+        <div className="mt-4 flex inline-flex rounded-xl border border-slate-800 bg-slate-900/80 p-1" role="group" aria-label="Cambiar vista">
           <button
             type="button"
             onClick={() => setVista('lista')}
-            className={`inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold transition-colors ${vista === 'lista' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-600'}`}
+            className={`inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold transition-colors ${vista === 'lista' ? 'bg-slate-800 text-brand-400 shadow-sm' : 'text-slate-400'}`}
           >
             <List className="h-4 w-4" aria-hidden="true" /> Lista
           </button>
           <button
             type="button"
             onClick={() => setVista('semana')}
-            className={`inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold transition-colors ${vista === 'semana' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-600'}`}
+            className={`inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold transition-colors ${vista === 'semana' ? 'bg-slate-800 text-brand-400 shadow-sm' : 'text-slate-400'}`}
           >
             <CalendarDays className="h-4 w-4" aria-hidden="true" /> Semana actual
           </button>
@@ -292,13 +292,13 @@ export default function Distribucion() {
       >
         {cargando ? (
           <div className="space-y-3">
-            {Array.from({ length: 4 }, (_, indice) => <div key={indice} className="h-20 animate-pulse rounded-xl bg-slate-100" />)}
+            {Array.from({ length: 4 }, (_, indice) => <div key={indice} className="h-20 animate-pulse rounded-xl bg-slate-800" />)}
           </div>
         ) : !filtradas.length ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
-            <CalendarRange className="mx-auto h-8 w-8 text-brand-700" aria-hidden="true" />
-            <h3 className="mt-3 font-bold text-slate-900">No hay asignaciones para estos filtros</h3>
-            <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
+          <div className="rounded-2xl border border-dashed border-slate-700 bg-[#0e1217]/50 px-6 py-12 text-center">
+            <CalendarRange className="mx-auto h-8 w-8 text-brand-400" aria-hidden="true" />
+            <h3 className="mt-3 font-bold text-slate-100">No hay asignaciones para estos filtros</h3>
+            <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">
               Prueba quitando filtros o crea una asignación nueva para definir quién cubre cada cliente.
             </p>
             <Button className="mt-5" leftIcon={Plus} onClick={abrirNuevo}>Nueva asignación</Button>
@@ -306,31 +306,31 @@ export default function Distribucion() {
         ) : vista === 'lista' ? (
           <div className="space-y-4">
             {agrupadas.map((grupo) => (
-              <div key={grupo.id} className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
-                <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-800">
+              <div key={grupo.id} className="rounded-2xl border border-slate-800 bg-[#161b22]/70 p-4">
+                <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-950/60 text-xs font-bold text-brand-300 ring-1 ring-brand-500/30">
                     {nombreCompleto(grupo.escolta).split(' ').map((p) => p[0]).slice(0, 2).join('')}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-slate-900">{nombreCompleto(grupo.escolta)}</p>
-                    <p className="text-xs text-slate-500">{grupo.lista.length} {grupo.lista.length === 1 ? 'asignación' : 'asignaciones'}</p>
+                    <p className="truncate text-sm font-bold text-slate-100">{nombreCompleto(grupo.escolta)}</p>
+                    <p className="text-xs text-slate-400">{grupo.lista.length} {grupo.lista.length === 1 ? 'asignación' : 'asignaciones'}</p>
                   </div>
                 </div>
                 <div className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-2">
                   {grupo.lista.map((asignacion) => (
-                    <div key={asignacion.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-card">
+                    <div key={asignacion.id} className="rounded-xl border border-slate-800 bg-[#0e1217] p-4 shadow-card">
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-bold text-slate-900">{nombreCliente(mapas.clientes[asignacion.cliente_id])}</p>
-                          <p className="mt-0.5 text-xs text-slate-500">{nombreTurno(mapas.turnos[asignacion.turno_id])}</p>
+                          <p className="truncate text-sm font-bold text-slate-100">{nombreCliente(mapas.clientes[asignacion.cliente_id])}</p>
+                          <p className="mt-0.5 text-xs text-slate-400">{nombreTurno(mapas.turnos[asignacion.turno_id])}</p>
                         </div>
                         <Badge tone={estadoTone(asignacion.estado)}>{estadoLabel(asignacion.estado)}</Badge>
                       </div>
-                      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600">
+                      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400">
                         <span><strong>Desde:</strong> {formatearFecha(asignacion.fecha_inicio)}</span>
                         <span><strong>Hasta:</strong> {asignacion.fecha_fin ? formatearFecha(asignacion.fecha_fin) : 'Sin fecha fin'}</span>
                       </div>
-                      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+                      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-800/80 pt-3">
                         {selectorEstado(asignacion)}
                         <Button variant="ghost" size="sm" leftIcon={Pencil} onClick={() => abrirEdicion(asignacion)}>Editar</Button>
                       </div>
@@ -351,10 +351,10 @@ export default function Distribucion() {
                   return inicio && inicio <= iso && iso <= fin;
                 });
                 return (
-                  <div key={iso} className="min-h-56 rounded-xl border border-slate-200 bg-slate-50 p-2">
-                    <div className="mb-2 rounded-lg bg-white px-2 py-2 text-center">
-                      <p className="text-xs font-bold text-slate-700">{DIAS_SEMANA[indice]}</p>
-                      <p className="text-lg font-extrabold text-slate-900">{dia.getDate()}</p>
+                  <div key={iso} className="min-h-56 rounded-xl border border-slate-800 bg-[#0e1217]/60 p-2">
+                    <div className="mb-2 rounded-lg border border-slate-800 bg-slate-900 px-2 py-2 text-center">
+                      <p className="text-xs font-bold text-slate-400">{DIAS_SEMANA[indice]}</p>
+                      <p className="text-lg font-extrabold text-slate-100">{dia.getDate()}</p>
                     </div>
                     <div className="space-y-2">
                       {delDia.length ? delDia.map((asignacion) => (
@@ -362,14 +362,14 @@ export default function Distribucion() {
                           key={asignacion.id}
                           type="button"
                           onClick={() => abrirEdicion(asignacion)}
-                          className="w-full rounded-lg border border-brand-200 bg-brand-50 p-2 text-left transition-colors hover:bg-brand-100"
+                          className="w-full rounded-lg border border-brand-500/30 bg-brand-950/40 p-2 text-left transition-colors hover:bg-brand-900/50"
                         >
-                          <p className="truncate text-xs font-bold text-brand-900">{nombreCompleto(mapas.escoltas[asignacion.escolta_id])}</p>
-                          <p className="mt-0.5 truncate text-[11px] text-brand-800">{nombreTurno(mapas.turnos[asignacion.turno_id])}</p>
-                          <p className="mt-1 truncate text-[11px] text-slate-600">{nombreCliente(mapas.clientes[asignacion.cliente_id])}</p>
+                          <p className="truncate text-xs font-bold text-brand-300">{nombreCompleto(mapas.escoltas[asignacion.escolta_id])}</p>
+                          <p className="mt-0.5 truncate text-[11px] text-brand-400">{nombreTurno(mapas.turnos[asignacion.turno_id])}</p>
+                          <p className="mt-1 truncate text-[11px] text-slate-400">{nombreCliente(mapas.clientes[asignacion.cliente_id])}</p>
                         </button>
                       )) : (
-                        <p className="py-4 text-center text-[11px] text-slate-400">Sin cobertura</p>
+                        <p className="py-4 text-center text-[11px] text-slate-500">Sin cobertura</p>
                       )}
                     </div>
                   </div>
@@ -440,7 +440,7 @@ export default function Distribucion() {
           />
         </div>
         <Field label="Resumen" help="Revisa que el rango de fechas y el escolta sean correctos antes de guardar.">
-          <p className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600">
+          <p className="rounded-xl border border-slate-800 bg-[#0e1217]/60 p-3 text-sm text-slate-300">
             {formulario.escolta_id ? nombreCompleto(mapas.escoltas[formulario.escolta_id]) : 'Escolta sin seleccionar'} →{' '}
             {formulario.cliente_id ? nombreCliente(mapas.clientes[formulario.cliente_id]) : 'Cliente sin seleccionar'}
           </p>

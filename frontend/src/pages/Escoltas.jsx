@@ -235,8 +235,8 @@ export default function Escoltas() {
     <div className="space-y-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Escoltas</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
+          <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Escoltas</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">
             Aquí se concentra la ficha de cada escolta: identificación, contacto, grado y estado.
             {!puedeEditar && ' Tu rol permite consultar la información; si algo está desactualizado, avisa a supervisor o administración.'}
           </p>
@@ -262,7 +262,7 @@ export default function Escoltas() {
               onChange={(evento) => setBusqueda(evento.target.value)}
               placeholder="Buscar por nombre, cédula o código…"
               aria-label="Buscar escoltas"
-              className="block min-h-11 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3 text-sm placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+              className="block min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             />
           </div>
           <div className="relative">
@@ -271,7 +271,7 @@ export default function Escoltas() {
               value={filtroEstado}
               onChange={(evento) => setFiltroEstado(evento.target.value)}
               aria-label="Filtrar por estado"
-              className="block min-h-11 w-full appearance-none rounded-xl border border-slate-300 bg-white pl-10 pr-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+              className="block min-h-11 w-full appearance-none rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-3 text-sm text-slate-100 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             >
               <option value="todos">Todos los estados</option>
               {OPCIONES_ESTADO_ESCOLTA.map((opcion) => (
@@ -425,11 +425,11 @@ export default function Escoltas() {
               ].map((dato) => {
                 const Icono = dato.icono;
                 return (
-                  <div key={dato.etiqueta} className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
-                    <Icono className="mt-0.5 h-4 w-4 shrink-0 text-brand-700" aria-hidden="true" />
+                  <div key={dato.etiqueta} className="flex items-start gap-3 rounded-xl border border-slate-800 bg-[#0e1217]/70 p-3">
+                    <Icono className="mt-0.5 h-4 w-4 shrink-0 text-brand-400" aria-hidden="true" />
                     <div>
-                      <dt className="text-xs font-medium text-slate-500">{dato.etiqueta}</dt>
-                      <dd className="mt-0.5 text-sm font-semibold text-slate-800">{dato.valor || 'No registrado'}</dd>
+                      <dt className="text-xs font-medium text-slate-400">{dato.etiqueta}</dt>
+                      <dd className="mt-0.5 text-sm font-semibold text-slate-200">{dato.valor || 'No registrado'}</dd>
                     </div>
                   </div>
                 );
@@ -437,12 +437,12 @@ export default function Escoltas() {
             </dl>
             {perfil.notas && (
               <Field label="Notas internas">
-                <p className="rounded-xl bg-slate-50 p-3 text-sm leading-relaxed text-slate-600">{perfil.notas}</p>
+                <p className="rounded-xl border border-slate-800 bg-[#0e1217]/60 p-3 text-sm leading-relaxed text-slate-300">{perfil.notas}</p>
               </Field>
             )}
-            <div className="rounded-xl bg-brand-50 p-4 text-sm text-brand-900">
-              <p className="font-semibold">Siguiente paso recomendado</p>
-              <p className="mt-1 leading-relaxed">
+            <div className="rounded-xl border border-brand-500/20 bg-brand-950/30 p-4 text-sm text-brand-200">
+              <p className="font-semibold text-brand-100">Siguiente paso recomendado</p>
+              <p className="mt-1 leading-relaxed text-brand-200/90">
                 Revisa que tenga asignación activa en <strong>Distribución</strong> y que su asistencia se registre diariamente.
               </p>
             </div>

@@ -21,6 +21,8 @@ import permisosRoutes from './routes/permisos.js';
 import nominasRoutes from './routes/nominas.js';
 import pagosRoutes from './routes/pagos.js';
 import auditoriaRoutes from './routes/auditoria.js';
+import rrhhRoutes from './routes/rrhh.js';
+import choferesRoutes from './routes/choferes.js';
 
 const app = express();
 
@@ -84,6 +86,8 @@ app.use('/api/permisos', permisosRoutes);
 app.use('/api/nominas', nominasRoutes);
 app.use('/api/pagos', pagosRoutes);
 app.use('/api/auditoria', auditoriaRoutes);
+app.use('/api/rrhh', rrhhRoutes);
+app.use('/api/choferes', choferesRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
