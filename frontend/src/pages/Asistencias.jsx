@@ -241,8 +241,8 @@ export default function Asistencias() {
     <div className="space-y-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Asistencias</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
+          <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Asistencias</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">
             Registra la entrada y salida diaria. El sistema calcula las horas automáticamente y las
             deja listas para el cálculo de nómina.
           </p>
@@ -257,10 +257,10 @@ export default function Asistencias() {
           <Input type="date" value={fecha} onChange={(evento) => setFecha(evento.target.value)} aria-label="Fecha de consulta" />
         </Card>
         <Card title="Registros del día" subtitle="Incluye entradas y salidas">
-          <p className="text-3xl font-extrabold text-slate-900">{registros.length}</p>
+          <p className="text-3xl font-extrabold text-slate-100">{registros.length}</p>
         </Card>
         <Card title="Horas acumuladas" subtitle="Suma del día seleccionado">
-          <p className="text-3xl font-extrabold text-brand-700">{formatearHoras(totalHoras)}</p>
+          <p className="text-3xl font-extrabold text-brand-400">{formatearHoras(totalHoras)}</p>
         </Card>
       </div>
 
@@ -278,7 +278,7 @@ export default function Asistencias() {
               onChange={(evento) => setBusqueda(evento.target.value)}
               placeholder="Buscar escolta…"
               aria-label="Buscar asistencia por escolta"
-              className="min-h-11 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+              className="min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             />
           </div>
           <Button variant="outline" onClick={() => setFecha(hoyISO())} leftIcon={CalendarCheck2} fullWidth className="sm:w-auto">
@@ -366,14 +366,14 @@ export default function Asistencias() {
             onChange={(evento) => cambiar('check_out', evento.target.value)}
           />
         </div>
-        <div className="mt-5 flex items-center gap-3 rounded-xl bg-brand-50 p-4 text-brand-900">
+        <div className="mt-5 flex items-center gap-3 rounded-xl border border-brand-500/30 bg-brand-950/40 p-4 text-brand-200">
           <Clock4 className="h-5 w-5 shrink-0" aria-hidden="true" />
           <div>
-            <p className="text-sm font-semibold">Horas calculadas</p>
+            <p className="text-sm font-semibold text-brand-100">Horas calculadas</p>
             <p className="text-2xl font-extrabold">{formatearHoras(calcularHoras(formulario.check_in, formulario.check_out))}</p>
           </div>
           {formulario.check_in && formulario.check_out && (
-            <CheckCircle2 className="ml-auto h-6 w-6 text-emerald-600" aria-hidden="true" />
+            <CheckCircle2 className="ml-auto h-6 w-6 text-emerald-400" aria-hidden="true" />
           )}
         </div>
       </Modal>

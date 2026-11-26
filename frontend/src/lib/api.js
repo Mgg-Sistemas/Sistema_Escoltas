@@ -124,25 +124,61 @@ export const api = {
   guardarAjustes: (cambios) => apiFetch('/ajustes', { method: 'PATCH', body: { cambios } }),
   cambiarClave: (clave, confirmacion) =>
     apiFetch('/auth/cambiar-clave', { method: 'POST', body: { clave, confirmacion } }),
-  // Choferes
-  listarConductores: () => apiFetch('/choferes/conductores'),
-  crearConductor: (datos) => apiFetch('/choferes/conductores', { method: 'POST', body: datos }),
-  listarViajes: () => apiFetch('/choferes/viajes'),
-  crearViaje: (datos) => apiFetch('/choferes/viajes', { method: 'POST', body: datos }),
-  cambiarEstadoViaje: (id, estado) => apiFetch(`/choferes/viajes/${id}/estado`, { method: 'PATCH', body: { estado } }),
-  listarViaticos: () => apiFetch('/choferes/viaticos'),
-  crearViatico: (datos) => apiFetch('/choferes/viaticos', { method: 'POST', body: datos }),
-  listarPagosChoferes: () => apiFetch('/choferes/pagos'),
-  crearPagoChofer: (datos) => apiFetch('/choferes/pagos', { method: 'POST', body: datos }),
-  resumenChoferes: () => apiFetch('/choferes/resumen'),
-  // RRHH
-  listarPersonalRrhh: () => apiFetch('/rrhh/personal'),
-  crearPersonalRrhh: (datos) => apiFetch('/rrhh/personal', { method: 'POST', body: datos }),
-  listarCargos: () => apiFetch('/rrhh/cargos'),
-  crearCargo: (datos) => apiFetch('/rrhh/cargos', { method: 'POST', body: datos }),
-  listarAnticipos: () => apiFetch('/rrhh/anticipos'),
+
+  // Recursos Humanos (RRHH)
+  listarPersonal: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return apiFetch(`/rrhh/personal${qs ? `?${qs}` : ''}`);
+  },
+  obtenerPersonal: (id) => apiFetch(`/rrhh/personal/${id}`),
+  crearPersonal: (datos) => apiFetch('/rrhh/personal', { method: 'POST', body: datos }),
+  actualizarPersonal: (id, datos) => apiFetch(`/rrhh/personal/${id}`, { method: 'PUT', body: datos }),
+  cambiarSueldoPersonal: (id, datos) => apiFetch(`/rrhh/personal/${id}/sueldo`, { method: 'POST', body: datos }),
+  cambiarCargoPersonal: (id, datos) => apiFetch(`/rrhh/personal/${id}/cargo`, { method: 'POST', body: datos }),
+  listarAnticipos: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return apiFetch(`/rrhh/anticipos${qs ? `?${qs}` : ''}`);
+  },
   crearAnticipo: (datos) => apiFetch('/rrhh/anticipos', { method: 'POST', body: datos }),
-  abonarAnticipo: (id, monto_abono) => apiFetch(`/rrhh/anticipos/${id}/abonar`, { method: 'PATCH', body: { monto_abono } }),
-  listarEventosRrhh: () => apiFetch('/rrhh/eventos'),
-  crearEventoRrhh: (datos) => apiFetch('/rrhh/eventos', { method: 'POST', body: datos }),
+  listarEmpresas: () => apiFetch('/rrhh/empresas'),
+  listarTabulador: () => apiFetch('/rrhh/tabulador'),
+  guardarTabulador: (datos) => apiFetch('/rrhh/tabulador', { method: 'POST', body: datos }),
+  listarMinutas: () => apiFetch('/rrhh/minutas'),
+  crearMinuta: (datos) => apiFetch('/rrhh/minutas', { method: 'POST', body: datos }),
+
+  // Choferes y Flota
+  listarConductores: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return apiFetch(`/choferes/conductores${qs ? `?${qs}` : ''}`);
+  },
+  crearConductor: (datos) => apiFetch('/choferes/conductores', { method: 'POST', body: datos }),
+  actualizarConductor: (id, datos) => apiFetch(`/choferes/conductores/${id}`, { method: 'PUT', body: datos }),
+  listarViajes: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return apiFetch(`/choferes/viajes${qs ? `?${qs}` : ''}`);
+  },
+  crearViaje: (datos) => apiFetch('/choferes/viajes', { method: 'POST', body: datos }),
+  cambiarEstadoViaje: (id, datos) => apiFetch(`/choferes/viajes/${id}/estado`, { method: 'PATCH', body: datos }),
+  listarViaticos: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return apiFetch(`/choferes/viaticos${qs ? `?${qs}` : ''}`);
+  },
+  crearViatico: (datos) => apiFetch('/choferes/viaticos', { method: 'POST', body: datos }),
+  listarPagosChoferes: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return apiFetch(`/choferes/pagos${qs ? `?${qs}` : ''}`);
+  },
+  crearPagoChofer: (datos) => apiFetch('/choferes/pagos', { method: 'POST', body: datos }),
+  listarFlota: () => apiFetch('/choferes/flota'),
+  crearFlota: (datos) => apiFetch('/choferes/flota', { method: 'POST', body: datos }),
+  actualizarFlota: (id, datos) => apiFetch(`/choferes/flota/${id}`, { method: 'PUT', body: datos }),
+  listarClasificacionesViaje: () => apiFetch('/choferes/clasificaciones'),
+
+  // Roles personalizados y autorizados
+  listarRolesPersonalizados: () => apiFetch('/roles/custom'),
+  guardarRolPersonalizado: (datos) => apiFetch('/roles/custom', { method: 'POST', body: datos }),
+  eliminarRolPersonalizado: (key) => apiFetch(`/roles/custom/${key}`, { method: 'DELETE' }),
+  listarAutorizados: () => apiFetch('/roles/autorizados'),
+  crearAutorizado: (datos) => apiFetch('/roles/autorizados', { method: 'POST', body: datos }),
+  eliminarAutorizado: (id) => apiFetch(`/roles/autorizados/${id}`, { method: 'DELETE' }),
 };

@@ -191,8 +191,8 @@ export default function Pagos() {
     <div className="space-y-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Pagos</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
+          <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Pagos</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">
             Registra cada desembolso, guarda la referencia del comprobante y confirma o anula el pago
             cuando corresponda.
           </p>
@@ -221,7 +221,7 @@ export default function Pagos() {
               onChange={(evento) => setBusqueda(evento.target.value)}
               placeholder="Buscar pago…"
               aria-label="Buscar pagos"
-              className="min-h-11 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+              className="min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             />
           </div>
           <div className="relative">
@@ -230,7 +230,7 @@ export default function Pagos() {
               value={filtroEstado}
               onChange={(evento) => setFiltroEstado(evento.target.value)}
               aria-label="Filtrar pagos por estado"
-              className="min-h-11 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+              className="min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-3 text-sm text-slate-100 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             >
               <option value="todos">Todos los estados</option>
               {OPCIONES_ESTADO_PAGO.map((opcion) => (
@@ -262,7 +262,7 @@ export default function Pagos() {
                 </Button>
               )}
               {fila.comprobante_url && (
-                <a href={fila.comprobante_url} target="_blank" rel="noreferrer" className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-300 px-3 text-xs font-semibold text-slate-600 hover:bg-slate-50">
+                <a href={fila.comprobante_url} target="_blank" rel="noreferrer" className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-700 bg-slate-900 px-3 text-xs font-semibold text-slate-300 hover:bg-slate-800">
                   <FileText className="h-3.5 w-3.5" aria-hidden="true" /> Comprobante
                 </a>
               )}
@@ -329,9 +329,9 @@ export default function Pagos() {
           />
         </div>
         {montoSugerido !== null && (
-          <div className="mt-5 flex flex-col gap-3 rounded-xl bg-brand-50 p-4 text-brand-900 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-5 flex flex-col gap-3 rounded-xl border border-brand-500/30 bg-brand-950/40 p-4 text-brand-200 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-semibold">Monto sugerido según nómina</p>
+              <p className="text-sm font-semibold text-brand-100">Monto sugerido según nómina</p>
               <p className="text-2xl font-extrabold">{formatearMoneda(montoSugerido)}</p>
             </div>
             <Button variant="outline" onClick={() => cambiar('monto', String(montoSugerido))}>Usar este monto</Button>

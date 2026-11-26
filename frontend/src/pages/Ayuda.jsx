@@ -94,8 +94,8 @@ export default function Ayuda() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Centro de ayuda</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
+        <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Centro de ayuda</h1>
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-400 sm:text-base">
           Guía práctica para usar el sistema sin confusiones. Busca un término, revisa el paso a paso
           de tu rol y consulta las preguntas frecuentes.
         </p>
@@ -119,14 +119,14 @@ export default function Ayuda() {
             return (
               <div
                 key={rol}
-                className={`rounded-xl border p-4 ${esActual ? 'border-brand-400 bg-brand-50 ring-2 ring-brand-100' : 'border-slate-200 bg-white'}`}
+                className={`rounded-xl border p-4 ${esActual ? 'border-brand-500 bg-brand-950/30 ring-2 ring-brand-500/30' : 'border-slate-800 bg-[#161b22]'}`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <Icono className="h-5 w-5 text-brand-700" aria-hidden="true" />
+                  <Icono className="h-5 w-5 text-brand-400" aria-hidden="true" />
                   {esActual && <Badge tone="azul">Tu rol</Badge>}
                 </div>
-                <p className="mt-3 text-sm font-bold text-slate-900">{ROLES_LABELS[rol]}</p>
-                <p className="mt-1 text-xs leading-relaxed text-slate-600">{ROLES_DESCRIPCION[rol]}</p>
+                <p className="mt-3 text-sm font-bold text-slate-100">{ROLES_LABELS[rol]}</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-400">{ROLES_DESCRIPCION[rol]}</p>
               </div>
             );
           })}
@@ -141,14 +141,14 @@ export default function Ayuda() {
               <Link
                 key={paso.titulo}
                 to={paso.ruta}
-                className="flex min-h-28 gap-3 rounded-xl border border-slate-200 p-4 transition-colors hover:border-brand-300 hover:bg-brand-50/40"
+                className="flex min-h-28 gap-3 rounded-xl border border-slate-800 bg-[#161b22] p-4 transition-colors hover:border-brand-500/40 hover:bg-slate-800/40"
               >
-                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-brand-500/30 bg-brand-950/60 text-brand-400">
                   <Icono className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-sm font-bold text-slate-900">{paso.titulo}</span>
-                  <span className="mt-1 block text-xs leading-relaxed text-slate-600">{paso.texto}</span>
+                  <span className="block text-sm font-bold text-slate-100">{paso.titulo}</span>
+                  <span className="mt-1 block text-xs leading-relaxed text-slate-400">{paso.texto}</span>
                 </span>
               </Link>
             );
@@ -157,16 +157,16 @@ export default function Ayuda() {
       </Card>
 
       <Card title="Datos en tiempo real" subtitle="No necesitas recargar la página para ver cambios">
-        <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-3 rounded-xl border border-slate-800 bg-[#161b22] p-4 sm:flex-row sm:items-center">
           <span
             className={`inline-flex h-3 w-3 shrink-0 rounded-full ${conectado ? 'bg-emerald-500' : 'bg-amber-500'}`}
             aria-hidden="true"
           />
           <div className="min-w-0">
-            <p className="text-sm font-bold text-slate-900">
+            <p className="text-sm font-bold text-slate-100">
               {conectado ? 'Sincronización activa' : 'Reconectando…'}
             </p>
-            <p className="mt-1 text-xs leading-relaxed text-slate-600">
+            <p className="mt-1 text-xs leading-relaxed text-slate-400">
               Cuando otro usuario aprueba un permiso, registra una asistencia o confirma un pago,
               las listas se actualizan solas. El puntito verde de la esquina superior indica que
               estás conectado. Si ves ámbar, espera unos segundos: la conexión se restablece sola.
@@ -181,9 +181,9 @@ export default function Ayuda() {
           {glosarioFiltrado.length ? (
             <dl className="space-y-3">
               {glosarioFiltrado.map((item) => (
-                <div key={item.termino} className="rounded-xl bg-slate-50 p-3">
-                  <dt className="text-sm font-bold text-slate-900">{item.termino}</dt>
-                  <dd className="mt-1 text-sm leading-relaxed text-slate-600">{item.definicion}</dd>
+                <div key={item.termino} className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
+                  <dt className="text-sm font-bold text-slate-100">{item.termino}</dt>
+                  <dd className="mt-1 text-sm leading-relaxed text-slate-400">{item.definicion}</dd>
                 </div>
               ))}
             </dl>
@@ -194,7 +194,7 @@ export default function Ayuda() {
 
         <Card title="Preguntas frecuentes" subtitle="Respuestas rápidas a dudas comunes">
           {faqFiltrada.length ? (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-slate-800">
               {faqFiltrada.map((item, indice) => {
                 const abierta = faqAbierta === indice;
                 return (
@@ -203,12 +203,12 @@ export default function Ayuda() {
                       type="button"
                       onClick={() => setFaqAbierta(abierta ? -1 : indice)}
                       aria-expanded={abierta}
-                      className="flex w-full min-h-12 items-center justify-between gap-3 py-3 text-left text-sm font-semibold text-slate-800"
+                      className="flex w-full min-h-12 items-center justify-between gap-3 py-3 text-left text-sm font-semibold text-slate-200"
                     >
                       {item.pregunta}
                       <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${abierta ? 'rotate-180' : ''}`} aria-hidden="true" />
                     </button>
-                    {abierta && <p className="pb-4 text-sm leading-relaxed text-slate-600">{item.respuesta}</p>}
+                    {abierta && <p className="pb-4 text-sm leading-relaxed text-slate-400">{item.respuesta}</p>}
                   </div>
                 );
               })}
@@ -219,11 +219,11 @@ export default function Ayuda() {
         </Card>
       </div>
 
-      <div className="flex flex-col items-start gap-3 rounded-2xl border border-brand-200 bg-brand-50 p-5 text-brand-900 sm:flex-row sm:items-center">
+      <div className="flex flex-col items-start gap-3 rounded-2xl border border-brand-500/30 bg-brand-950/40 p-5 text-brand-200 sm:flex-row sm:items-center">
         <BadgeHelp className="h-8 w-8 shrink-0" aria-hidden="true" />
         <div className="flex-1">
-          <p className="font-bold">¿Necesitas más apoyo?</p>
-          <p className="mt-1 text-sm leading-relaxed text-brand-800">
+          <p className="font-bold text-brand-100">¿Necesitas más apoyo?</p>
+          <p className="mt-1 text-sm leading-relaxed text-brand-200/90">
             Comunica el problema al administrador indicando el módulo, la fecha y el mensaje de error
             que apareció en la notificación. Eso acelera la revisión.
           </p>

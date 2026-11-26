@@ -220,8 +220,8 @@ export default function Permisos() {
     <div className="space-y-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Permisos</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
+          <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Permisos</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">
             {puedeRevisar
               ? 'Revisa las solicitudes, aprueba o rechaza con una nota clara y deja constancia del comprobante.'
               : 'Solicita tus permisos, revisa el estado de tus peticiones y consulta las decisiones del supervisor.'}
@@ -235,11 +235,11 @@ export default function Permisos() {
       </header>
 
       {pendientes > 0 && puedeRevisar && (
-        <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-950/40 p-4 text-amber-200">
           <CalendarClock className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
           <div>
-            <p className="text-sm font-bold">{pendientes} {pendientes === 1 ? 'solicitud pendiente' : 'solicitudes pendientes'}</p>
-            <p className="mt-1 text-xs leading-relaxed">Respóndelas a la brevedad para que el escolta pueda planificar su jornada.</p>
+            <p className="text-sm font-bold text-amber-100">{pendientes} {pendientes === 1 ? 'solicitud pendiente' : 'solicitudes pendientes'}</p>
+            <p className="mt-1 text-xs leading-relaxed text-amber-200/90">Respóndelas a la brevedad para que el escolta pueda planificar su jornada.</p>
           </div>
         </div>
       )}
@@ -258,7 +258,7 @@ export default function Permisos() {
               onChange={(evento) => setBusqueda(evento.target.value)}
               placeholder="Buscar por escolta, tipo o motivo…"
               aria-label="Buscar permisos"
-              className="min-h-11 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+              className="min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             />
           </div>
           <div className="relative">
@@ -267,7 +267,7 @@ export default function Permisos() {
               value={filtroEstado}
               onChange={(evento) => setFiltroEstado(evento.target.value)}
               aria-label="Filtrar permisos por estado"
-              className="min-h-11 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+              className="min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-3 text-sm text-slate-100 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             >
               <option value="todos">Todos los estados</option>
               {OPCIONES_ESTADO_PERMISO.map((opcion) => (
@@ -295,7 +295,7 @@ export default function Permisos() {
                   href={fila.comprobante_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-300 px-3 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                  className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-700 bg-slate-900 px-3 text-xs font-semibold text-slate-300 hover:bg-slate-800"
                 >
                   <Paperclip className="h-3.5 w-3.5" aria-hidden="true" /> Ver comprobante
                 </a>
@@ -312,10 +312,10 @@ export default function Permisos() {
 
         {!cargando && filtrados.some((permiso) => permiso.notas_revision) && (
           <div className="mt-5 space-y-2">
-            <h3 className="text-sm font-bold text-slate-800">Notas de revisión recientes</h3>
+            <h3 className="text-sm font-bold text-slate-200">Notas de revisión recientes</h3>
             {filtrados.filter((permiso) => permiso.notas_revision).slice(0, 3).map((permiso) => (
-              <div key={permiso.id} className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600">
-                <strong className="text-slate-800">{nombreCompleto(mapas.escoltas[permiso.escolta_id])}:</strong> {permiso.notas_revision}
+              <div key={permiso.id} className="rounded-xl border border-slate-800 bg-[#0e1217] p-3 text-sm text-slate-300">
+                <strong className="text-slate-100">{nombreCompleto(mapas.escoltas[permiso.escolta_id])}:</strong> {permiso.notas_revision}
               </div>
             ))}
           </div>
@@ -403,11 +403,11 @@ export default function Permisos() {
       >
         {revision && (
           <div className="space-y-4">
-            <div className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600">
+            <div className="rounded-xl border border-slate-800 bg-[#0e1217] p-3 text-sm text-slate-300">
               <p><strong>Periodo:</strong> {formatearFecha(revision.permiso.fecha_inicio)} {revision.permiso.fecha_fin ? `→ ${formatearFecha(revision.permiso.fecha_fin)}` : ''}</p>
               <p className="mt-1"><strong>Motivo:</strong> {revision.permiso.motivo}</p>
               {revision.permiso.comprobante_url && (
-                <a href={revision.permiso.comprobante_url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 font-semibold text-brand-700 hover:underline">
+                <a href={revision.permiso.comprobante_url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 font-semibold text-brand-400 hover:underline">
                   <ExternalLink className="h-4 w-4" aria-hidden="true" /> Abrir comprobante
                 </a>
               )}

@@ -5,29 +5,29 @@ export const ROLES_LABELS = {
   supervisor: 'Supervisor',
   contador: 'Contador',
   escolta: 'Escolta',
-  chofer: 'Chofer / Conductor',
+  chofer: 'Chofer',
   rrhh: 'Recursos Humanos',
 };
 
 export const ROLES_DESCRIPCION = {
   admin: 'Control total del sistema: usuarios, roles, personal y pagos.',
-  supervisor: 'Distribución de escoltas, asistencias y revisión de permisos.',
+  supervisor: 'Distribución de escoltas, rutas, asistencias y revisión de permisos.',
   contador: 'Periodos de nómina, cálculo de pagos y cierre de nómina.',
   escolta: 'Consultar tus datos, registrar asistencia y solicitar permisos.',
-  chofer: 'Consultar viajes asignados, rutas y viáticos en carretera.',
-  rrhh: 'Gestión de expedientes de personal, contratos y descansos.',
+  chofer: 'Consultar viajes asignados, gastos en ruta y registro de kilometraje.',
+  rrhh: 'Gestión de personal, expedientes, descansos, tabulador y minutas.',
 };
 
 // Permisos de navegación por módulo (el backend/RLS sigue siendo la fuente de verdad).
 export const ROLES_POR_MODULO = {
   escoltas: ['admin', 'supervisor', 'escolta'],
-  choferes: ['admin', 'supervisor', 'chofer'],
-  rrhh: ['admin', 'rrhh', 'contador'],
   distribucion: ['admin', 'supervisor'],
   permisos: ROLES,
   asistencias: ['admin', 'supervisor', 'escolta'],
   nomina: ['admin', 'contador'],
   pagos: ['admin', 'contador'],
+  rrhh: ['admin', 'supervisor', 'contador', 'rrhh'],
+  choferes: ['admin', 'supervisor', 'contador', 'chofer'],
   usuarios: ['admin'],
   'roles-permisos': ['admin'],
   ajustes: ['admin'],
@@ -38,13 +38,13 @@ export const ROLES_POR_MODULO = {
 export const MODULOS_SISTEMA = [
   { key: 'dashboard', label: 'Inicio', descripcion: 'Resumen general del sistema.' },
   { key: 'escoltas', label: 'Escoltas', descripcion: 'Fichas del personal.' },
-  { key: 'choferes', label: 'Choferes', descripcion: 'Conductores, rutas y viajes.' },
-  { key: 'rrhh', label: 'Recursos Humanos', descripcion: 'Expedientes, anticipos y vacaciones.' },
   { key: 'distribucion', label: 'Distribución', descripcion: 'Asignaciones y turnos.' },
   { key: 'permisos', label: 'Permisos', descripcion: 'Solicitudes y aprobaciones.' },
   { key: 'asistencias', label: 'Asistencias', descripcion: 'Check-in y check-out.' },
   { key: 'nomina', label: 'Nómina', descripcion: 'Periodos y detalles.' },
   { key: 'pagos', label: 'Pagos', descripcion: 'Registro y confirmación.' },
+  { key: 'rrhh', label: 'Recursos Humanos', descripcion: 'Fichas de personal, contratos, anticipos y minutas.' },
+  { key: 'choferes', label: 'Choferes y Flota', descripcion: 'Expedientes de choferes, rutas, viáticos y pagos.' },
   { key: 'usuarios', label: 'Usuarios', descripcion: 'Cuentas y claves.' },
   { key: 'roles', label: 'Roles', descripcion: 'Roles y matriz de acceso.' },
   { key: 'ajustes', label: 'Ajustes', descripcion: 'Configuración general.' },
@@ -60,13 +60,13 @@ export const NIVELES_PERMISO = [
 ];
 
 export const TONES = {
-  verde: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-  amarillo: 'bg-amber-50 text-amber-800 ring-amber-200',
-  rojo: 'bg-rose-50 text-rose-700 ring-rose-200',
-  azul: 'bg-blue-50 text-blue-700 ring-blue-200',
-  morado: 'bg-violet-50 text-violet-700 ring-violet-200',
-  naranja: 'bg-brand-50 text-brand-800 ring-brand-200',
-  gris: 'bg-slate-100 text-slate-600 ring-slate-200',
+  verde: 'bg-emerald-950/60 text-emerald-400 ring-emerald-800/60',
+  amarillo: 'bg-amber-950/60 text-amber-300 ring-amber-800/60',
+  rojo: 'bg-rose-950/60 text-rose-400 ring-rose-800/60',
+  azul: 'bg-blue-950/60 text-blue-300 ring-blue-800/60',
+  morado: 'bg-violet-950/60 text-violet-300 ring-violet-800/60',
+  naranja: 'bg-brand-950/60 text-brand-300 ring-brand-800/60',
+  gris: 'bg-slate-800/80 text-slate-400 ring-slate-700/60',
 };
 
 // Los valores deben coincidir con los CHECK de PostgreSQL (ver supabase/migrations).

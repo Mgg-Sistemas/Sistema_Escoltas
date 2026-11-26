@@ -169,6 +169,9 @@ export function formatearNumero(valor, decimales = 2) {
   return new Intl.NumberFormat(LOCALE, { minimumFractionDigits: decimales, maximumFractionDigits: decimales }).format(numero);
 }
 
+export const formatoFecha = formatearFecha;
+export const formatoDinero = (m) => Number(m || 0).toLocaleString(LOCALE, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 /** Devuelve YYYY-MM-DD usando la fecha local del dispositivo. */
 export function aISOFecha(fecha = new Date()) {
   const year = fecha.getFullYear();

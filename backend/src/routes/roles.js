@@ -101,4 +101,119 @@ router.put(
   }),
 );
 
+/** Listar roles personalizados (custom_roles) */
+router.get(
+  '/custom',
+  asyncHandler(async (req, res) => {
+    const { data, error } = await supabase
+      .from('custom_roles')
+      .select('*')
+      .order('created_at');
+
+    if (error) throw mapSupabaseError(error, 'No fue posible consultar roles personalizados.');
+    return ok(res, data ?? []);
+  }),
+);
+
+/** Crear o actualizar rol personalizado */
+router.post(
+  '/custom',
+  asyncHandler(async (req, res) => {
+    const { key, label, descripcion, color } = req.body;
+    if (!key || !label) throw new ApiError(400, 'Clave y etiqueta son obligatorias.');
+
+    const claveLimpa = key.trim().toLowerCase().replace(/\s+/g, '_');
+    const { data, error } = await supabase
+      .from('custom_roles')
+      .upsert({
+        key: claveLimpa,
+        label: label.trim(),
+        descripcion: descripcion?.trim() || null,
+        color: color || '#cc4400',
+        sistema: false,
+        created_by: req.user.id,
+      })
+      .select('*')
+      .single();
+
+    if (error) throw mapSupabaseError(error, 'No fue posible guardar el rol personalizado.');
+
+    // Asegura registro en roles_permisos
+    await supabase
+      .from('roles_permisos')
+      .upsert({
+        role: claveLimpa,
+        permisos: {},
+        vistas_telefono: [],
+        solo_telefono: false,
+      });
+
+    return ok(res, data);
+  }),
+);
+
+/** Eliminar rol personalizado no de sistema */
+router.delete(
+  '/custom/:key',
+  asyncHandler(async (req, res) => {
+    const { key } = req.params;
+    const { data: role } = await supabase.from('custom_roles').select('*').eq('key', key).single();
+    if (role?.sistema) throw new ApiError(400, 'No se pueden eliminar roles base del sistema.');
+
+    await supabase.from('roles_permisos').delete().eq('role', key);
+    const { error } = await supabase.from('custom_roles').delete().eq('key', key);
+    if (error) throw mapSupabaseError(error, 'No fue posible eliminar el rol.');
+
+    return ok(res, { mensaje: 'Rol eliminado con éxito.' });
+  }),
+);
+
+/** Listar usuarios autorizados para aprobaciones de módulos */
+router.get(
+  '/autorizados',
+  asyncHandler(async (req, res) => {
+    const { data, error } = await supabase
+      .from('usuarios_autorizados')
+      .select('*, usuario:profiles(id, nombre_completo, email, role, username)')
+      .order('created_at');
+
+    if (error) throw mapSupabaseError(error, 'No fue posible consultar autorizados.');
+    return ok(res, data ?? []);
+  }),
+);
+
+/** Registrar usuario autorizado */
+router.post(
+  '/autorizados',
+  asyncHandler(async (req, res) => {
+    const { usuario_id, modulo, accion = 'aprobar' } = req.body;
+    if (!usuario_id || !modulo) throw new ApiError(400, 'Usuario y módulo requeridos.');
+
+    const { data, error } = await supabase
+      .from('usuarios_autorizados')
+      .upsert({
+        usuario_id,
+        modulo,
+        accion,
+        activo: true,
+        created_by: req.user.id,
+      })
+      .select('*, usuario:profiles(id, nombre_completo, email, role, username)')
+      .single();
+
+    if (error) throw mapSupabaseError(error, 'No fue posible autorizar al usuario.');
+    return ok(res, data);
+  }),
+);
+
+/** Revocar usuario autorizado */
+router.delete(
+  '/autorizados/:id',
+  asyncHandler(async (req, res) => {
+    const { error } = await supabase.from('usuarios_autorizados').delete().eq('id', req.params.id);
+    if (error) throw mapSupabaseError(error, 'No fue posible revocar la autorización.');
+    return ok(res, { mensaje: 'Autorización revocada.' });
+  }),
+);
+
 export default router;

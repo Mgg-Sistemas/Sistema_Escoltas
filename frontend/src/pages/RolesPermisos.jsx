@@ -1,6 +1,26 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { CheckCheck, KeyRound, ShieldCheck, UserCog } from 'lucide-react';
-import { Badge, Button, Card, HelpTip, useToast } from '../components/ui.jsx';
+import {
+  CheckCheck,
+  KeyRound,
+  Plus,
+  RotateCcw,
+  ShieldAlert,
+  ShieldCheck,
+  Smartphone,
+  Trash2,
+  UserCog,
+} from 'lucide-react';
+import {
+  Badge,
+  Button,
+  Card,
+  ConfirmDialog,
+  HelpTip,
+  Input,
+  Modal,
+  Select,
+  useToast,
+} from '../components/ui.jsx';
 import { useRealtimeRecarga } from '../hooks/useRealtime.js';
 import { api } from '../lib/api.js';
 import {
@@ -11,53 +31,44 @@ import {
   ROLES_LABELS,
 } from '../lib/constants.js';
 
-const MATRIZ_VACIA = Object.fromEntries(
-  MODULOS_SISTEMA.map((modulo) => [
-    modulo.key,
-    { lectura: false, escritura: false, full: false },
-  ]),
-);
-
-function normalizar(matriz = {}) {
-  return Object.fromEntries(
-    MODULOS_SISTEMA.map((modulo) => {
-      const actual = matriz[modulo.key] ?? {};
-      return [
-        modulo.key,
-        {
-          lectura: actual.lectura === true,
-          escritura: actual.escritura === true,
-          full: actual.full === true,
-        },
-      ];
-    }),
-  );
-}
-
 export default function RolesPermisos() {
   const toast = useToast();
   const [roles, setRoles] = useState([]);
+  const [customRoles, setCustomRoles] = useState([]);
   const [matrices, setMatrices] = useState({});
+  const [telefonoConfig, setTelefonoConfig] = useState({});
   const [rolActivo, setRolActivo] = useState('admin');
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
-  const [hayCambios, setHayCambios] = useState(false);
+
+  // Modal nuevo rol
+  const [modalNuevoRol, setModalNuevoRol] = useState(false);
+  const [formNuevoRol, setFormNuevoRol] = useState({ key: '', label: '', descripcion: '', color: '#cc4400' });
 
   const cargar = useCallback(async () => {
     setCargando(true);
     try {
-      const datos = await api.obtenerRoles();
+      const [datos, custom] = await Promise.all([
+        api.obtenerRoles(),
+        api.listarRolesPersonalizados().catch(() => []),
+      ]);
+
       const porRol = Object.fromEntries(
-        (datos?.matriz ?? []).map((fila) => [fila.role, normalizar(fila.permisos)]),
+        (datos?.matriz || []).map((fila) => [fila.role, fila.permisos ?? {}]),
       );
-      for (const rol of ROLES) {
-        if (!porRol[rol]) porRol[rol] = { ...MATRIZ_VACIA };
-      }
-      setRoles(datos?.roles ?? []);
+      const tel = Object.fromEntries(
+        (datos?.matriz || []).map((fila) => [
+          fila.role,
+          { solo_telefono: fila.solo_telefono || false, vistas_telefono: fila.vistas_telefono || [] },
+        ]),
+      );
+
       setMatrices(porRol);
-      setHayCambios(false);
+      setTelefonoConfig(tel);
+      setRoles(datos?.roles ?? []);
+      setCustomRoles(custom ?? []);
     } catch (error) {
-      toast.error('No se pudieron cargar los permisos', error.message);
+      toast.error(error.message || 'No fue posible cargar roles y permisos.');
     } finally {
       setCargando(false);
     }
@@ -67,184 +78,277 @@ export default function RolesPermisos() {
     cargar();
   }, [cargar]);
 
-  useRealtimeRecarga(cargar, { tablas: ['roles', 'permisos_sistema', 'rol_permisos', 'roles_permisos'] });
+  const listaRolesCompleta = useMemo(() => {
+    const baseKeys = new Set(ROLES);
+    const combinados = [...ROLES];
+    customRoles.forEach((cr) => {
+      if (!baseKeys.has(cr.key)) {
+        combinados.push(cr.key);
+      }
+    });
+    return combinados;
+  }, [customRoles]);
 
-  const matriz = matrices[rolActivo] ?? MATRIZ_VACIA;
+  const matrizActiva = useMemo(() => {
+    const actual = matrices[rolActivo] ?? {};
+    return Object.fromEntries(
+      MODULOS_SISTEMA.map((m) => [
+        m.key,
+        {
+          lectura: actual[m.key]?.lectura === true || actual[m.key]?.full === true,
+          escritura: actual[m.key]?.escritura === true || actual[m.key]?.full === true,
+          full: actual[m.key]?.full === true || rolActivo === 'admin',
+        },
+      ]),
+    );
+  }, [matrices, rolActivo]);
 
-  const alternar = (modulo, nivel) => {
-    setMatrices((actual) => {
-      const permisosRol = { ...(actual[rolActivo] ?? MATRIZ_VACIA) };
-      const niveles = { ...(permisosRol[modulo] ?? {}) };
-      const nuevoValor = !niveles[nivel];
+  const handleToggle = (moduloKey, nivel) => {
+    if (rolActivo === 'admin') return;
+    setMatrices((prev) => {
+      const actualRol = prev[rolActivo] ?? {};
+      const actualMod = actualRol[moduloKey] ?? { lectura: false, escritura: false, full: false };
+      const nuevoValor = !actualMod[nivel];
+      const actualizado = { ...actualMod, [nivel]: nuevoValor };
 
-      if (nivel === 'full') {
-        niveles.full = nuevoValor;
-        if (nuevoValor) {
-          niveles.lectura = true;
-          niveles.escritura = true;
-        }
-      } else {
-        niveles[nivel] = nuevoValor;
-        if (niveles.lectura && niveles.escritura) niveles.full = true;
-        else niveles.full = false;
+      if (nivel === 'full' && nuevoValor) {
+        actualizado.lectura = true;
+        actualizado.escritura = true;
+      }
+      if (nivel === 'escritura' && nuevoValor) {
+        actualizado.lectura = true;
+      }
+      if (nivel === 'lectura' && !nuevoValor) {
+        actualizado.escritura = false;
+        actualizado.full = false;
       }
 
-      permisosRol[modulo] = niveles;
-      return { ...actual, [rolActivo]: permisosRol };
+      return {
+        ...prev,
+        [rolActivo]: {
+          ...actualRol,
+          [moduloKey]: actualizado,
+        },
+      };
     });
-    setHayCambios(true);
   };
 
-  const guardar = async () => {
+  const handleGuardar = async () => {
+    setGuardando(true);
     try {
-      setGuardando(true);
+      const tel = telefonoConfig[rolActivo] || { solo_telefono: false, vistas_telefono: [] };
       await api.guardarPermisosRol({
         role: rolActivo,
-        permisos: matriz,
-        vistas_telefono: [],
-        solo_telefono: false,
+        permisos: matrices[rolActivo] ?? {},
+        solo_telefono: tel.solo_telefono,
+        vistas_telefono: tel.vistas_telefono,
       });
-      toast.success(
-        'Permisos guardados',
-        `La matriz de ${ROLES_LABELS[rolActivo]} se actualizó para todos los usuarios con ese rol.`,
-      );
-      setHayCambios(false);
+      toast.success(`Matriz y accesos de "${ROLES_LABELS[rolActivo] || rolActivo}" guardados.`);
     } catch (error) {
-      toast.error('No se pudieron guardar los permisos', error.message);
+      toast.error(error.message || 'No fue posible guardar la matriz.');
     } finally {
       setGuardando(false);
     }
   };
 
-  const totales = useMemo(() => {
-    const activos = Object.values(matriz).filter(
-      (niveles) => niveles.lectura || niveles.escritura || niveles.full,
-    ).length;
-    return { activos, total: MODULOS_SISTEMA.length };
-  }, [matriz]);
+  const handleCrearNuevoRol = async (e) => {
+    e.preventDefault();
+    try {
+      await api.guardarRolPersonalizado(formNuevoRol);
+      toast.success(`Rol "${formNuevoRol.label}" registrado con éxito.`);
+      setModalNuevoRol(false);
+      setFormNuevoRol({ key: '', label: '', descripcion: '', color: '#cc4400' });
+      await cargar();
+    } catch (err) {
+      toast.error(err.message || 'Error al crear rol');
+    }
+  };
+
+  const handleEliminarRol = async (key) => {
+    if (ROLES.includes(key)) {
+      toast.error('No se pueden eliminar los roles base del sistema.');
+      return;
+    }
+    try {
+      await api.eliminarRolPersonalizado(key);
+      toast.success('Rol personalizado eliminado.');
+      setRolActivo('admin');
+      await cargar();
+    } catch (err) {
+      toast.error(err.message || 'Error al eliminar rol');
+    }
+  };
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Roles y permisos</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
-          Define qué puede ver y modificar cada rol. Los cambios se aplican de inmediato al menú y a
-          las operaciones permitidas por el backend. Marca <strong>Control total</strong> cuando el rol
-          deba administrar por completo un módulo.
-        </p>
-      </header>
+      {/* Encabezado */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-100">Matriz de Roles y Permisos</h1>
+          <p className="mt-1 text-sm text-slate-400">
+            Estructura heredada de Golden Touch (GT): lectura, escritura o control total por módulo, vistas móviles y roles personalizados.
+          </p>
+        </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {ROLES.map((rol) => {
-          const activo = rol === rolActivo;
+        <div className="flex items-center gap-2">
+          <Button variant="outline" leftIcon={Plus} onClick={() => setModalNuevoRol(true)}>
+            Nuevo Rol
+          </Button>
+          <Button variant="primary" leftIcon={CheckCheck} onClick={handleGuardar} disabled={guardando}>
+            {guardando ? 'Guardando...' : 'Guardar Cambios'}
+          </Button>
+        </div>
+      </div>
+
+      {/* Selector de rol con badges interactivos */}
+      <div className="flex flex-wrap gap-2">
+        {listaRolesCompleta.map((r) => {
+          const activo = rolActivo === r;
+          const esCustom = !ROLES.includes(r);
           return (
             <button
-              key={rol}
+              key={r}
               type="button"
-              onClick={() => {
-                setRolActivo(rol);
-                setHayCambios(false);
-              }}
-              className={`min-h-24 rounded-2xl border p-4 text-left transition-colors ${
+              onClick={() => setRolActivo(r)}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
                 activo
-                  ? 'border-brand-400 bg-brand-50 ring-2 ring-brand-100'
-                  : 'border-slate-200 bg-white hover:border-brand-300 hover:bg-brand-50/40'
+                  ? 'bg-brand-600 text-white shadow-lg ring-2 ring-brand-400/40'
+                  : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700/80 hover:text-slate-100 border border-slate-700/60'
               }`}
             >
-              <div className="flex items-center justify-between gap-2">
-                <UserCog className={`h-5 w-5 ${activo ? 'text-brand-700' : 'text-slate-400'}`} aria-hidden="true" />
-                {activo && <Badge tone="naranja">Editando</Badge>}
-              </div>
-              <p className="mt-2 text-sm font-bold text-slate-900">{ROLES_LABELS[rol]}</p>
-              <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500">{ROLES_DESCRIPCION[rol]}</p>
+              <span>{ROLES_LABELS[r] || r}</span>
+              {esCustom && (
+                <button
+                  type="button"
+                  title="Eliminar rol personalizado"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEliminarRol(r);
+                  }}
+                  className="hover:text-rose-400 ml-1"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              )}
             </button>
           );
         })}
       </div>
 
-      <Card
-        title={`Matriz de ${ROLES_LABELS[rolActivo]}`}
-        subtitle={`${totales.activos} de ${totales.total} módulos con algún acceso`}
-        actions={
-          <HelpTip title="Cómo funciona">
-            Lectura permite consultar, Escritura permite crear y editar, y Control total incluye acciones
-            sensibles como eliminar, cerrar nómina o confirmar pagos.
-          </HelpTip>
-        }
-      >
-        {cargando ? (
-          <p className="py-8 text-center text-sm text-slate-500">Cargando permisos…</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] border-separate border-spacing-y-2 text-left text-sm">
-              <thead>
-                <tr className="text-xs uppercase tracking-wide text-slate-500">
-                  <th className="px-3 py-2">Módulo</th>
-                  {NIVELES_PERMISO.map((nivel) => (
-                    <th key={nivel.key} className="w-32 px-3 py-2 text-center">{nivel.label}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {MODULOS_SISTEMA.map((modulo) => {
-                  const niveles = matriz[modulo.key] ?? {};
-                  return (
-                    <tr key={modulo.key} className="bg-slate-50/80">
-                      <td className="rounded-l-xl px-3 py-3">
-                        <p className="font-bold text-slate-900">{modulo.label}</p>
-                        <p className="text-xs text-slate-500">{modulo.descripcion}</p>
-                      </td>
-                      {NIVELES_PERMISO.map((nivel) => (
-                        <td key={nivel.key} className="px-3 py-3 text-center">
-                          <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 px-2">
-                            <input
-                              type="checkbox"
-                              checked={niveles[nivel.key] === true}
-                              onChange={() => alternar(modulo.key, nivel.key)}
-                              aria-label={`${nivel.label} en ${modulo.label} para ${ROLES_LABELS[rolActivo]}`}
-                              className="h-5 w-5 rounded border-slate-300 text-brand-600 focus:ring-brand-400"
-                            />
-                          </label>
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+      {/* Panel de permisos del rol seleccionado */}
+      <Card className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-700/60 pb-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-brand-400" />
+              <span>Permisos para: {ROLES_LABELS[rolActivo] || rolActivo}</span>
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {ROLES_DESCRIPCION[rolActivo] || 'Rol personalizado del sistema.'}
+            </p>
           </div>
-        )}
 
-        <div className="mt-5 flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
-          <p className="flex items-start gap-2 text-xs leading-relaxed text-slate-500">
-            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" />
-            El backend y las políticas RLS verifican estos permisos; ocultar un botón nunca es la única barrera.
-          </p>
-          <Button
-            variant="primary"
-            size="lg"
-            loading={guardando}
-            disabled={!hayCambios || cargando}
-            leftIcon={CheckCheck}
-            onClick={guardar}
-            className="w-full sm:w-auto"
-          >
-            {hayCambios ? 'Guardar cambios' : 'Sin cambios pendientes'}
-          </Button>
+          <div className="flex items-center gap-4 text-xs font-mono text-slate-400">
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" /> Control Total
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-blue-400" /> Escritura
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-amber-400" /> Lectura
+            </span>
+          </div>
+        </div>
+
+        {/* Tabla matriz */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm text-slate-300">
+            <thead className="bg-slate-800/80 text-xs uppercase text-slate-400 border-b border-slate-700">
+              <tr>
+                <th className="py-3 px-4">Módulo Funcional</th>
+                <th className="py-3 px-4 text-center">Lectura</th>
+                <th className="py-3 px-4 text-center">Escritura</th>
+                <th className="py-3 px-4 text-center">Control Total (Full)</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800">
+              {MODULOS_SISTEMA.map((modulo) => {
+                const fila = matrizActiva[modulo.key] ?? {};
+                return (
+                  <tr key={modulo.key} className="hover:bg-slate-800/40">
+                    <td className="py-3 px-4">
+                      <div className="font-semibold text-slate-100">{modulo.label}</div>
+                      <div className="text-xs text-slate-400">{modulo.descripcion}</div>
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-brand-600 focus:ring-brand-500 cursor-pointer"
+                        checked={fila.lectura}
+                        disabled={rolActivo === 'admin'}
+                        onChange={() => handleToggle(modulo.key, 'lectura')}
+                      />
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-brand-600 focus:ring-brand-500 cursor-pointer"
+                        checked={fila.escritura}
+                        disabled={rolActivo === 'admin'}
+                        onChange={() => handleToggle(modulo.key, 'escritura')}
+                      />
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-brand-600 focus:ring-brand-500 cursor-pointer"
+                        checked={fila.full}
+                        disabled={rolActivo === 'admin'}
+                        onChange={() => handleToggle(modulo.key, 'full')}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </Card>
 
-      <Card title="Permisos granulares del sistema" subtitle="Códigos usados por la API y las políticas de seguridad">
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-          {MODULOS_SISTEMA.map((modulo) => (
-            <div key={modulo.key} className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-xs">
-              <KeyRound className="h-4 w-4 shrink-0 text-brand-700" aria-hidden="true" />
-              <span className="font-semibold text-slate-700">{modulo.label}</span>
-              <span className="ml-auto font-mono text-slate-400">{modulo.key}.*</span>
-            </div>
-          ))}
-        </div>
-      </Card>
+      {/* MODAL NUEVO ROL */}
+      <Modal abierto={modalNuevoRol} alCerrar={() => setModalNuevoRol(false)} titulo="Crear Rol Personalizado">
+        <form onSubmit={handleCrearNuevoRol} className="space-y-4 text-slate-200">
+          <Input
+            label="Identificador Clave (sin espacios)"
+            required
+            placeholder="ej. jefe_seguridad"
+            value={formNuevoRol.key}
+            onChange={(e) => setFormNuevoRol({ ...formNuevoRol, key: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
+          />
+          <Input
+            label="Etiqueta / Nombre Visible"
+            required
+            placeholder="Jefe de Seguridad y Patrullaje"
+            value={formNuevoRol.label}
+            onChange={(e) => setFormNuevoRol({ ...formNuevoRol, label: e.target.value })}
+          />
+          <Input
+            label="Descripción del Rol"
+            placeholder="Responsable de supervisión y respuesta inmediata..."
+            value={formNuevoRol.descripcion}
+            onChange={(e) => setFormNuevoRol({ ...formNuevoRol, descripcion: e.target.value })}
+          />
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" type="button" onClick={() => setModalNuevoRol(false)}>
+              Cancelar
+            </Button>
+            <Button variant="primary" type="submit">
+              Registrar Rol
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

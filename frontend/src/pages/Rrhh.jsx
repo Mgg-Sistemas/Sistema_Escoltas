@@ -1,288 +1,536 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  Banknote,
   Briefcase,
+  Building2,
   Calendar,
-  CheckCircle2,
-  DollarSign,
+  Clock,
+  Coins,
+  FileSpreadsheet,
   FileText,
+  History,
+  Layers,
   Plus,
-  RefreshCw,
+  QrCode,
   Search,
+  TrendingUp,
   UserCheck,
   UserPlus,
   Users,
 } from 'lucide-react';
-import { Badge, Button, Card, Input, Modal, Select, useToast } from '../components/ui.jsx';
-import { apiFetch } from '../lib/api.js';
+import {
+  Badge,
+  Button,
+  Card,
+  HelpTip,
+  Input,
+  Modal,
+  Select,
+  useToast,
+} from '../components/ui.jsx';
+import DataTable from '../components/DataTable.jsx';
+import { api } from '../lib/api.js';
+import { formatoDinero, formatoFecha } from '../lib/data.js';
+
+const PESTANAS = [
+  { id: 'personal', label: 'Personal', icon: Users, desc: 'Fichas y expedientes' },
+  { id: 'anticipos', label: 'Anticipos / Préstamos', icon: Banknote, desc: 'Adelantos y cuotas' },
+  { id: 'nomina', label: 'Nómina', icon: FileSpreadsheet, desc: 'Resumen y periodos' },
+  { id: 'descansos', label: 'Descansos / Vacaciones', icon: Calendar, desc: 'Control de días' },
+  { id: 'administrativo', label: 'Tabulador y Cargos', icon: Layers, desc: 'Escala y movimientos' },
+  { id: 'minutas', label: 'Minutas', icon: FileText, desc: 'Reuniones y acuerdos' },
+];
+
+const FORM_PERSONAL_INICIAL = {
+  empresa: 'ESC',
+  ficha_nro: '',
+  nombre: '',
+  apellido: '',
+  cedula: '',
+  rif: '',
+  cargo: 'Escolta de Seguridad',
+  departamento: 'Operaciones',
+  sueldo_base: 350,
+  moneda_sueldo: 'USD',
+  telefono: '',
+  correo: '',
+  direccion: '',
+  activo: true,
+};
 
 export default function Rrhh() {
   const toast = useToast();
-  const [tab, setTab] = useState('personal');
+  const [pestanaActiva, setPestanaActiva] = useState('personal');
+  const [empresaFiltro, setEmpresaFiltro] = useState('');
+  const [busqueda, setBusqueda] = useState('');
+  const [personal, setPersonal] = useState([]);
+  const [anticipos, setAnticipos] = useState([]);
+  const [tabulador, setTabulador] = useState([]);
+  const [minutas, setMinutas] = useState([]);
   const [cargando, setCargando] = useState(true);
 
-  const [personal, setPersonal] = useState([]);
-  const [cargos, setCargos] = useState([]);
-  const [anticipos, setAnticipos] = useState([]);
-  const [eventos, setEventos] = useState([]);
-
   // Modales
-  const [modalPersonal, setModalPersonal] = useState(false);
-  const [formPersonal, setFormPersonal] = useState({
-    nombre: '',
-    apellido: '',
-    cedula: '',
-    cargo: '',
-    departamento: '',
-    sueldo_base: 0,
-    telefono: '',
-    correo: '',
-    direccion: '',
-    fecha_ingreso: new Date().toISOString().split('T')[0],
-  });
+  const [modalPersonalAbierto, setModalPersonalAbierto] = useState(false);
+  const [formPersonal, setFormPersonal] = useState(FORM_PERSONAL_INICIAL);
+  const [editandoPersonalId, setEditandoPersonalId] = useState(null);
 
-  const [modalAnticipo, setModalAnticipo] = useState(false);
+  const [modalSueldoAbierto, setModalSueldoAbierto] = useState(false);
+  const [sueldoTarget, setSueldoTarget] = useState(null);
+  const [formSueldo, setFormSueldo] = useState({ nuevo_sueldo: '', motivo: '' });
+
+  const [modalAnticipoAbierto, setModalAnticipoAbierto] = useState(false);
   const [formAnticipo, setFormAnticipo] = useState({
     personal_id: '',
     tipo: 'anticipo',
-    monto_total: 0,
-    cuota_sugerida: 0,
+    monto_total: '',
+    cuotas: 1,
     motivo: '',
   });
 
-  const [modalEvento, setModalEvento] = useState(false);
-  const [formEvento, setFormEvento] = useState({
-    personal_id: '',
-    tipo: 'vacaciones',
-    fecha_inicio: new Date().toISOString().split('T')[0],
-    fecha_fin: new Date().toISOString().split('T')[0],
-    dias: 15,
-    remunerado: true,
-    descripcion: '',
+  const [modalMinutaAbierto, setModalMinutaAbierto] = useState(false);
+  const [formMinuta, setFormMinuta] = useState({
+    fecha: new Date().toISOString().split('T')[0],
+    turno: 'Diurno',
+    observaciones: '',
+    temas: '',
+    acuerdos: '',
   });
-
-  const [modalAbono, setModalAbono] = useState(false);
-  const [itemAbono, setItemAbono] = useState(null);
-  const [montoAbono, setMontoAbono] = useState('');
-
-  const [guardando, setGuardando] = useState(false);
 
   const cargarDatos = useCallback(async () => {
     setCargando(true);
     try {
-      const [pRes, cRes, aRes, eRes] = await Promise.all([
-        apiFetch('/rrhh/personal').catch(() => []),
-        apiFetch('/rrhh/cargos').catch(() => []),
-        apiFetch('/rrhh/anticipos').catch(() => []),
-        apiFetch('/rrhh/eventos').catch(() => []),
+      const [resPersonal, resAnticipos, resTabulador, resMinutas] = await Promise.all([
+        api.listarPersonal({ empresa: empresaFiltro || undefined, q: busqueda || undefined }),
+        api.listarAnticipos(),
+        api.listarTabulador(),
+        api.listarMinutas(),
       ]);
-      setPersonal(pRes || []);
-      setCargos(cRes || []);
-      setAnticipos(aRes || []);
-      setEventos(eRes || []);
-    } catch {
-      toast.error('Error al cargar datos de Recursos Humanos');
+      setPersonal(resPersonal || []);
+      setAnticipos(resAnticipos || []);
+      setTabulador(resTabulador || []);
+      setMinutas(resMinutas || []);
+    } catch (err) {
+      toast.error('Error al cargar datos de RRHH: ' + (err.message || 'Error de conexión'));
     } finally {
       setCargando(false);
     }
-  }, [toast]);
+  }, [empresaFiltro, busqueda, toast]);
 
   useEffect(() => {
     cargarDatos();
   }, [cargarDatos]);
 
-  // Guardar Personal
-  const guardarPersonal = async (e) => {
+  // Manejadores
+  const handleGuardarPersonal = async (e) => {
     e.preventDefault();
-    if (!formPersonal.nombre.trim()) {
-      toast.error('El nombre es obligatorio');
-      return;
-    }
-    setGuardando(true);
     try {
-      await apiFetch('/rrhh/personal', {
-        method: 'POST',
-        body: formPersonal,
-      });
-      toast.success('Ficha de personal creada exitosamente');
-      setModalPersonal(false);
-      setFormPersonal({
-        nombre: '',
-        apellido: '',
-        cedula: '',
-        cargo: '',
-        departamento: '',
-        sueldo_base: 0,
-        telefono: '',
-        correo: '',
-        direccion: '',
-        fecha_ingreso: new Date().toISOString().split('T')[0],
-      });
+      if (editandoPersonalId) {
+        await api.actualizarPersonal(editandoPersonalId, formPersonal);
+        toast.success('Ficha de personal actualizada');
+      } else {
+        await api.crearPersonal(formPersonal);
+        toast.success('Nueva ficha de personal creada');
+      }
+      setModalPersonalAbierto(false);
+      setEditandoPersonalId(null);
+      setFormPersonal(FORM_PERSONAL_INICIAL);
       cargarDatos();
     } catch (err) {
       toast.error(err.message || 'Error al guardar personal');
-    } finally {
-      setGuardando(false);
     }
   };
 
-  // Guardar Anticipo
-  const guardarAnticipo = async (e) => {
+  const handleCambiarSueldo = async (e) => {
     e.preventDefault();
-    if (!formAnticipo.personal_id || !formAnticipo.monto_total) {
-      toast.error('Completa los campos obligatorios');
-      return;
-    }
-    setGuardando(true);
+    if (!sueldoTarget) return;
     try {
-      await apiFetch('/rrhh/anticipos', {
-        method: 'POST',
-        body: formAnticipo,
-      });
-      toast.success('Solicitud registrada');
-      setModalAnticipo(false);
-      setFormAnticipo({
-        personal_id: '',
-        tipo: 'anticipo',
-        monto_total: 0,
-        cuota_sugerida: 0,
-        motivo: '',
-      });
+      await api.cambiarSueldoPersonal(sueldoTarget.id, formSueldo);
+      toast.success('Sueldo actualizado con registro histórico');
+      setModalSueldoAbierto(false);
+      setSueldoTarget(null);
+      setFormSueldo({ nuevo_sueldo: '', motivo: '' });
+      cargarDatos();
+    } catch (err) {
+      toast.error(err.message || 'Error al actualizar sueldo');
+    }
+  };
+
+  const handleGuardarAnticipo = async (e) => {
+    e.preventDefault();
+    try {
+      await api.crearAnticipo(formAnticipo);
+      toast.success('Anticipo/Préstamo registrado');
+      setModalAnticipoAbierto(false);
+      setFormAnticipo({ personal_id: '', tipo: 'anticipo', monto_total: '', cuotas: 1, motivo: '' });
       cargarDatos();
     } catch (err) {
       toast.error(err.message || 'Error al registrar anticipo');
-    } finally {
-      setGuardando(false);
     }
   };
 
-  // Registrar Abono
-  const registrarAbono = async (e) => {
+  const handleGuardarMinuta = async (e) => {
     e.preventDefault();
-    if (!itemAbono || !montoAbono) return;
-    setGuardando(true);
     try {
-      await apiFetch(`/rrhh/anticipos/${itemAbono.id}/abonar`, {
-        method: 'PATCH',
-        body: { monto_abono: Number(montoAbono) },
+      await api.crearMinuta({
+        fecha: formMinuta.fecha,
+        turno: formMinuta.turno,
+        observaciones: formMinuta.observaciones,
+        temas: formMinuta.temas.split('\n').filter(Boolean).map((t) => ({ tema: t })),
+        acuerdos: formMinuta.acuerdos.split('\n').filter(Boolean).map((a) => ({ acuerdo: a })),
       });
-      toast.success('Abono registrado correctamente');
-      setModalAbono(false);
-      setItemAbono(null);
-      setMontoAbono('');
+      toast.success('Minuta de reunión registrada');
+      setModalMinutaAbierto(false);
       cargarDatos();
     } catch (err) {
-      toast.error(err.message || 'Error al registrar abono');
-    } finally {
-      setGuardando(false);
+      toast.error(err.message || 'Error al registrar minuta');
     }
   };
 
-  // Guardar Evento / Permiso / Vacación
-  const guardarEvento = async (e) => {
-    e.preventDefault();
-    if (!formEvento.personal_id) {
-      toast.error('Selecciona el empleado');
-      return;
-    }
-    setGuardando(true);
-    try {
-      await apiFetch('/rrhh/eventos', {
-        method: 'POST',
-        body: formEvento,
-      });
-      toast.success('Evento registrado');
-      setModalEvento(false);
-      cargarDatos();
-    } catch (err) {
-      toast.error(err.message || 'Error al registrar evento');
-    } finally {
-      setGuardando(false);
-    }
-  };
+  const personalFiltrado = useMemo(() => {
+    return personal.filter((p) => {
+      if (empresaFiltro && p.empresa !== empresaFiltro) return false;
+      if (!busqueda) return true;
+      const b = busqueda.toLowerCase();
+      return (
+        p.nombre?.toLowerCase().includes(b) ||
+        p.apellido?.toLowerCase().includes(b) ||
+        p.cedula?.toLowerCase().includes(b) ||
+        p.ficha_nro?.toLowerCase().includes(b) ||
+        p.cargo?.toLowerCase().includes(b)
+      );
+    });
+  }, [personal, empresaFiltro, busqueda]);
+
+  const columnasPersonal = [
+    {
+      encabezado: 'Ficha / Persona',
+      clave: 'persona',
+      render: (fila) => (
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs font-semibold text-brand-400 bg-brand-950/60 px-1.5 py-0.5 rounded border border-brand-800/40">
+              {fila.ficha_nro || 'S/F'}
+            </span>
+            <span className="font-semibold text-slate-100">{fila.nombre} {fila.apellido}</span>
+          </div>
+          <div className="text-xs text-slate-400 mt-0.5">
+            C.I: {fila.cedula || 'N/A'} · {fila.empresa || 'ESC'}
+          </div>
+        </div>
+      ),
+    },
+    {
+      encabezado: 'Cargo / Departamento',
+      clave: 'cargo',
+      render: (fila) => (
+        <div>
+          <div className="text-sm font-medium text-slate-200">{fila.cargo || 'Sin cargo'}</div>
+          <div className="text-xs text-slate-400">{fila.departamento || 'Operaciones'}</div>
+        </div>
+      ),
+    },
+    {
+      encabezado: 'Sueldo Base',
+      clave: 'sueldo',
+      render: (fila) => (
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-mono text-sm font-semibold text-emerald-400">
+            {formatoDinero(fila.sueldo_base || 0)} <span className="text-xs text-slate-400">USD</span>
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setSueldoTarget(fila);
+              setFormSueldo({ nuevo_sueldo: fila.sueldo_base || '', motivo: '' });
+              setModalSueldoAbierto(true);
+            }}
+            className="text-xs text-brand-400 hover:text-brand-300 underline font-medium"
+          >
+            Ajustar
+          </button>
+        </div>
+      ),
+    },
+    {
+      encabezado: 'Contacto',
+      clave: 'contacto',
+      render: (fila) => (
+        <div className="text-xs text-slate-300">
+          <div>{fila.telefono || 'Sin teléfono'}</div>
+          <div className="text-slate-400 truncate max-w-[150px]">{fila.correo || '—'}</div>
+        </div>
+      ),
+    },
+    {
+      encabezado: 'Estado',
+      clave: 'estado',
+      render: (fila) => (
+        <Badge tone={fila.activo ? 'verde' : 'gris'}>
+          {fila.activo ? 'Activo' : 'Inactivo'}
+        </Badge>
+      ),
+    },
+    {
+      encabezado: 'Acciones',
+      clave: 'acciones',
+      render: (fila) => (
+        <div className="flex items-center gap-1">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setEditandoPersonalId(fila.id);
+              setFormPersonal({ ...FORM_PERSONAL_INICIAL, ...fila });
+              setModalPersonalAbierto(true);
+            }}
+          >
+            Editar
+          </Button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6">
       {/* Encabezado */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex items-center gap-2">
-            <div className="rounded-xl bg-purple-500/10 p-2 text-purple-600">
-              <Users className="h-6 w-6" />
-            </div>
-            <h1 className="text-2xl font-bold text-slate-900">Recursos Humanos (RRHH)</h1>
-          </div>
-          <p className="mt-1 text-sm text-slate-500">
-            Expedientes de personal, anticipos y préstamos, vacaciones, permisos laborales y catálogo de cargos.
+          <h1 className="text-2xl font-bold tracking-tight text-slate-100">Recursos Humanos</h1>
+          <p className="mt-1 text-sm text-slate-400">
+            Gestión integral de personal, nómina, anticipos, descansos, tabulador salarial y minutas estilo GT.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={cargarDatos} leftIcon={RefreshCw} disabled={cargando}>
-            Actualizar
-          </Button>
-          <Button variant="primary" size="sm" onClick={() => setModalPersonal(true)} leftIcon={UserPlus}>
-            Nuevo Empleado
-          </Button>
-        </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-slate-200">
-        {[
-          { id: 'personal', label: `Personal (${personal.length})` },
-          { id: 'anticipos', label: `Anticipos y Préstamos (${anticipos.length})` },
-          { id: 'eventos', label: `Vacaciones y Permisos (${eventos.length})` },
-          { id: 'cargos', label: `Cargos (${cargos.length})` },
-        ].map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
-              tab === t.id
-                ? 'border-brand-600 text-brand-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
-            }`}
+        {pestanaActiva === 'personal' && (
+          <Button
+            variant="primary"
+            leftIcon={UserPlus}
+            onClick={() => {
+              setEditandoPersonalId(null);
+              setFormPersonal(FORM_PERSONAL_INICIAL);
+              setModalPersonalAbierto(true);
+            }}
           >
-            {t.label}
-          </button>
-        ))}
+            Nuevo Personal
+          </Button>
+        )}
+        {pestanaActiva === 'anticipos' && (
+          <Button
+            variant="primary"
+            leftIcon={Plus}
+            onClick={() => setModalAnticipoAbierto(true)}
+          >
+            Registrar Anticipo
+          </Button>
+        )}
+        {pestanaActiva === 'minutas' && (
+          <Button
+            variant="primary"
+            leftIcon={Plus}
+            onClick={() => setModalMinutaAbierto(true)}
+          >
+            Nueva Minuta
+          </Button>
+        )}
       </div>
 
-      {/* 1. Personal */}
-      {tab === 'personal' && (
-        <Card className="p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-slate-800">Ficha de Personal</h2>
-            <Button variant="primary" size="sm" onClick={() => setModalPersonal(true)} leftIcon={Plus}>
-              Agregar Empleado
-            </Button>
+      {/* Navegación por pestañas */}
+      <div className="flex flex-wrap gap-2 border-b border-slate-700/60 pb-3">
+        {PESTANAS.map((pestana) => {
+          const Icon = pestana.icon;
+          const activa = pestanaActiva === pestana.id;
+          return (
+            <button
+              key={pestana.id}
+              type="button"
+              onClick={() => setPestanaActiva(pestana.id)}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all ${
+                activa
+                  ? 'bg-brand-600 text-white shadow-md'
+                  : 'bg-slate-800/60 text-slate-300 hover:bg-slate-700/60 hover:text-slate-100'
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              <span>{pestana.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* PESTAÑA 1: PERSONAL */}
+      {pestanaActiva === 'personal' && (
+        <Card className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex flex-1 items-center gap-2 max-w-md">
+              <Search className="h-4 w-4 text-slate-400" />
+              <Input
+                placeholder="Buscar por nombre, cédula, ficha o cargo..."
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Select
+                value={empresaFiltro}
+                onChange={(e) => setEmpresaFiltro(e.target.value)}
+                options={[
+                  { value: '', label: 'Todas las empresas' },
+                  { value: 'ESC', label: 'ESC · Escoltas' },
+                  { value: 'GT', label: 'GT · Golden Touch' },
+                  { value: 'MTO', label: 'MTO · Transporte' },
+                ]}
+              />
+            </div>
+          </div>
+
+          <DataTable
+            columnas={columnasPersonal}
+            filas={personalFiltrado}
+            cargando={cargando}
+            mensajeVacio="No se encontraron trabajadores en este criterio."
+          />
+        </Card>
+      )}
+
+      {/* PESTAÑA 2: ANTICIPOS Y PRÉSTAMOS */}
+      {pestanaActiva === 'anticipos' && (
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-100">Anticipos y Préstamos Activos</h2>
+            <div className="text-xs text-slate-400">
+              Descuento automático configurable por quincena
+            </div>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+            <table className="w-full text-left text-sm text-slate-300">
+              <thead className="bg-slate-800/80 text-xs uppercase text-slate-400 border-b border-slate-700">
                 <tr>
-                  <th className="px-4 py-3">Empleado</th>
-                  <th className="px-4 py-3">Cédula</th>
-                  <th className="px-4 py-3">Cargo / Depto</th>
-                  <th className="px-4 py-3">Sueldo Base</th>
-                  <th className="px-4 py-3">Fecha Ingreso</th>
-                  <th className="px-4 py-3">Estado</th>
+                  <th className="py-3 px-4">Trabajador</th>
+                  <th className="py-3 px-4">Tipo</th>
+                  <th className="py-3 px-4">Monto Total</th>
+                  <th className="py-3 px-4">Cuotas</th>
+                  <th className="py-3 px-4">Saldo Pendiente</th>
+                  <th className="py-3 px-4">Estado</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {personal.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 font-medium text-slate-900">{p.nombre} {p.apellido}</td>
-                    <td className="px-4 py-3">{p.cedula || '—'}</td>
-                    <td className="px-4 py-3">
-                      <span className="font-medium text-slate-800">{p.cargo || 'Sin cargo'}</span>
-                      {p.departamento && <span className="text-xs text-slate-400 block">{p.departamento}</span>}
+              <tbody className="divide-y divide-slate-800">
+                {anticipos.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-slate-400">
+                      No hay anticipos ni préstamos registrados.
                     </td>
-                    <td className="px-4 py-3 font-semibold text-slate-900">${p.sueldo_base || 0}</td>
-                    <td className="px-4 py-3">{p.fecha_ingreso || '—'}</td>
-                    <td className="px-4 py-3">
-                      <Badge variant={p.activo ? 'success' : 'slate'}>{p.activo ? 'Activo' : 'Inactivo'}</Badge>
+                  </tr>
+                ) : (
+                  anticipos.map((ant) => (
+                    <tr key={ant.id} className="hover:bg-slate-800/40">
+                      <td className="py-3 px-4 font-medium text-slate-200">
+                        {ant.personal?.nombre} {ant.personal?.apellido} ({ant.personal?.ficha_nro || 'S/F'})
+                      </td>
+                      <td className="py-3 px-4 capitalize">{ant.tipo}</td>
+                      <td className="py-3 px-4 font-mono font-semibold text-slate-100">
+                        {formatoDinero(ant.monto_total)} USD
+                      </td>
+                      <td className="py-3 px-4 font-mono">
+                        {ant.cuotas} cuota(s) de {formatoDinero(ant.monto_cuota)} USD
+                      </td>
+                      <td className="py-3 px-4 font-mono font-semibold text-amber-400">
+                        {formatoDinero(ant.saldo_pendiente)} USD
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge tone={ant.estado === 'activo' ? 'amarillo' : 'verde'}>
+                          {ant.estado}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
+      {/* PESTAÑA 3: NÓMINA */}
+      {pestanaActiva === 'nomina' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="space-y-2">
+            <span className="text-xs uppercase font-medium text-slate-400">Plantilla Activa</span>
+            <p className="text-2xl font-bold text-slate-100">{personal.filter((p) => p.activo).length}</p>
+            <p className="text-xs text-slate-400">Personal en nómina corriente</p>
+          </Card>
+          <Card className="space-y-2">
+            <span className="text-xs uppercase font-medium text-slate-400">Total Sueldo Base Mensual</span>
+            <p className="text-2xl font-bold text-emerald-400">
+              {formatoDinero(personal.filter((p) => p.activo).reduce((sum, p) => sum + (Number(p.sueldo_base) || 0), 0))} USD
+            </p>
+            <p className="text-xs text-slate-400">Monto global base estimado</p>
+          </Card>
+          <Card className="space-y-2">
+            <span className="text-xs uppercase font-medium text-slate-400">Anticipos Activos</span>
+            <p className="text-2xl font-bold text-amber-400">
+              {formatoDinero(anticipos.filter((a) => a.estado === 'activo').reduce((sum, a) => sum + (Number(a.saldo_pendiente) || 0), 0))} USD
+            </p>
+            <p className="text-xs text-slate-400">Saldo pendiente por deducir</p>
+          </Card>
+        </div>
+      )}
+
+      {/* PESTAÑA 4: DESCANSOS */}
+      {pestanaActiva === 'descansos' && (
+        <Card className="space-y-4">
+          <h2 className="text-lg font-semibold text-slate-100">Control de Descansos y Vacaciones</h2>
+          <p className="text-sm text-slate-400 leading-relaxed">
+            Módulo homologado con Golden Touch: cálculo automático de 15 días anuales reglamentarios, cómputo de vacaciones acumuladas y programación de descansos por turnos rotativos.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+            <div className="rounded-xl border border-slate-700/60 bg-slate-800/40 p-4">
+              <span className="text-xs text-slate-400">Días Reglamentarios</span>
+              <p className="text-xl font-bold text-slate-100 mt-1">15 días/año</p>
+            </div>
+            <div className="rounded-xl border border-slate-700/60 bg-slate-800/40 p-4">
+              <span className="text-xs text-slate-400">Tope Rotativo</span>
+              <p className="text-xl font-bold text-slate-100 mt-1">2 días libres / semana</p>
+            </div>
+            <div className="rounded-xl border border-slate-700/60 bg-slate-800/40 p-4">
+              <span className="text-xs text-slate-400">En Descanso Hoy</span>
+              <p className="text-xl font-bold text-brand-400 mt-1">Operativo</p>
+            </div>
+            <div className="rounded-xl border border-slate-700/60 bg-slate-800/40 p-4">
+              <span className="text-xs text-slate-400">Vacaciones Planificadas</span>
+              <p className="text-xl font-bold text-emerald-400 mt-1">Al día</p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* PESTAÑA 5: TABULADOR Y CARGOS */}
+      {pestanaActiva === 'administrativo' && (
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-100">Tabulador Salarial Vigente</h2>
+            <div className="text-xs text-slate-400">Escala de sueldos de referencia</div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm text-slate-300">
+              <thead className="bg-slate-800/80 text-xs uppercase text-slate-400 border-b border-slate-700">
+                <tr>
+                  <th className="py-3 px-4">Cargo</th>
+                  <th className="py-3 px-4">Nivel</th>
+                  <th className="py-3 px-4">Sueldo Base</th>
+                  <th className="py-3 px-4">Vigencia</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800">
+                {tabulador.map((tab) => (
+                  <tr key={tab.id} className="hover:bg-slate-800/40">
+                    <td className="py-3 px-4 font-medium text-slate-200">{tab.cargo}</td>
+                    <td className="py-3 px-4 font-mono font-semibold text-brand-400">{tab.nivel}</td>
+                    <td className="py-3 px-4 font-mono font-bold text-emerald-400">
+                      {formatoDinero(tab.sueldo_base)} {tab.moneda}
                     </td>
+                    <td className="py-3 px-4 text-xs text-slate-400">{formatoFecha(tab.vigencia_desde)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -291,292 +539,280 @@ export default function Rrhh() {
         </Card>
       )}
 
-      {/* 2. Anticipos y Préstamos */}
-      {tab === 'anticipos' && (
-        <Card className="p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-slate-800">Anticipos y Préstamos al Personal</h2>
-            <Button variant="primary" size="sm" onClick={() => setModalAnticipo(true)} leftIcon={Plus}>
-              Nueva Solicitud
-            </Button>
+      {/* PESTAÑA 6: MINUTAS */}
+      {pestanaActiva === 'minutas' && (
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-100">Minutas Operativas y Acuerdos</h2>
+            <div className="text-xs text-slate-400">Reuniones de coordinación y seguimiento</div>
           </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
-                <tr>
-                  <th className="px-4 py-3">Empleado</th>
-                  <th className="px-4 py-3">Tipo</th>
-                  <th className="px-4 py-3">Monto Total</th>
-                  <th className="px-4 py-3">Saldo Pendiente</th>
-                  <th className="px-4 py-3">Estado</th>
-                  <th className="px-4 py-3">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {anticipos.map((a) => (
-                  <tr key={a.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 font-medium text-slate-900">
-                      {a.personal ? `${a.personal.nombre} ${a.personal.apellido || ''}` : 'Empleado'}
-                    </td>
-                    <td className="px-4 py-3"><Badge variant={a.tipo === 'prestamo' ? 'purple' : 'info'}>{a.tipo}</Badge></td>
-                    <td className="px-4 py-3 font-semibold text-slate-900">${a.monto_total}</td>
-                    <td className="px-4 py-3 font-semibold text-amber-700">${a.saldo}</td>
-                    <td className="px-4 py-3"><Badge variant={a.estado === 'activo' ? 'warning' : 'success'}>{a.estado}</Badge></td>
-                    <td className="px-4 py-3">
-                      {a.estado === 'activo' && (
-                        <button
-                          onClick={() => {
-                            setItemAbono(a);
-                            setModalAbono(true);
-                          }}
-                          className="text-xs text-brand-600 font-medium hover:underline"
-                        >
-                          Abonar Cuota
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
-
-      {/* 3. Vacaciones y Permisos */}
-      {tab === 'eventos' && (
-        <Card className="p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-slate-800">Vacaciones, Reposos y Permisos</h2>
-            <Button variant="primary" size="sm" onClick={() => setModalEvento(true)} leftIcon={Plus}>
-              Registrar Ausencia
-            </Button>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
-                <tr>
-                  <th className="px-4 py-3">Empleado</th>
-                  <th className="px-4 py-3">Tipo</th>
-                  <th className="px-4 py-3">Desde</th>
-                  <th className="px-4 py-3">Hasta</th>
-                  <th className="px-4 py-3">Días</th>
-                  <th className="px-4 py-3">Estado</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {eventos.map((ev) => (
-                  <tr key={ev.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 font-medium text-slate-900">
-                      {ev.personal ? `${ev.personal.nombre} ${ev.personal.apellido || ''}` : 'Empleado'}
-                    </td>
-                    <td className="px-4 py-3"><Badge variant="outline">{ev.tipo}</Badge></td>
-                    <td className="px-4 py-3">{ev.fecha_inicio}</td>
-                    <td className="px-4 py-3">{ev.fecha_fin}</td>
-                    <td className="px-4 py-3 font-semibold">{ev.dias} días</td>
-                    <td className="px-4 py-3"><Badge variant="success">{ev.estado}</Badge></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
-
-      {/* 4. Cargos */}
-      {tab === 'cargos' && (
-        <Card className="p-4">
-          <h2 className="text-lg font-semibold text-slate-800 mb-4">Catálogo de Puestos y Cargos</h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {cargos.map((c) => (
-              <div key={c.id} className="rounded-xl border border-slate-200 p-4">
-                <div className="flex items-center gap-2">
-                  <Briefcase className="h-4 w-4 text-brand-600" />
-                  <h3 className="font-semibold text-slate-900">{c.nombre}</h3>
+          <div className="space-y-3">
+            {minutas.length === 0 ? (
+              <p className="text-sm text-slate-400 py-6 text-center">No hay minutas registradas.</p>
+            ) : (
+              minutas.map((m) => (
+                <div key={m.id} className="p-4 rounded-xl border border-slate-700/60 bg-slate-800/40 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs font-bold text-brand-400">{m.correlativo}</span>
+                    <span className="text-xs text-slate-400">{formatoFecha(m.fecha)} · Turno {m.turno}</span>
+                  </div>
+                  <p className="text-sm text-slate-200">{m.observaciones || 'Sin observaciones generales.'}</p>
+                  <div className="text-xs text-slate-400">Supervisor: {m.supervisor_nombre || 'N/A'}</div>
                 </div>
-                {c.departamento && <p className="text-xs text-slate-500 mt-1">Dpto: {c.departamento}</p>}
-                {c.sueldo_sugerido > 0 && <p className="text-xs text-emerald-600 font-medium mt-1">Sugerido: ${c.sueldo_sugerido}</p>}
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </Card>
       )}
 
-      {/* Modal Nuevo Empleado */}
-      <Modal abierto={modalPersonal} alCerrar={() => setModalPersonal(false)} titulo="Registrar Ficha de Personal">
-        <form onSubmit={guardarPersonal} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+      {/* MODAL PERSONAL */}
+      <Modal
+        abierto={modalPersonalAbierto}
+        alCerrar={() => setModalPersonalAbierto(false)}
+        titulo={editandoPersonalId ? 'Editar Ficha de Personal' : 'Nueva Ficha de Personal'}
+      >
+        <form onSubmit={handleGuardarPersonal} className="space-y-4 text-slate-200">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
-              label="Nombre *"
+              label="Nombre"
+              required
               value={formPersonal.nombre}
               onChange={(e) => setFormPersonal({ ...formPersonal, nombre: e.target.value })}
-              required
             />
             <Input
               label="Apellido"
+              required
               value={formPersonal.apellido}
               onChange={(e) => setFormPersonal({ ...formPersonal, apellido: e.target.value })}
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
               label="Cédula"
+              required
+              placeholder="V-12345678"
               value={formPersonal.cedula}
               onChange={(e) => setFormPersonal({ ...formPersonal, cedula: e.target.value })}
             />
             <Input
-              label="Teléfono"
-              value={formPersonal.telefono}
-              onChange={(e) => setFormPersonal({ ...formPersonal, telefono: e.target.value })}
+              label="Nº Ficha (Código)"
+              placeholder="001 o GT-01"
+              value={formPersonal.ficha_nro}
+              onChange={(e) => setFormPersonal({ ...formPersonal, ficha_nro: e.target.value })}
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select
+              label="Empresa"
+              value={formPersonal.empresa}
+              onChange={(e) => setFormPersonal({ ...formPersonal, empresa: e.target.value })}
+              options={[
+                { value: 'ESC', label: 'ESC · Escoltas' },
+                { value: 'GT', label: 'GT · Golden Touch' },
+                { value: 'MTO', label: 'MTO · Transporte' },
+              ]}
+            />
             <Input
               label="Cargo"
               value={formPersonal.cargo}
               onChange={(e) => setFormPersonal({ ...formPersonal, cargo: e.target.value })}
             />
-            <Input
-              label="Departamento"
-              value={formPersonal.departamento}
-              onChange={(e) => setFormPersonal({ ...formPersonal, departamento: e.target.value })}
-            />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
+              label="Sueldo Base Mensual (USD)"
               type="number"
-              label="Sueldo Base (USD)"
+              step="0.01"
+              required
               value={formPersonal.sueldo_base}
-              onChange={(e) => setFormPersonal({ ...formPersonal, sueldo_base: e.target.value })}
+              onChange={(e) => setFormPersonal({ ...formPersonal, sueldo_base: Number(e.target.value) })}
             />
             <Input
-              type="date"
-              label="Fecha Ingreso"
-              value={formPersonal.fecha_ingreso}
-              onChange={(e) => setFormPersonal({ ...formPersonal, fecha_ingreso: e.target.value })}
+              label="Teléfono"
+              placeholder="+58 412..."
+              value={formPersonal.telefono}
+              onChange={(e) => setFormPersonal({ ...formPersonal, telefono: e.target.value })}
             />
           </div>
+
+          <Input
+            label="Correo Electrónico"
+            type="email"
+            value={formPersonal.correo}
+            onChange={(e) => setFormPersonal({ ...formPersonal, correo: e.target.value })}
+          />
+
           <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={() => setModalPersonal(false)} type="button">Cancelar</Button>
-            <Button variant="primary" type="submit" disabled={guardando}>Crear Ficha</Button>
+            <Button variant="outline" type="button" onClick={() => setModalPersonalAbierto(false)}>
+              Cancelar
+            </Button>
+            <Button variant="primary" type="submit">
+              Guardar Ficha
+            </Button>
           </div>
         </form>
       </Modal>
 
-      {/* Modal Nuevo Anticipo */}
-      <Modal abierto={modalAnticipo} alCerrar={() => setModalAnticipo(false)} titulo="Registrar Anticipo o Préstamo">
-        <form onSubmit={guardarAnticipo} className="space-y-4">
+      {/* MODAL SUELDO */}
+      <Modal
+        abierto={modalSueldoAbierto}
+        alCerrar={() => setModalSueldoAbierto(false)}
+        titulo={`Ajuste Salarial · ${sueldoTarget?.nombre} ${sueldoTarget?.apellido}`}
+      >
+        <form onSubmit={handleCambiarSueldo} className="space-y-4 text-slate-200">
+          <p className="text-xs text-slate-400">
+            Sueldo actual: <strong className="text-slate-100">{formatoDinero(sueldoTarget?.sueldo_base || 0)} USD</strong>.
+            Cada ajuste queda registrado en el histórico auditado.
+          </p>
+          <Input
+            label="Nuevo Sueldo Base Mensual (USD)"
+            type="number"
+            step="0.01"
+            required
+            value={formSueldo.nuevo_sueldo}
+            onChange={(e) => setFormSueldo({ ...formSueldo, nuevo_sueldo: e.target.value })}
+          />
+          <Input
+            label="Motivo del Ajuste"
+            required
+            placeholder="Aumento por desempeño, reestructuración, etc."
+            value={formSueldo.motivo}
+            onChange={(e) => setFormSueldo({ ...formSueldo, motivo: e.target.value })}
+          />
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" type="button" onClick={() => setModalSueldoAbierto(false)}>
+              Cancelar
+            </Button>
+            <Button variant="primary" type="submit">
+              Confirmar Sueldo
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* MODAL ANTICIPO */}
+      <Modal
+        abierto={modalAnticipoAbierto}
+        alCerrar={() => setModalAnticipoAbierto(false)}
+        titulo="Registrar Anticipo o Préstamo"
+      >
+        <form onSubmit={handleGuardarAnticipo} className="space-y-4 text-slate-200">
           <Select
-            label="Empleado *"
+            label="Personal Solicitante"
+            required
             value={formAnticipo.personal_id}
             onChange={(e) => setFormAnticipo({ ...formAnticipo, personal_id: e.target.value })}
-            required
-          >
-            <option value="">-- Seleccionar empleado --</option>
-            {personal.map((p) => (
-              <option key={p.id} value={p.id}>{p.nombre} {p.apellido}</option>
-            ))}
-          </Select>
-          <div className="grid grid-cols-2 gap-3">
+            options={[
+              { value: '', label: 'Seleccionar trabajador...' },
+              ...personal.map((p) => ({
+                value: p.id,
+                label: `${p.nombre} ${p.apellido} (${p.ficha_nro || p.cedula || 'S/F'})`,
+              })),
+            ]}
+          />
+          <div className="grid grid-cols-2 gap-4">
             <Select
-              label="Tipo *"
+              label="Tipo"
               value={formAnticipo.tipo}
               onChange={(e) => setFormAnticipo({ ...formAnticipo, tipo: e.target.value })}
-            >
-              <option value="anticipo">Anticipo de Sueldo</option>
-              <option value="prestamo">Préstamo Institucional</option>
-            </Select>
+              options={[
+                { value: 'anticipo', label: 'Anticipo' },
+                { value: 'prestamo', label: 'Préstamo' },
+              ]}
+            />
             <Input
+              label="Monto Total (USD)"
               type="number"
-              label="Monto Total (USD) *"
+              step="0.01"
+              required
               value={formAnticipo.monto_total}
               onChange={(e) => setFormAnticipo({ ...formAnticipo, monto_total: e.target.value })}
-              required
             />
           </div>
           <Input
-            label="Motivo"
+            label="Número de Cuotas"
+            type="number"
+            min="1"
+            value={formAnticipo.cuotas}
+            onChange={(e) => setFormAnticipo({ ...formAnticipo, cuotas: e.target.value })}
+          />
+          <Input
+            label="Motivo / Observación"
             value={formAnticipo.motivo}
             onChange={(e) => setFormAnticipo({ ...formAnticipo, motivo: e.target.value })}
           />
           <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={() => setModalAnticipo(false)} type="button">Cancelar</Button>
-            <Button variant="primary" type="submit" disabled={guardando}>Guardar Solicitud</Button>
+            <Button variant="outline" type="button" onClick={() => setModalAnticipoAbierto(false)}>
+              Cancelar
+            </Button>
+            <Button variant="primary" type="submit">
+              Guardar Anticipo
+            </Button>
           </div>
         </form>
       </Modal>
 
-      {/* Modal Abonar Cuota */}
-      <Modal abierto={modalAbono} alCerrar={() => setModalAbono(false)} titulo="Abonar a Anticipo / Préstamo">
-        <form onSubmit={registrarAbono} className="space-y-4">
-          <p className="text-sm text-slate-600">
-            Saldo pendiente actual: <strong className="text-amber-700">${itemAbono?.saldo}</strong>
-          </p>
-          <Input
-            type="number"
-            label="Monto a abonar (USD) *"
-            value={montoAbono}
-            onChange={(e) => setMontoAbono(e.target.value)}
-            required
-          />
-          <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={() => setModalAbono(false)} type="button">Cancelar</Button>
-            <Button variant="primary" type="submit" disabled={guardando}>Registrar Abono</Button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Modal Nueva Ausencia */}
-      <Modal abierto={modalEvento} alCerrar={() => setModalEvento(false)} titulo="Registrar Vacaciones o Permiso">
-        <form onSubmit={guardarEvento} className="space-y-4">
-          <Select
-            label="Empleado *"
-            value={formEvento.personal_id}
-            onChange={(e) => setFormEvento({ ...formEvento, personal_id: e.target.value })}
-            required
-          >
-            <option value="">-- Seleccionar empleado --</option>
-            {personal.map((p) => (
-              <option key={p.id} value={p.id}>{p.nombre} {p.apellido}</option>
-            ))}
-          </Select>
-          <Select
-            label="Tipo de Ausencia"
-            value={formEvento.tipo}
-            onChange={(e) => setFormEvento({ ...formEvento, tipo: e.target.value })}
-          >
-            <option value="vacaciones">Vacaciones Anuales</option>
-            <option value="permiso">Permiso Laboral</option>
-            <option value="reposo">Reposo Médico</option>
-            <option value="otro">Otro</option>
-          </Select>
-          <div className="grid grid-cols-2 gap-3">
+      {/* MODAL MINUTA */}
+      <Modal
+        abierto={modalMinutaAbierto}
+        alCerrar={() => setModalMinutaAbierto(false)}
+        titulo="Registrar Minuta de Reunión Operativa"
+      >
+        <form onSubmit={handleGuardarMinuta} className="space-y-4 text-slate-200">
+          <div className="grid grid-cols-2 gap-4">
             <Input
+              label="Fecha"
               type="date"
-              label="Desde"
-              value={formEvento.fecha_inicio}
-              onChange={(e) => setFormEvento({ ...formEvento, fecha_inicio: e.target.value })}
               required
+              value={formMinuta.fecha}
+              onChange={(e) => setFormMinuta({ ...formMinuta, fecha: e.target.value })}
             />
-            <Input
-              type="date"
-              label="Hasta"
-              value={formEvento.fecha_fin}
-              onChange={(e) => setFormEvento({ ...formEvento, fecha_fin: e.target.value })}
-              required
+            <Select
+              label="Turno"
+              value={formMinuta.turno}
+              onChange={(e) => setFormMinuta({ ...formMinuta, turno: e.target.value })}
+              options={[
+                { value: 'Diurno', label: 'Diurno' },
+                { value: 'Nocturno', label: 'Nocturno' },
+                { value: 'Mixto', label: 'Mixto' },
+              ]}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-300 mb-1">Temas Tratados (1 por línea)</label>
+            <textarea
+              className="w-full rounded-xl border border-slate-700 bg-slate-900/80 p-3 text-sm text-slate-100 placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              rows={3}
+              value={formMinuta.temas}
+              onChange={(e) => setFormMinuta({ ...formMinuta, temas: e.target.value })}
+              placeholder="Asignación de unidades blindadas&#10;Revisión de turnos de escolta"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-300 mb-1">Acuerdos y Responsables (1 por línea)</label>
+            <textarea
+              className="w-full rounded-xl border border-slate-700 bg-slate-900/80 p-3 text-sm text-slate-100 placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              rows={3}
+              value={formMinuta.acuerdos}
+              onChange={(e) => setFormMinuta({ ...formMinuta, acuerdos: e.target.value })}
+              placeholder="Chequeo preventivo de vehículos los viernes"
             />
           </div>
           <Input
-            type="number"
-            label="Días Totales"
-            value={formEvento.dias}
-            onChange={(e) => setFormEvento({ ...formEvento, dias: e.target.value })}
+            label="Observaciones Generales"
+            value={formMinuta.observaciones}
+            onChange={(e) => setFormMinuta({ ...formMinuta, observaciones: e.target.value })}
           />
           <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={() => setModalEvento(false)} type="button">Cancelar</Button>
-            <Button variant="primary" type="submit" disabled={guardando}>Guardar Ausencia</Button>
+            <Button variant="outline" type="button" onClick={() => setModalMinutaAbierto(false)}>
+              Cancelar
+            </Button>
+            <Button variant="primary" type="submit">
+              Guardar Minuta
+            </Button>
           </div>
         </form>
       </Modal>

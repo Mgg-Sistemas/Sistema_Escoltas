@@ -31,7 +31,7 @@ export default function RecuperarClave() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
+    <div className="flex min-h-screen items-center justify-center bg-[#0e1217] px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
           <img
@@ -39,20 +39,20 @@ export default function RecuperarClave() {
             alt="Emblema de Seguridad Escoltas"
             className="h-20 w-20 object-contain"
           />
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-700">Recuperación</p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-400">Recuperación</p>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-panel sm:p-8">
-          <h1 className="text-2xl font-bold text-slate-900">Recupera tu contraseña</h1>
-          <p className="mt-2 text-sm leading-relaxed text-slate-500">
+        <div className="rounded-2xl border border-slate-700/60 bg-[#161b22] p-6 shadow-panel sm:p-8">
+          <h1 className="text-2xl font-bold text-slate-100">Recupera tu contraseña</h1>
+          <p className="mt-2 text-sm leading-relaxed text-slate-400">
             Escribe el usuario con el que ingresas. Te enviaremos un enlace seguro a tu correo
             interno para crear una contraseña nueva. Por seguridad, siempre se te pedirá confirmarla
             dos veces.
           </p>
 
           {enviado ? (
-            <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
-              <p className="flex items-start gap-2 font-bold">
+            <div className="mt-6 rounded-xl border border-emerald-500/30 bg-emerald-950/40 p-4 text-sm text-emerald-200">
+              <p className="flex items-start gap-2 font-bold text-emerald-100">
                 <MailCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                 Revisa tu correo
               </p>
@@ -63,7 +63,7 @@ export default function RecuperarClave() {
           ) : (
             <form onSubmit={enviar} className="mt-6 space-y-5">
               {error && (
-                <div role="alert" className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-medium text-rose-800">
+                <div role="alert" className="flex items-start gap-2 rounded-xl border border-rose-500/30 bg-rose-950/40 p-3 text-sm font-medium text-rose-300">
                   <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                   <p>{error}</p>
                 </div>
@@ -86,7 +86,7 @@ export default function RecuperarClave() {
 
           <Link
             to="/login"
-            className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-brand-700 hover:underline"
+            className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-brand-400 hover:text-brand-300 hover:underline"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             Volver al inicio de sesión

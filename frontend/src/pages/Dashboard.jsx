@@ -150,7 +150,7 @@ export default function Dashboard() {
     lista.push({ to: '/asistencias', label: 'Asistencias', descripcion: 'Registrar entrada y salida', icono: CalendarCheck2, color: 'bg-emerald-50 text-emerald-700' });
     if (puede('nomina')) lista.push({ to: '/nomina', label: 'Nómina', descripcion: 'Cerrar periodos y calcular', icono: WalletCards, color: 'bg-violet-50 text-violet-700' });
     if (puede('pagos')) lista.push({ to: '/pagos', label: 'Pagos', descripcion: 'Registrar y confirmar', icono: CreditCard, color: 'bg-rose-50 text-rose-700' });
-    if (puede('usuarios')) lista.push({ to: '/usuarios', label: 'Usuarios', descripcion: 'Administrar roles', icono: ShieldCheck, color: 'bg-slate-100 text-slate-700' });
+    if (puede('usuarios')) lista.push({ to: '/usuarios', label: 'Usuarios', descripcion: 'Administrar roles', icono: ShieldCheck, color: 'bg-slate-800 text-slate-300' });
     return lista;
   }, [puede]);
 
@@ -180,9 +180,9 @@ export default function Dashboard() {
     <div className="space-y-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Bienvenido de nuevo 👋</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
-            Estás entrando como <strong className="text-slate-800">{roleLabel}</strong>. Aquí tienes un
+          <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Bienvenido de nuevo 👋</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">
+            Estás entrando como <strong className="text-slate-200">{roleLabel}</strong>. Aquí tienes un
             resumen de la operación y los accesos más usados.
           </p>
         </div>
@@ -226,22 +226,22 @@ export default function Dashboard() {
               <li key={paso.label}>
                 <Link
                   to={paso.to}
-                  className="flex min-h-14 items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5 transition-colors hover:border-brand-200 hover:bg-brand-50/50"
+                  className="flex min-h-14 items-center gap-3 rounded-xl border border-slate-800 bg-[#0e1217]/60 px-3 py-2.5 transition-colors hover:border-brand-500/40 hover:bg-slate-800/40"
                 >
-                  <span className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${paso.done ? 'bg-emerald-100 text-emerald-700' : 'bg-white text-slate-500 ring-1 ring-slate-200'}`}>
+                  <span className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${paso.done ? 'bg-emerald-950/60 text-emerald-400 ring-1 ring-emerald-500/30' : 'bg-slate-800 text-slate-300 ring-1 ring-slate-700'}`}>
                     {paso.done ? <CheckCircle2 className="h-4 w-4" aria-hidden="true" /> : indice + 1}
                   </span>
-                  <span className={`flex-1 text-sm font-medium ${paso.done ? 'text-slate-500 line-through decoration-slate-300' : 'text-slate-800'}`}>
+                  <span className={`flex-1 text-sm font-medium ${paso.done ? 'text-slate-500 line-through decoration-slate-600' : 'text-slate-200'}`}>
                     {paso.label}
                   </span>
-                  <ArrowRight className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                  <ArrowRight className="h-4 w-4 text-slate-500" aria-hidden="true" />
                 </Link>
               </li>
             ))}
           </ol>
-          <div className="mt-5 rounded-xl bg-brand-50 p-4 text-sm text-brand-900">
-            <p className="font-semibold"> Consejo</p>
-            <p className="mt-1 leading-relaxed text-brand-800">
+          <div className="mt-5 rounded-xl border border-brand-500/20 bg-brand-950/30 p-4 text-sm text-brand-200">
+            <p className="font-semibold text-brand-100">💡 Consejo</p>
+            <p className="mt-1 leading-relaxed text-brand-200/90">
               Un buen flujo es: personal → asignación → asistencia → permisos → nómina → pagos.
             </p>
           </div>
@@ -264,16 +264,16 @@ export default function Dashboard() {
                   <Link
                     key={acceso.to}
                     to={acceso.to}
-                    className="group flex min-h-24 items-center gap-3 rounded-xl border border-slate-200 p-4 transition-all hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-card"
+                    className="group flex min-h-24 items-center gap-3 rounded-xl border border-slate-800 bg-[#0e1217]/50 p-4 transition-all hover:-translate-y-0.5 hover:border-brand-500/50 hover:bg-slate-800/40 hover:shadow-card"
                   >
                     <span className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${acceso.color}`}>
                       <Icono className="h-5 w-5" aria-hidden="true" />
                     </span>
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-bold text-slate-800">{acceso.label}</span>
-                      <span className="mt-0.5 block text-xs text-slate-500">{acceso.descripcion}</span>
+                      <span className="block truncate text-sm font-bold text-slate-200">{acceso.label}</span>
+                      <span className="mt-0.5 block text-xs text-slate-400">{acceso.descripcion}</span>
                     </span>
-                    <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-1 group-hover:text-brand-600" aria-hidden="true" />
+                    <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-slate-500 transition-transform group-hover:translate-x-1 group-hover:text-brand-400" aria-hidden="true" />
                   </Link>
                 );
               })}
@@ -285,25 +285,25 @@ export default function Dashboard() {
       <Card
         title="Actividad reciente"
         subtitle="Últimos permisos y asistencias registrados"
-        actions={<Link to="/ayuda" className="inline-flex items-center gap-1 text-sm font-semibold text-brand-700 hover:underline"><CircleHelp className="h-4 w-4" aria-hidden="true" /> Cómo funciona</Link>}
+        actions={<Link to="/ayuda" className="inline-flex items-center gap-1 text-sm font-semibold text-brand-400 hover:underline"><CircleHelp className="h-4 w-4" aria-hidden="true" /> Cómo funciona</Link>}
       >
         {cargando ? (
           <div className="space-y-3">
             {Array.from({ length: 4 }, (_, indice) => <Skeleton key={indice} className="h-14" />)}
           </div>
         ) : actividad.length ? (
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-slate-800">
             {actividad.map((evento) => {
               const Icono = evento.icono;
               return (
                 <li key={evento.id}>
-                  <Link to={evento.ruta} className="flex items-center gap-3 py-3 transition-colors hover:bg-slate-50">
-                    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+                  <Link to={evento.ruta} className="flex items-center gap-3 py-3 transition-colors hover:bg-slate-800/40">
+                    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-800 text-slate-300">
                       <Icono className="h-4 w-4" aria-hidden="true" />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold text-slate-800">{evento.titulo}</span>
-                      <span className="block text-xs text-slate-500">{formatearFechaHora(evento.fecha)}</span>
+                      <span className="block truncate text-sm font-semibold text-slate-200">{evento.titulo}</span>
+                      <span className="block text-xs text-slate-400">{formatearFechaHora(evento.fecha)}</span>
                     </span>
                     <Badge tone={estadoTone(evento.estado)}>{estadoLabel(evento.estado)}</Badge>
                   </Link>
@@ -322,10 +322,10 @@ export default function Dashboard() {
         )}
       </Card>
 
-      <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
-        <FileText className="h-5 w-5 shrink-0 text-brand-700" aria-hidden="true" />
+      <div className="flex items-center gap-2 rounded-xl border border-slate-800 bg-[#161b22] p-4 text-sm text-slate-300">
+        <FileText className="h-5 w-5 shrink-0 text-brand-400" aria-hidden="true" />
         <p>
-          ¿Tienes dudas sobre un paso? La sección <Link to="/ayuda" className="font-semibold text-brand-700 hover:underline">Ayuda</Link> explica cada módulo con ejemplos y un glosario.
+          ¿Tienes dudas sobre un paso? La sección <Link to="/ayuda" className="font-semibold text-brand-400 hover:underline">Ayuda</Link> explica cada módulo con ejemplos y un glosario.
         </p>
       </div>
     </div>
