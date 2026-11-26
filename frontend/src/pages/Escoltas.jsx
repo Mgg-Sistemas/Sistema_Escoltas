@@ -538,15 +538,16 @@ export default function Escoltas() {
           emptyIcon={UsersRound}
           onRowClick={(fila) => setPerfilFicha(fila)}
           actions={(fila) => (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 whitespace-nowrap">
               <Button
                 variant="primary"
                 size="sm"
                 leftIcon={IdCard}
                 onClick={() => setPerfilFicha(fila)}
-                title="Ver Carnet y Ficha"
+                title="Ver Carnet y Ficha Oficial"
+                className="whitespace-nowrap px-3 text-xs font-bold"
               >
-                Ficha / Carnet
+                Carnet
               </Button>
               {puedeEditar && (
                 <Button

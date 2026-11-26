@@ -38,7 +38,6 @@ const SECCIONES_NAVEGACION = [
       { to: '/distribucion', label: 'Turnos y Distribución', icon: CalendarRange, descripcion: 'Asignaciones y cobertura', modulo: 'distribucion' },
       { to: '/permisos', label: 'Descansos y Permisos', icon: ClipboardCheck, descripcion: 'Rotaciones y reposos', modulo: 'permisos' },
       { to: '/asistencias', label: 'Disponibilidad y Asistencia', icon: CalendarCheck2, descripcion: 'Entradas, salidas y guardias', modulo: 'asistencias' },
-      { to: '/choferes', label: 'Flota y Servicios', icon: Truck, descripcion: 'Rutas, traslados y vehículos', modulo: 'choferes' },
     ],
   },
   {
@@ -186,7 +185,7 @@ export default function Layout() {
   const movilPrincipal = [
     todosLosItems[0],
     todosLosItems.find((item) => item.to === '/escoltas'),
-    todosLosItems.find((item) => item.to === '/choferes') || todosLosItems.find((item) => item.to === '/rrhh'),
+    todosLosItems.find((item) => item.to === '/distribucion') || todosLosItems.find((item) => item.to === '/rrhh'),
     todosLosItems.find((item) => item.to === '/nomina') || todosLosItems.find((item) => item.to === '/usuarios'),
   ].filter(Boolean);
 

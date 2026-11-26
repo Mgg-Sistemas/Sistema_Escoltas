@@ -129,8 +129,8 @@ export default function DataTable({
         ))}
       </div>
 
-      {/* Vista escritorio: tabla oscura profesional y descansada */}
-      <div className="hidden overflow-hidden rounded-xl border border-slate-700/60 bg-[#161b22] md:block shadow-sm">
+      {/* Vista escritorio: tabla oscura profesional y descansada con scroll horizontal si es necesario */}
+      <div className="hidden overflow-x-auto rounded-xl border border-slate-700/60 bg-[#161b22] md:block shadow-sm">
         <table className="min-w-full divide-y divide-slate-800 text-left text-sm">
           <thead className="bg-slate-800/80">
             <tr>
@@ -143,7 +143,14 @@ export default function DataTable({
                   {columna.label}
                 </th>
               ))}
-              {actions && <th scope="col" className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wide text-slate-400">Acciones</th>}
+              {actions && (
+                <th
+                  scope="col"
+                  className="whitespace-nowrap px-4 py-3 text-right text-xs font-bold uppercase tracking-wide text-slate-400 min-w-[150px] w-[160px]"
+                >
+                  Acción
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/80">
@@ -159,8 +166,8 @@ export default function DataTable({
                   </td>
                 ))}
                 {actions && (
-                  <td className="whitespace-nowrap px-4 py-3.5 text-right" onClick={(evento) => evento.stopPropagation()}>
-                    <div className="inline-flex flex-wrap justify-end gap-2">{actions(fila)}</div>
+                  <td className="whitespace-nowrap px-4 py-3.5 text-right min-w-[130px]" onClick={(evento) => evento.stopPropagation()}>
+                    <div className="inline-flex items-center justify-end gap-1.5">{actions(fila)}</div>
                   </td>
                 )}
               </tr>

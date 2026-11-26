@@ -164,14 +164,28 @@ export default function CarnetPersonal({ escolta, grado = 'Escolta Operativo', a
       <div className="flex flex-col items-center justify-center py-2">
         <div
           ref={carnetRef}
-          className="relative w-full max-w-[340px] aspect-[1/1.6] rounded-[24px] overflow-hidden border border-[#434a56] bg-gradient-to-b from-[#1c1f24] via-[#14171c] to-[#0c0e12] p-5 shadow-2xl transition-all duration-300"
-          style={{
-            backgroundImage: `
-              radial-gradient(circle at 100% 0%, rgba(255, 138, 0, 0.22) 0%, transparent 45%),
-              radial-gradient(circle at 0% 100%, rgba(255, 213, 74, 0.15) 0%, transparent 40%),
-              linear-gradient(180deg, #1f2329 0%, #111317 100%)
-            `,
-          }}
+          className={`relative w-full max-w-[340px] aspect-[1/1.6] rounded-[24px] overflow-hidden border shadow-2xl transition-all duration-300 p-5 ${
+            lado === 'frente'
+              ? 'border-[#434a56] bg-gradient-to-b from-[#1c1f24] via-[#14171c] to-[#0c0e12]'
+              : 'border-[#d0d7de] bg-gradient-to-b from-[#ffffff] via-[#f8fafc] to-[#f1f5f9] text-slate-800'
+          }`}
+          style={
+            lado === 'frente'
+              ? {
+                  backgroundImage: `
+                    radial-gradient(circle at 100% 0%, rgba(255, 138, 0, 0.22) 0%, transparent 45%),
+                    radial-gradient(circle at 0% 100%, rgba(255, 213, 74, 0.15) 0%, transparent 40%),
+                    linear-gradient(180deg, #1f2329 0%, #111317 100%)
+                  `,
+                }
+              : {
+                  backgroundImage: `
+                    radial-gradient(circle at 100% 100%, rgba(255, 138, 0, 0.08) 0%, transparent 50%),
+                    radial-gradient(circle at 0% 0%, rgba(200, 215, 230, 0.3) 0%, transparent 45%),
+                    linear-gradient(180deg, #ffffff 0%, #f4f6f9 100%)
+                  `,
+                }
+          }
         >
           {/* LADO FRENTE */}
           {lado === 'frente' ? (
@@ -250,71 +264,106 @@ export default function CarnetPersonal({ escolta, grado = 'Escolta Operativo', a
               </div>
             </div>
           ) : (
-            /* LADO REVERSO */
-            <div className="flex h-full flex-col justify-between text-left select-none p-1">
-              {/* Encabezado reverso (SIN HUECO) */}
-              <div className="flex items-center justify-between border-b border-[#333944] pb-2.5">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="h-5 w-5 text-[#ff8a00]" />
-                  <span className="text-xs font-black tracking-wide text-white">ESCOLTAS VIGILANCIA</span>
-                </div>
-                <span className="text-[10px] font-bold text-[#29c081] bg-[#29c081]/15 px-2 py-0.5 rounded-full border border-[#29c081]/30">
-                  VALIDADO
-                </span>
+            /* LADO REVERSO (Formato Oficial Idéntico al Ejemplo) */
+            <div className="relative flex h-full flex-col justify-between text-left select-none p-1">
+              {/* Marca de agua sutil de Escudo / Guardia al fondo */}
+              <div className="pointer-events-none absolute right-1 top-8 opacity-[0.06] select-none">
+                <ShieldCheck className="h-56 w-56 text-slate-900" />
               </div>
 
-              {/* Datos Operativos con Iconos */}
-              <div className="space-y-2.5 py-3 text-xs">
-                <div className="rounded-lg bg-[#23272e]/80 border border-[#333944] p-2 flex items-center gap-2.5">
-                  <IdCard className="h-4 w-4 text-[#ff8a00] shrink-0" />
-                  <div className="min-w-0">
-                    <span className="text-[9px] uppercase font-bold text-slate-400 block">Tipo de Servicio</span>
-                    <strong className="text-slate-100 truncate block text-[11px]">{cargo}</strong>
+              {/* 4 Bloques de Datos Operativos Estilo Caja */}
+              <div className="relative z-10 space-y-2.5 pt-2">
+                {/* Tipo de Servicio */}
+                <div className="rounded-xl border border-slate-200 bg-white/95 px-3 py-2.5 shadow-sm">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-[#ff8a00]">
+                      <IdCard className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[9px] font-bold tracking-wider text-slate-400 uppercase block leading-none">
+                        TIPO DE SERVICIO
+                      </span>
+                      <strong className="text-[12px] font-black text-slate-900 tracking-tight block mt-0.5 truncate">
+                        {cargo}
+                      </strong>
+                    </div>
                   </div>
                 </div>
 
-                <div className="rounded-lg bg-[#23272e]/80 border border-[#333944] p-2 flex items-center gap-2.5">
-                  <Building className="h-4 w-4 text-[#ffd54a] shrink-0" />
-                  <div className="min-w-0">
-                    <span className="text-[9px] uppercase font-bold text-slate-400 block">Área / Asignación</span>
-                    <strong className="text-slate-100 truncate block text-[11px]">{area}</strong>
+                {/* Área / Asignación */}
+                <div className="rounded-xl border border-slate-200 bg-white/95 px-3 py-2.5 shadow-sm">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-[#ff8a00]">
+                      <Building className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[9px] font-bold tracking-wider text-slate-400 uppercase block leading-none">
+                        ÁREA / ASIGNACIÓN
+                      </span>
+                      <strong className="text-[12px] font-black text-slate-900 tracking-tight block mt-0.5 truncate">
+                        {area}
+                      </strong>
+                    </div>
                   </div>
                 </div>
 
-                <div className="rounded-lg bg-[#23272e]/80 border border-[#333944] p-2 flex items-center gap-2.5">
-                  <Calendar className="h-4 w-4 text-blue-400 shrink-0" />
-                  <div className="min-w-0">
-                    <span className="text-[9px] uppercase font-bold text-slate-400 block">Turno Operativo</span>
-                    <strong className="text-slate-100 truncate block text-[11px]">{turno}</strong>
+                {/* Turno Operativo */}
+                <div className="rounded-xl border border-slate-200 bg-white/95 px-3 py-2.5 shadow-sm">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-[#ff8a00]">
+                      <Calendar className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[9px] font-bold tracking-wider text-slate-400 uppercase block leading-none">
+                        TURNO OPERATIVO
+                      </span>
+                      <strong className="text-[12px] font-black text-slate-900 tracking-tight block mt-0.5 truncate">
+                        {turno}
+                      </strong>
+                    </div>
                   </div>
                 </div>
 
-                <div className="rounded-lg bg-[#23272e]/80 border border-[#333944] p-2 flex items-center gap-2.5">
-                  <CheckCircle2 className="h-4 w-4 text-[#29c081] shrink-0" />
-                  <div className="min-w-0">
-                    <span className="text-[9px] uppercase font-bold text-slate-400 block">Vigencia Oficial</span>
-                    <strong className="text-slate-100 truncate block text-[11px]">{vigencia}</strong>
+                {/* Vigencia Oficial */}
+                <div className="rounded-xl border border-slate-200 bg-white/95 px-3 py-2.5 shadow-sm">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-[#29c081]">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[9px] font-bold tracking-wider text-slate-400 uppercase block leading-none">
+                        VIGENCIA OFICIAL
+                      </span>
+                      <strong className="text-[12px] font-black text-slate-900 tracking-tight block mt-0.5">
+                        {vigencia}
+                      </strong>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Cláusula reglamentaria */}
-              <div className="text-[9px] text-slate-400 leading-tight text-center px-1">
-                Este carnet es de uso personal e intransferible e identifica al personal de Seguridad y Vigilancia de ESCOLTAS.
+              {/* Cláusula Reglamentaria Oficial y Divisor Naranja */}
+              <div className="relative z-10 pt-2 pb-1">
+                <div className="w-12 h-0.5 bg-[#ff8a00] mx-auto mb-2 rounded-full" />
+                <p className="text-[9.5px] font-medium text-slate-500 leading-snug text-center px-1">
+                  Este carnet es de uso personal e intransferible e identifica al personal de Seguridad y Vigilancia de ESCOLTAS.
+                </p>
               </div>
 
-              {/* Código de Barras Vectorial */}
-              <div className="mt-2 text-center rounded-lg bg-white p-2">
-                <div className="flex items-center justify-center gap-[2px] h-7">
-                  {Array.from({ length: 42 }).map((_, i) => (
+              {/* Código de Barras en Contenedor Blanco Limpio */}
+              <div className="relative z-10 mt-1 rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm text-center">
+                <div className="flex items-center justify-center gap-[2.5px] h-8">
+                  {Array.from({ length: 48 }).map((_, i) => (
                     <span
                       key={i}
-                      className="bg-black inline-block h-full"
-                      style={{ width: i % 3 === 0 ? '3px' : i % 2 === 0 ? '1px' : '2px' }}
+                      className="bg-slate-950 inline-block h-full"
+                      style={{
+                        width: i % 4 === 0 ? '3px' : i % 3 === 0 ? '1px' : i % 2 === 0 ? '2px' : '1px',
+                      }}
                     />
                   ))}
                 </div>
-                <p className="font-mono text-[10px] font-bold text-black tracking-wider mt-0.5">
+                <p className="font-mono text-[11px] font-black tracking-[0.2em] text-slate-950 mt-1 uppercase">
                   {codigo}
                 </p>
               </div>

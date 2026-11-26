@@ -45,7 +45,6 @@ export const MODULOS_SISTEMA = [
   { key: 'nomina', label: 'Nómina', descripcion: 'Periodos y detalles.' },
   { key: 'pagos', label: 'Pagos', descripcion: 'Registro y confirmación.' },
   { key: 'rrhh', label: 'Recursos Humanos', descripcion: 'Fichas de personal, contratos, anticipos y minutas.' },
-  { key: 'choferes', label: 'Choferes y Flota', descripcion: 'Expedientes de choferes, rutas, viáticos y pagos.' },
   { key: 'usuarios', label: 'Usuarios', descripcion: 'Cuentas y claves.' },
   { key: 'roles', label: 'Roles', descripcion: 'Roles y matriz de acceso.' },
   { key: 'ajustes', label: 'Ajustes', descripcion: 'Configuración general.' },
