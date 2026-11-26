@@ -7,6 +7,7 @@ import {
   CircleHelp,
   ClipboardCheck,
   CreditCard,
+  History,
   KeyRound,
   LayoutDashboard,
   LogOut,
@@ -54,6 +55,7 @@ const SECCIONES_NAVEGACION = [
       { to: '/usuarios', label: 'Usuarios y Cuentas', icon: UserCog, descripcion: 'Directorio y accesos', modulo: 'usuarios' },
       { to: '/roles-permisos', label: 'Roles y Permisos', icon: KeyRound, descripcion: 'Matriz de control', modulo: 'roles-permisos' },
       { to: '/ajustes', label: 'Configuración', icon: Settings2, descripcion: 'Ajustes y temas visuales', modulo: 'ajustes' },
+      { to: '/auditoria', label: 'Auditoría', icon: History, descripcion: 'Bitácora y trazabilidad', modulo: 'auditoria' },
       { to: '/ayuda', label: 'Ayuda', icon: CircleHelp, descripcion: 'Manuales y soporte', modulo: 'ayuda' },
     ],
   },
@@ -71,6 +73,7 @@ const ETIQUETAS_RUTA = {
   usuarios: 'Usuarios',
   'roles-permisos': 'Roles y permisos',
   ajustes: 'Ajustes',
+  auditoria: 'Auditoría',
   'cambiar-clave': 'Cambiar clave',
   ayuda: 'Ayuda',
 };

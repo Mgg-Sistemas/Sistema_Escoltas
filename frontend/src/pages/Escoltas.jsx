@@ -67,136 +67,11 @@ const FORM_VACIO = {
   estado: 'activo',
   categoria: 'escolta', // 'escolta' | 'seguridad' | 'chofer'
   cargo: 'Escolta VIP / Custodia',
-  area: 'Presidencia / Operaciones',
+  area: 'Presidencia / Seguridad Operativa',
   turno: 'Diurno (08:00 - 20:00)',
   notas: '',
   foto_url: '',
 };
-
-// Plantilla de personal operativo inicial (garantiza que el sistema esté inmediatamente operativo con datos profesionales)
-const PERSONAL_BASE = [
-  {
-    id: 'esc-0147',
-    codigo: 'ESC-0147',
-    nombres: 'Carlos Alberto',
-    apellidos: 'Méndez García',
-    cedula: 'V-20.458.763',
-    telefono: '0414-2345678',
-    direccion: 'Urb. Altamira, Caracas',
-    fecha_ingreso: '2023-03-15',
-    categoria: 'escolta',
-    cargo: 'Escolta VIP / Custodia Directa',
-    area: 'Presidencia / Despacho Ejecutivo',
-    turno: 'Diurno (08:00 - 20:00)',
-    estado: 'activo',
-    foto_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&fit=crop&q=80',
-    notas: 'Especialista en protección ejecutiva y tiro táctico.',
-  },
-  {
-    id: 'esc-0148',
-    codigo: 'ESC-0148',
-    nombres: 'José Leonardo',
-    apellidos: 'Rodríguez Silva',
-    cedula: 'V-18.924.110',
-    telefono: '0412-8765432',
-    direccion: 'Las Mercedes, Caracas',
-    fecha_ingreso: '2023-06-01',
-    categoria: 'escolta',
-    cargo: 'Escolta Custodia / Avanzada',
-    area: 'Custodia Móvil y Rutas',
-    turno: 'Rotativo (12x12)',
-    estado: 'activo',
-    foto_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&fit=crop&q=80',
-    notas: 'Certificación en primeros auxilios tácticos y manejo defensivo.',
-  },
-  {
-    id: 'esc-0150',
-    codigo: 'ESC-0150',
-    nombres: 'Andrea Valentina',
-    apellidos: 'Rojas Paredes',
-    cedula: 'V-24.118.590',
-    telefono: '0424-3456789',
-    direccion: 'Chacao, Caracas',
-    fecha_ingreso: '2024-01-10',
-    categoria: 'escolta',
-    cargo: 'Escolta Perimétrico / VIP',
-    area: 'Seguridad Ejecutiva Femenina',
-    turno: 'Diurno (08:00 - 18:00)',
-    estado: 'activo',
-    foto_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&fit=crop&q=80',
-    notas: 'Custodia ejecutiva diplomática.',
-  },
-  {
-    id: 'seg-0201',
-    codigo: 'SEG-0201',
-    nombres: 'Luis Eduardo',
-    apellidos: 'Figueroa Blanco',
-    cedula: 'V-19.330.412',
-    telefono: '0416-5551234',
-    direccion: 'Guatire, Miranda',
-    fecha_ingreso: '2022-11-20',
-    categoria: 'seguridad',
-    cargo: 'Vigilante Planta Principal',
-    area: 'Acceso Principal y Garita 1',
-    turno: 'Nocturno (20:00 - 08:00)',
-    estado: 'activo',
-    foto_url: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=300&fit=crop&q=80',
-    notas: 'Control de acceso peatonal y vehicular.',
-  },
-  {
-    id: 'seg-0202',
-    codigo: 'SEG-0202',
-    nombres: 'Miguel Ángel',
-    apellidos: 'Pérez Torres',
-    cedula: 'V-21.849.201',
-    telefono: '0414-9988776',
-    direccion: 'Boleíta Norte, Caracas',
-    fecha_ingreso: '2023-08-15',
-    categoria: 'seguridad',
-    cargo: 'Supervisor de Turno / Seguridad',
-    area: 'Recinto Industrial y Depósitos',
-    turno: 'Rotativo (24x48)',
-    estado: 'activo',
-    foto_url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300&fit=crop&q=80',
-    notas: 'Monitoreo de CCTV y rondas perimétricas.',
-  },
-  {
-    id: 'cho-0301',
-    codigo: 'CHO-0301',
-    nombres: 'Ramón Antonio',
-    apellidos: 'Castillo Mendoza',
-    cedula: 'V-17.502.819',
-    telefono: '0412-1122334',
-    direccion: 'San Antonio de los Altos',
-    fecha_ingreso: '2022-04-10',
-    categoria: 'chofer',
-    cargo: 'Conductor Seguridad Blindada',
-    area: 'Flota Blindada / Traslados',
-    turno: 'Diurno Especial (07:00 - 19:00)',
-    estado: 'activo',
-    foto_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&fit=crop&q=80',
-    notas: 'Licencia de 5ta, curso de evasión vehicular y blindaje nivel IV.',
-  },
-  {
-    id: 'cho-0302',
-    codigo: 'CHO-0302',
-    nombres: 'Wilmer José',
-    apellidos: 'Gómez Salcedo',
-    cedula: 'V-16.890.311',
-    telefono: '0424-7766554',
-    direccion: 'La Guaira, La Guaira',
-    fecha_ingreso: '2023-02-18',
-    categoria: 'chofer',
-    cargo: 'Chofer Escolta Ejecutivo',
-    area: 'Ruta Aeropuerto - Caracas',
-    turno: 'Flexible según agenda',
-    estado: 'activo',
-    foto_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&fit=crop&q=80',
-    notas: 'Vehículos SUV ejecutivos y protocolos aeroportuarios.',
-  },
-];
-
-const LOCAL_STORAGE_PAPELERA_KEY = 'sistema_escoltas_papelera_personal_v1';
 
 export default function Escoltas() {
   const { role, user } = useAuth();
@@ -222,70 +97,60 @@ export default function Escoltas() {
   const [errores, setErrores] = useState({});
   const [confirmarEliminar, setConfirmarEliminar] = useState(null);
 
-  // Cargar datos (Supabase con fallback inteligente)
+  // Cargar datos exclusivamente desde Supabase
   const cargar = useCallback(async () => {
     setCargando(true);
     try {
-      // Cargar papelera guardada
-      try {
-        const papeleraGuardada = localStorage.getItem(LOCAL_STORAGE_PAPELERA_KEY);
-        if (papeleraGuardada) setPapelera(JSON.parse(papeleraGuardada));
-      } catch (_) {}
-
       const [resultadoEscoltas, resultadoGrados] = await Promise.allSettled([
         listar(TABLAS.escoltas, { ordenarPor: 'nombres', ascendente: true }),
         listar(TABLAS.grados, { ordenarPor: 'nombre', ascendente: true }),
       ]);
 
-      let listaCargada = [];
-
-      if (resultadoEscoltas.status === 'fulfilled' && Array.isArray(resultadoEscoltas.value) && resultadoEscoltas.value.length > 0) {
-        // Enriquecer datos de Supabase
-        listaCargada = resultadoEscoltas.value.map((item) => {
-          let cat = 'escolta';
-          if (item.codigo?.startsWith('SEG') || item.notas?.includes('[CAT:seguridad]')) cat = 'seguridad';
-          if (item.codigo?.startsWith('CHO') || item.notas?.includes('[CAT:chofer]')) cat = 'chofer';
-          return {
-            ...item,
-            categoria: item.categoria || cat,
-            cargo: item.cargo || (cat === 'seguridad' ? 'Seguridad y Vigilancia' : cat === 'chofer' ? 'Chofer de Seguridad' : 'Escolta Operativo'),
-            area: item.area || 'Seguridad y Vigilancia',
-            turno: item.turno || 'Diurno',
-          };
-        });
+      if (resultadoEscoltas.status === 'rejected') {
+        throw new Error(resultadoEscoltas.reason?.message || 'Error al conectar con la tabla escoltas');
       }
 
-      // Si Supabase devuelve solo las 3 filas genéricas o está vacía, fusionar con el personal base profesional
-      if (listaCargada.length <= 3) {
-        const codigosExistentes = new Set(listaCargada.map((item) => item.codigo));
-        const extras = PERSONAL_BASE.filter((base) => !codigosExistentes.has(base.codigo));
-        listaCargada = [...listaCargada, ...extras];
-      }
+      const datos = resultadoEscoltas.value || [];
 
-      // Filtro de papelera local
-      const papeleraIds = new Set(
-        (() => {
-          try {
-            return JSON.parse(localStorage.getItem(LOCAL_STORAGE_PAPELERA_KEY) || '[]').map((p) => p.id);
-          } catch {
-            return [];
-          }
-        })(),
-      );
+      // Procesar y parsear metadatos operativos guardados en Supabase
+      const procesados = datos.map((item) => {
+        const notasTexto = String(item.notas || '');
+        const catTag = notasTexto.match(/\[CAT:([^\]]+)\]/)?.[1];
+        const cargoTag = notasTexto.match(/\[CARGO:([^\]]+)\]/)?.[1];
+        const areaTag = notasTexto.match(/\[AREA:([^\]]+)\]/)?.[1];
+        const turnoTag = notasTexto.match(/\[TURNO:([^\]]+)\]/)?.[1];
 
-      const visibles = listaCargada.filter((item) => !papeleraIds.has(item.id));
-      setPersonal(visibles);
+        let cat = catTag || 'escolta';
+        if (!catTag) {
+          if (item.codigo?.startsWith('SEG')) cat = 'seguridad';
+          if (item.codigo?.startsWith('CHO')) cat = 'chofer';
+        }
+
+        return {
+          ...item,
+          categoria: cat,
+          cargo: cargoTag || (cat === 'seguridad' ? 'Seguridad y Vigilancia' : cat === 'chofer' ? 'Chofer de Seguridad' : 'Escolta VIP / Custodia'),
+          area: areaTag || 'Presidencia / Seguridad Operativa',
+          turno: turnoTag || 'Diurno',
+        };
+      });
+
+      // Separar activos y papelera (estado === 'inactivo' o marcado)
+      const activos = procesados.filter((p) => p.estado !== 'inactivo');
+      const inactivos = procesados.filter((p) => p.estado === 'inactivo');
+
+      setPersonal(activos);
+      setPapelera(inactivos);
 
       if (resultadoGrados.status === 'fulfilled') {
-        setGrados(resultadoGrados.value);
+        setGrados(resultadoGrados.value || []);
       }
     } catch (err) {
-      console.warn('Cargando personal base de contingencia:', err);
-      setPersonal(PERSONAL_BASE);
+      toast.error('No se pudo cargar la lista de personal desde Supabase', err.message);
     } finally {
       setCargando(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     cargar();
@@ -333,9 +198,10 @@ export default function Escoltas() {
 
   const abrirNuevo = () => {
     setEditando(null);
+    const prefijo = categoriaActiva === 'seguridad' ? 'SEG' : categoriaActiva === 'chofer' ? 'CHO' : 'ESC';
     setFormulario({
       ...FORM_VACIO,
-      codigo: `ESC-${String(personal.length + 148).padStart(4, '0')}`,
+      codigo: `${prefijo}-${String(personal.length + 150).padStart(4, '0')}`,
       categoria: categoriaActiva === 'todos' ? 'escolta' : categoriaActiva,
     });
     setErrores({});
@@ -358,7 +224,7 @@ export default function Escoltas() {
       area: escolta.area || 'Seguridad y Vigilancia',
       turno: escolta.turno || 'Diurno',
       estado: escolta.estado || 'activo',
-      notas: escolta.notas || '',
+      notas: (escolta.notas || '').replace(/\[(CAT|CARGO|AREA|TURNO):[^\]]+\]/g, '').trim(),
       foto_url: escolta.foto_url || '',
     });
     setErrores({});
@@ -380,6 +246,9 @@ export default function Escoltas() {
       return;
     }
 
+    const notasLimpias = (formulario.notas || '').replace(/\[(CAT|CARGO|AREA|TURNO):[^\]]+\]/g, '').trim();
+    const notasConMetadatos = `${notasLimpias} [CAT:${formulario.categoria}] [CARGO:${formulario.cargo}] [AREA:${formulario.area}] [TURNO:${formulario.turno}]`.trim();
+
     const valores = {
       codigo: formulario.codigo.trim(),
       nombres: formulario.nombres.trim(),
@@ -391,97 +260,109 @@ export default function Escoltas() {
       grado_id: formulario.grado_id || null,
       estado: formulario.estado || 'activo',
       foto_url: formulario.foto_url.trim() || null,
-      notas: `${formulario.notas || ''} [CAT:${formulario.categoria}] [CARGO:${formulario.cargo}]`.trim(),
+      notas: notasConMetadatos,
     };
 
     try {
       setGuardando(true);
       if (editando) {
-        if (!editando.id.startsWith('esc-') && !editando.id.startsWith('seg-') && !editando.id.startsWith('cho-')) {
-          await actualizar(TABLAS.escoltas, editando.id, valores).catch(() => {});
-        }
-        setPersonal((prev) =>
-          prev.map((item) =>
-            item.id === editando.id
-              ? { ...item, ...formulario, id: editando.id }
-              : item,
-          ),
-        );
-        toast.success('Ficha actualizada correctamente');
+        await actualizar(TABLAS.escoltas, editando.id, valores);
+        toast.success('Ficha actualizada correctamente en Supabase');
       } else {
-        const nuevoId = 'local-' + Date.now();
-        const registro = {
-          ...formulario,
-          id: nuevoId,
-        };
-        // Intentar registrar en Supabase
-        try {
-          const creado = await crear(TABLAS.escoltas, valores);
-          if (creado?.id) registro.id = creado.id;
-        } catch (_) {}
-
-        setPersonal((prev) => [registro, ...prev]);
-        toast.success('Personal registrado con éxito');
+        await crear(TABLAS.escoltas, valores);
+        toast.success('Personal registrado con éxito en Supabase');
       }
 
       setModalAbierto(false);
+      await cargar();
     } catch (error) {
-      toast.error('No se pudo guardar la ficha', error.message);
+      toast.error('Error al guardar en la base de datos', error.message);
     } finally {
       setGuardando(false);
     }
   };
 
-  // Enviar a la Papelera (Soft-delete estilo Golden Touch)
+  // Enviar a la Papelera directamente en Supabase (Soft-delete)
   const enviarAPapelera = async (registro) => {
     try {
       setGuardando(true);
-      const elementoPapelera = {
-        ...registro,
-        eliminado_at: new Date().toISOString(),
-      };
-
-      const nuevaPapelera = [elementoPapelera, ...papelera];
-      setPapelera(nuevaPapelera);
-      localStorage.setItem(LOCAL_STORAGE_PAPELERA_KEY, JSON.stringify(nuevaPapelera));
-
-      setPersonal((prev) => prev.filter((p) => p.id !== registro.id));
+      await actualizar(TABLAS.escoltas, registro.id, { estado: 'inactivo' });
+      toast.success(
+        'Movido a la papelera en Supabase',
+        `${nombreCompleto(registro)} fue desactivado y enviado a la papelera.`,
+      );
       setPerfilFicha(null);
       setConfirmarEliminar(null);
-
-      toast.success(
-        'Enviado a la papelera',
-        `${nombreCompleto(registro)} fue movido a la papelera. Puedes restaurarlo cuando desees.`,
-      );
+      await cargar();
     } catch (error) {
-      toast.error('Error al mover a papelera', error.message);
+      toast.error('No se pudo mover a la papelera', error.message);
     } finally {
       setGuardando(false);
     }
   };
 
-  // Restaurar desde la papelera
+  // Restaurar desde la papelera directamente en Supabase
   const restaurarDePapelera = async (registro) => {
-    const nuevaPapelera = papelera.filter((p) => p.id !== registro.id);
-    setPapelera(nuevaPapelera);
-    localStorage.setItem(LOCAL_STORAGE_PAPELERA_KEY, JSON.stringify(nuevaPapelera));
-
-    const { eliminado_at, ...recuperado } = registro;
-    setPersonal((prev) => [recuperado, ...prev]);
-    toast.success('Registro restaurado', `${nombreCompleto(registro)} volvió a estar activo en el sistema.`);
+    try {
+      setGuardando(true);
+      await actualizar(TABLAS.escoltas, registro.id, { estado: 'activo' });
+      toast.success('Registro restaurado en Supabase', `${nombreCompleto(registro)} vuelve a estar activo.`);
+      await cargar();
+    } catch (error) {
+      toast.error('No se pudo restaurar el registro', error.message);
+    } finally {
+      setGuardando(false);
+    }
   };
 
-  // Vaciar papelera permanentemente
+  // Vaciar papelera permanentemente verificando relaciones foráneas
   const vaciarPapeleraDefinitivo = async () => {
-    for (const item of papelera) {
-      if (!item.id.startsWith('esc-') && !item.id.startsWith('seg-') && !item.id.startsWith('cho-') && !item.id.startsWith('local-')) {
-        await eliminar(TABLAS.escoltas, item.id).catch(() => {});
-      }
+    if (!puedeEditar) {
+      toast.error('No autorizado', 'Solo administradores pueden vaciar la papelera.');
+      return;
     }
-    setPapelera([]);
-    localStorage.removeItem(LOCAL_STORAGE_PAPELERA_KEY);
-    setModalPapelera(false);
-    toast.success('Papelera vaciada permanentemente');
+
+    try {
+      setGuardando(true);
+      let purgados = 0;
+      let protegidos = 0;
+
+      for (const item of papelera) {
+        // Verificar dependencias en Supabase antes de eliminar
+        const [asig, nom] = await Promise.all([
+          listar(TABLAS.asignaciones, { filtros: { escolta_id: item.id }, limite: 1 }).catch(() => []),
+          listar(TABLAS.detallesNomina, { filtros: { escolta_id: item.id }, limite: 1 }).catch(() => []),
+        ]);
+
+        if (asig.length > 0 || nom.length > 0) {
+          protegidos++;
+          continue;
+        }
+
+        try {
+          await eliminar(TABLAS.escoltas, item.id);
+          purgados++;
+        } catch (errEliminar) {
+          toast.error(`Error al eliminar ${item.codigo}`, errEliminar.message);
+        }
+      }
+
+      setModalPapelera(false);
+      await cargar();
+
+      if (protegidos > 0) {
+        toast.warning(
+          `${purgados} purgado(s), ${protegidos} protegido(s)`,
+          'Los registros con asignaciones o recibos de nómina históricos se mantienen para preservar la integridad.',
+        );
+      } else if (purgados > 0) {
+        toast.success('Papelera vaciada con éxito');
+      }
+    } catch (error) {
+      toast.error('Error al procesar el vaciado de papelera', error.message);
+    } finally {
+      setGuardando(false);
+    }
   };
 
   const columnas = [
@@ -550,7 +431,7 @@ export default function Escoltas() {
             </div>
           </div>
           <p className="mt-2 text-sm text-slate-400 max-w-2xl">
-            Expediente digital, emisión de carnet institucional con QR/código de barras, ficha técnica oficial en PDF y control de flota.
+            Expediente digital, emisión de carnet institucional con QR escaneable y código de barras, ficha oficial en PDF y gestión conectada a Supabase.
           </p>
         </div>
 
@@ -613,10 +494,10 @@ export default function Escoltas() {
       {/* Tarjeta de Lista con Filtros */}
       <Card
         title={`Listado: ${CATEGORIAS_PERSONAL.find((c) => c.id === categoriaActiva)?.label || 'Personal'}`}
-        subtitle={`${filtrados.length} integrantes registrados`}
+        subtitle={`${filtrados.length} integrantes registrados en base de datos`}
         actions={
           <HelpTip title="Gestión de Personal">
-            Puedes filtrar por categoría superior (Escoltas, Seguridad, Choferes). Haz clic en cualquier integrante para ver su Ficha Técnica y emitir su Carnet.
+            Información sincronizada en tiempo real con Supabase. Haz clic en cualquier fila para abrir el expediente técnico, emitir el carnet o imprimir la ficha oficial.
           </HelpTip>
         }
       >
@@ -734,7 +615,7 @@ export default function Escoltas() {
       >
         {perfilFicha && (
           <div className="space-y-6">
-            {/* Componente de Carnet Digital Integrado (Frente y Reverso sin hueco central) */}
+            {/* Componente de Carnet Digital Integrado (Frente y Reverso sin hueco central, QR Real) */}
             <CarnetPersonal escolta={perfilFicha} grado={perfilFicha.cargo} />
 
             {/* Datos detallados de expediente */}
@@ -767,7 +648,7 @@ export default function Escoltas() {
               {perfilFicha.notas && (
                 <div className="mt-3 rounded-xl border border-slate-800 bg-[#14171c] p-3 text-xs text-slate-300">
                   <span className="font-bold text-[#ffd54a] block mb-1">Notas y Acreditaciones:</span>
-                  {perfilFicha.notas}
+                  {(perfilFicha.notas || '').replace(/\[(CAT|CARGO|AREA|TURNO):[^\]]+\]/g, '').trim()}
                 </div>
               )}
             </div>
@@ -780,7 +661,7 @@ export default function Escoltas() {
         open={modalAbierto}
         onClose={() => setModalAbierto(false)}
         title={editando ? 'Editar Ficha de Personal' : 'Registrar Nuevo Integrante'}
-        description="Completa la información del personal de seguridad o custodia."
+        description="Completa la información del personal en Supabase."
         size="lg"
         footer={
           <div className="flex flex-col gap-2 sm:flex-row-reverse">
@@ -868,9 +749,9 @@ export default function Escoltas() {
             options={OPCIONES_ESTADO_ESCOLTA}
           />
           <Input
-            label="URL de la Foto (para el Carnet)" type="url" value={formulario.foto_url} containerClassName="sm:col-span-2"
+            label="URL de la Foto" type="url" value={formulario.foto_url} containerClassName="sm:col-span-2"
             onChange={(e) => cambiarCampo('foto_url', e.target.value)} placeholder="https://…"
-            help="Enlace a la foto del personal para su visualización en el carnet y expediente."
+            help="Opcional. Foto oficial para el carnet y expediente."
           />
           <Input
             label="Dirección de Residencia" value={formulario.direccion} containerClassName="sm:col-span-2"
@@ -884,7 +765,7 @@ export default function Escoltas() {
         </div>
       </Modal>
 
-      {/* Modal Papelera Universal estilo Golden Touch */}
+      {/* Modal Papelera Universal estilo Golden Touch conectado a Supabase */}
       <PapeleraModal
         abierto={modalPapelera}
         alCerrar={() => setModalPapelera(false)}
@@ -893,6 +774,7 @@ export default function Escoltas() {
         registros={papelera}
         alRestaurar={restaurarDePapelera}
         alVaciar={vaciarPapeleraDefinitivo}
+        cargando={guardando}
       />
 
       {/* Diálogo de Confirmación para mover a Papelera */}
@@ -902,7 +784,7 @@ export default function Escoltas() {
         title="¿Enviar a la papelera?"
         description={
           confirmarEliminar
-            ? `Se moverá la ficha de ${nombreCompleto(confirmarEliminar)} a la papelera. Podrás restaurarla en cualquier momento.`
+            ? `Se moverá la ficha de ${nombreCompleto(confirmarEliminar)} a la papelera en Supabase. Podrás restaurarla en cualquier momento.`
             : ''
         }
         confirmLabel="Sí, mover a papelera"

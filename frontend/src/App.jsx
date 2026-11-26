@@ -21,6 +21,7 @@ import Ajustes from './pages/Ajustes.jsx';
 import Ayuda from './pages/Ayuda.jsx';
 import Rrhh from './pages/Rrhh.jsx';
 import Choferes from './pages/Choferes.jsx';
+import Auditoria from './pages/Auditoria.jsx';
 
 function PantallaCarga() {
   return (
@@ -102,13 +103,14 @@ export default function App() {
             <Route path="distribucion" element={<Distribucion />} />
             <Route path="permisos" element={<Permisos />} />
             <Route path="asistencias" element={<Asistencias />} />
-            <Route path="rrhh" element={<RoleRoute roles={['admin', 'supervisor', 'contador', 'rrhh']} modulo="Recursos Humanos"><Rrhh /></RoleRoute>} />
-            <Route path="choferes" element={<RoleRoute roles={['admin', 'supervisor', 'contador', 'chofer']} modulo="Choferes"><Choferes /></RoleRoute>} />
-            <Route path="nomina" element={<RoleRoute roles={['admin', 'contador']} modulo="Nómina"><Nomina /></RoleRoute>} />
-            <Route path="pagos" element={<RoleRoute roles={['admin', 'contador']} modulo="Pagos"><Pagos /></RoleRoute>} />
-            <Route path="usuarios" element={<RoleRoute roles={['admin']} modulo="Usuarios"><Usuarios /></RoleRoute>} />
-            <Route path="roles-permisos" element={<RoleRoute roles={['admin']} modulo="Roles y permisos"><RolesPermisos /></RoleRoute>} />
-            <Route path="ajustes" element={<RoleRoute roles={['admin']} modulo="Ajustes"><Ajustes /></RoleRoute>} />
+            <Route path="rrhh" element={<Rrhh />} />
+            <Route path="choferes" element={<Choferes />} />
+            <Route path="nomina" element={<Nomina />} />
+            <Route path="pagos" element={<Pagos />} />
+            <Route path="usuarios" element={<Usuarios />} />
+            <Route path="roles-permisos" element={<RolesPermisos />} />
+            <Route path="ajustes" element={<Ajustes />} />
+            <Route path="auditoria" element={<Auditoria />} />
             <Route path="ayuda" element={<Ayuda />} />
           </Route>
           <Route path="*" element={<Navigate to={autenticado ? '/' : '/login'} replace />} />

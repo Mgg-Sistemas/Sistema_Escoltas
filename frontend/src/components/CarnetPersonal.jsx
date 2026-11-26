@@ -214,15 +214,16 @@ export default function CarnetPersonal({ escolta, grado = 'Escolta Operativo', a
                     </div>
                   </div>
 
-                  {/* QR Code estilizado */}
+                  {/* QR Code Escaneable Real */}
                   <div className="flex flex-col items-center justify-center gap-1.5">
-                    <div className="h-24 w-24 rounded-2xl border-2 border-[#ff8a00]/60 bg-white p-2 shadow-md flex items-center justify-center">
-                      <div className="relative flex items-center justify-center">
-                        <QrCode className="h-20 w-20 text-slate-900" />
-                        <div className="absolute inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#1c1f24] border border-[#ff8a00]">
-                          <Shield className="h-3 w-3 text-[#ff8a00]" />
-                        </div>
-                      </div>
+                    <div className="h-24 w-24 rounded-2xl border-2 border-[#ff8a00]/60 bg-white p-1 shadow-md flex items-center justify-center overflow-hidden">
+                      <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(
+                          `ESCOLTAS · CREDENCIAL OFICIAL\nTITULAR: ${nombre}\nCEDULA: ${cedula}\nCODIGO: ${codigo}\nCARGO: ${cargo}\nESTADO: ACTIVO / VERIFICADO\nhttps://sistemaescoltas.com/`,
+                        )}`}
+                        alt={`QR Oficial ${codigo}`}
+                        className="h-full w-full object-contain"
+                      />
                     </div>
                     <span className="rounded-md bg-[#ff8a00] px-2 py-0.5 text-[10px] font-black text-black tracking-wider shadow">
                       ID: {codigo}

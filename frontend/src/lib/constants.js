@@ -18,20 +18,21 @@ export const ROLES_DESCRIPCION = {
   rrhh: 'Gestión de personal, expedientes, descansos, tabulador y minutas.',
 };
 
-// Permisos de navegación por módulo (el backend/RLS sigue siendo la fuente de verdad).
+// Permisos de navegación por módulo: todos los módulos activados en el sistema
 export const ROLES_POR_MODULO = {
-  escoltas: ['admin', 'supervisor', 'escolta'],
-  distribucion: ['admin', 'supervisor'],
+  escoltas: ROLES,
+  distribucion: ROLES,
   permisos: ROLES,
-  asistencias: ['admin', 'supervisor', 'escolta'],
-  nomina: ['admin', 'contador'],
-  pagos: ['admin', 'contador'],
-  rrhh: ['admin', 'supervisor', 'contador', 'rrhh'],
-  choferes: ['admin', 'supervisor', 'contador', 'chofer'],
-  usuarios: ['admin'],
-  'roles-permisos': ['admin'],
-  ajustes: ['admin'],
+  asistencias: ROLES,
+  nomina: ROLES,
+  pagos: ROLES,
+  rrhh: ROLES,
+  choferes: ROLES,
+  usuarios: ROLES,
+  'roles-permisos': ROLES,
+  ajustes: ROLES,
   ayuda: ROLES,
+  papelera: ROLES,
 };
 
 // Módulos de la matriz de permisos traída de la base funcional GT.

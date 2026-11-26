@@ -46,7 +46,6 @@ export default function VistaTelefono({ alCerrar, soloPreview = false }) {
   const nombreUsuario = profile?.full_name || user?.user_metadata?.nombre || 'Carlos Méndez';
   const cargoUsuario = roleLabel || 'Escolta / Seguridad Operativa';
   const idUsuario = 'ESC-0147';
-  const fotoUsuario = profile?.avatar_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&fit=crop&q=80';
 
   const escoltaData = {
     id: 'esc-0147',
@@ -59,7 +58,7 @@ export default function VistaTelefono({ alCerrar, soloPreview = false }) {
     cargo: cargoUsuario,
     area: 'Presidencia / Seguridad Operativa',
     turno: 'Diurno (08:00 - 20:00)',
-    foto_url: fotoUsuario,
+    foto_url: null,
     fecha_ingreso: '2023-03-15',
   };
 
@@ -170,13 +169,11 @@ export default function VistaTelefono({ alCerrar, soloPreview = false }) {
           <div className="rounded-2xl border border-[#343a46] bg-gradient-to-b from-[#1c2027] to-[#12151a] p-3 shadow-lg">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                {/* Foto circular con aro naranja */}
-                <div className="relative inline-block">
-                  <img
-                    src={fotoUsuario}
-                    alt={nombreUsuario}
-                    className="h-12 w-12 rounded-full object-cover border-2 border-[#ff8a00] shadow-md"
-                  />
+                {/* Emblema de Seguridad (sin foto) */}
+                <div className="relative inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#ff8a00] to-[#ffd54a] p-0.5 shadow-md">
+                  <div className="flex h-full w-full items-center justify-center rounded-[14px] bg-[#14171c] text-[#ff8a00]">
+                    <ShieldCheck className="h-6 w-6" />
+                  </div>
                   <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-[#29c081] border-2 border-black" />
                 </div>
 
