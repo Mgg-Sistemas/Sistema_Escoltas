@@ -13,6 +13,7 @@ import {
   ListChecks,
   ShieldCheck,
   TrendingUp,
+  Truck,
   UserPlus,
   UsersRound,
   WalletCards,
