@@ -14,6 +14,7 @@ import {
   Moon,
   Settings2,
   ShieldCheck,
+  Smartphone,
   Truck,
   UserCog,
   UsersRound,
@@ -25,6 +26,7 @@ import { useRealtime } from '../context/RealtimeContext.jsx';
 import { Badge, Button } from './ui.jsx';
 import { iniciales } from '../lib/data.js';
 import { api } from '../lib/api.js';
+import VistaTelefono from './VistaTelefono.jsx';
 
 const SECCIONES_NAVEGACION = [
   {
@@ -121,6 +123,7 @@ export default function Layout() {
   const [drawerAbierto, setDrawerAbierto] = useState(false);
   const [cerrandoSesion, setCerrandoSesion] = useState(false);
   const [tasas, setTasas] = useState(null);
+  const [vistaMovilAbierta, setVistaMovilAbierta] = useState(false);
 
   useEffect(() => {
     let activo = true;
@@ -252,6 +255,16 @@ export default function Layout() {
               <span className={`h-2 w-2 rounded-full ${conectado ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
               <span className="hidden sm:inline">{conectado ? 'En vivo' : 'Conectando'}</span>
             </span>
+
+            <button
+              type="button"
+              onClick={() => setVistaMovilAbierta(true)}
+              title="Previsualizar Vista Móvil / Teléfono"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#ff8a00] bg-[#1c1f24] border border-[#ff8a00]/40 hover:bg-[#2b3038] transition-all shadow-sm"
+            >
+              <Smartphone className="h-4 w-4" />
+              <span className="hidden xl:inline">Vista Teléfono</span>
+            </button>
 
             {puede('ajustes') && (
               <NavLink
@@ -435,6 +448,22 @@ export default function Layout() {
           Más
         </button>
       </nav>
+
+      {/* Modal Interactivo de Vista Teléfono (Mockup Smartphone) */}
+      {vistaMovilAbierta && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-2 sm:p-4 animate-in fade-in">
+          <div className="relative flex flex-col items-center max-h-[96vh] overflow-y-auto">
+            <button
+              onClick={() => setVistaMovilAbierta(false)}
+              className="absolute -top-2 right-2 sm:-right-10 z-50 inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white shadow-lg"
+              title="Cerrar vista móvil"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <VistaTelefono alCerrar={() => setVistaMovilAbierta(false)} soloPreview />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -50,6 +50,7 @@ export const MODULOS_SISTEMA = [
   { key: 'ajustes', label: 'Ajustes', descripcion: 'Configuración general.' },
   { key: 'auditoria', label: 'Auditoría', descripcion: 'Bitácora de cambios.' },
   { key: 'ayuda', label: 'Ayuda', descripcion: 'Guía del sistema.' },
+  { key: 'papelera', label: 'Papelera de Reciclaje', descripcion: 'Recuperar o vaciar registros eliminados.' },
   { key: 'tiempo_real', label: 'Tiempo real', descripcion: 'Actualizaciones automáticas.' },
 ];
 

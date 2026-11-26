@@ -615,18 +615,21 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* FILA 3: MATRIZ SEMANAL INTERACTIVA DE TURNOS Y DESCANSOS (DEL ARCHIVO HTML DE EJEMPLO) */}
+      {/* FILA 3: MATRIZ SEMANAL DE TURNOS Y DESCANSOS (SOLO INFORMATIVO EN DASHBOARD) */}
       <Card className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-[#333944] pb-3">
           <div>
             <div className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-[#ff8a00]" />
               <h2 className="text-base font-bold text-slate-100">
-                Matriz Semanal de Turnos y Descansos (Interactivo)
+                Matriz Semanal de Turnos y Descansos
               </h2>
+              <span className="rounded-full bg-slate-800 border border-slate-700/80 px-2 py-0.5 text-[10px] font-bold text-slate-400">
+                Solo informativo
+              </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              Pulsa cualquier celda para alternar el turno en tiempo real: <strong className="text-[#ff8a00]">D</strong> (Diurno) · <strong className="text-slate-300">N</strong> (Nocturno) · <strong className="text-oro">L</strong> (Libre / Descanso).
+              Vista general de asignaciones de la semana: <strong className="text-[#ff8a00]">D</strong> (Diurno) · <strong className="text-slate-300">N</strong> (Nocturno) · <strong className="text-slate-300">L</strong> (Libre / Descanso). Para editar, usa el módulo de Distribución.
             </p>
           </div>
 
@@ -634,6 +637,12 @@ export default function Dashboard() {
             <span className="inline-flex items-center gap-1 rounded bg-[#ff8a00] px-2 py-0.5 font-bold text-black">D Diurno</span>
             <span className="inline-flex items-center gap-1 rounded bg-[#333944] px-2 py-0.5 font-bold text-white">N Nocturno</span>
             <span className="inline-flex items-center gap-1 rounded bg-slate-300 px-2 py-0.5 font-bold text-black">L Libre</span>
+            <Link
+              to="/distribucion"
+              className="ml-2 inline-flex items-center gap-1 rounded-lg bg-[#2b3038] border border-[#ff8a00]/30 px-3 py-1 font-bold text-xs text-[#ff8a00] hover:bg-[#ff8a00] hover:text-black transition"
+            >
+              Ir a Turnos y Distribución →
+            </Link>
           </div>
         </div>
 
@@ -649,7 +658,7 @@ export default function Dashboard() {
                 <th className="py-2.5 px-2 text-center font-bold">Vie</th>
                 <th className="py-2.5 px-2 text-center font-bold">Sáb</th>
                 <th className="py-2.5 px-2 text-center font-bold">Dom</th>
-                <th className="py-2.5 px-3 text-right font-bold">Acción</th>
+                <th className="py-2.5 px-3 text-right font-bold">Módulo</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#333944]">
@@ -674,14 +683,12 @@ export default function Dashboard() {
 
                     return (
                       <td key={dia} className="py-2 px-1 text-center">
-                        <button
-                          type="button"
-                          onClick={() => alternarTurno(clave, valor)}
-                          title={`Cambiar turno de ${m.nombre} el ${dia}`}
-                          className={`h-8 w-8 rounded-lg text-xs transition transform active:scale-90 ${colorClase}`}
+                        <span
+                          className={`inline-flex items-center justify-center h-8 w-8 rounded-lg text-xs select-none ${colorClase}`}
+                          title={`${m.nombre} - ${dia}: ${valor === 'D' ? 'Diurno' : valor === 'N' ? 'Nocturno' : 'Libre'}`}
                         >
                           {valor}
-                        </button>
+                        </span>
                       </td>
                     );
                   })}

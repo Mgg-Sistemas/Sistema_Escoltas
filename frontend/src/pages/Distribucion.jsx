@@ -46,12 +46,31 @@ export default function Distribucion() {
   const [busqueda, setBusqueda] = useState('');
   const [filtroEscolta, setFiltroEscolta] = useState('todos');
   const [filtroEstado, setFiltroEstado] = useState('todos');
-  const [vista, setVista] = useState('lista');
+  const [vista, setVista] = useState('matriz');
   const [modal, setModal] = useState(false);
   const [editando, setEditando] = useState(null);
   const [formulario, setFormulario] = useState(FORM_VACIO);
   const [errores, setErrores] = useState({});
   const [guardando, setGuardando] = useState(false);
+
+  // Matriz interactiva de turnos y descansos en el módulo de distribución
+  const [turnosMatriz, setTurnosMatriz] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('escoltas_turnos_matriz')) || {};
+    } catch {
+      return {};
+    }
+  });
+
+  const alternarTurno = (clave, actual) => {
+    const orden = { D: 'N', N: 'L', L: 'D' };
+    const nuevo = orden[actual] || 'D';
+    setTurnosMatriz((prev) => {
+      const act = { ...prev, [clave]: nuevo };
+      localStorage.setItem('escoltas_turnos_matriz', JSON.stringify(act));
+      return act;
+    });
+  };
 
   const cargar = useCallback(async () => {
     setCargando(true);
