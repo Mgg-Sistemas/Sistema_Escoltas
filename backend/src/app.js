@@ -67,7 +67,8 @@ app.use(cors({ origin: origenPermitido, credentials: origenes !== '*' }));
 app.use(express.json({ limit: '2mb' }));
 
 // Rutas públicas: salud, versión y recuperación de contraseña (antes de autenticación).
-app.use('/api/health', healthRoutes);
+app.use(['/health', '/api/health'], healthRoutes);
+app.get('/healthz', (req, res) => res.status(200).send('OK'));
 app.use('/api/auth', authPublicRouter);
 
 app.get(['/version.json', '/api/version'], (req, res) => {
@@ -133,8 +134,17 @@ const distFrontend = path.resolve(__dirname, '../../frontend/dist');
 if (fs.existsSync(distFrontend)) {
   app.use(express.static(distFrontend));
   app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api')) return next();
+    if (req.path.startsWith('/api') || req.path === '/health' || req.path === '/healthz') return next();
     res.sendFile(path.join(distFrontend, 'index.html'));
+  });
+} else {
+  // Respaldo de salud si el frontend estático se sirve aparte o durante el arranque en App Platform
+  app.get('/', (req, res) => {
+    res.status(200).json({
+      status: 'ok',
+      service: 'sistema-escoltas-sistemas',
+      time: new Date().toISOString(),
+    });
   });
 }
 

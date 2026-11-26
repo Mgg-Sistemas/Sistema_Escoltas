@@ -14,6 +14,12 @@ export function created(res, data) {
   return res.status(201).json({ ok: true, data });
 }
 
+export const creado = created;
+
+export function sinContenido(res) {
+  return res.status(204).end();
+}
+
 const TIPOS_EN_ESPAÑOL = {
   string: 'texto',
   number: 'número',

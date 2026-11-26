@@ -2,8 +2,8 @@ import app from './app.js';
 import { config } from './config.js';
 import { cerrarRealtime } from './lib/realtime.js';
 
-const servidor = app.listen(config.port, () => {
-  console.log(`[API] Servidor iniciado en http://localhost:${config.port}/api`);
+const servidor = app.listen(config.port, '0.0.0.0', () => {
+  console.log(`[API] Servidor iniciado en http://0.0.0.0:${config.port}/api`);
   console.log(`[API] Base de datos: ${config.dbName}`);
 });
 
