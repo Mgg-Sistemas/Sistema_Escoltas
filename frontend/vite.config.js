@@ -2,7 +2,11 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 function appVersion() {
   const env = (
@@ -52,8 +56,12 @@ export default defineConfig(({ mode }) => {
     || env.SUPABASE_URL
     || 'https://rznkopetlmitfxcixjcr.supabase.co';
 
+  const publicDir = existsSync(path.resolve(__dirname, '../public'))
+    ? path.resolve(__dirname, '../public')
+    : path.resolve(__dirname, 'public');
+
   return {
-    publicDir: '../public',
+    publicDir,
     plugins: [react(), versionJsonPlugin],
     define: {
       'import.meta.env.VITE_APP_VERSION': JSON.stringify(APP_VERSION),
