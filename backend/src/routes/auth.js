@@ -74,6 +74,17 @@ authPublicRouter.get(
   }),
 );
 
+/** Entrega configuración pública del cliente (Supabase anon key) si no fue compilada en el bundle */
+authPublicRouter.get(
+  '/config',
+  asyncHandler(async (_req, res) => {
+    return ok(res, {
+      supabaseUrl: config.supabaseUrl,
+      supabaseAnonKey: config.anonKey,
+    });
+  }),
+);
+
 authPublicRouter.post(
   '/recuperar',
   validate(esquemaRecuperarClave),
