@@ -1,0 +1,34 @@
+name: sistema-escoltas
+region: nyc
+
+services:
+  - name: backend
+    github:
+      repo: Mgg-Sistemas/Sistema_Escoltas
+      branch: main
+      deploy_on_push: true
+    source_dir: backend
+    run_command: npm start
+    http_port: 4000
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    routes:
+      - path: /api
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+
+static_sites:
+  - name: frontend
+    github:
+      repo: Mgg-Sistemas/Sistema_Escoltas
+      branch: main
+      deploy_on_push: true
+    source_dir: frontend
+    build_command: npm run build
+    output_dir: dist
+    catchall_document: index.html
+    routes:
+      - path: /
