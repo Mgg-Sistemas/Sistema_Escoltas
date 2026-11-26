@@ -1,9 +1,22 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
       colors: {
+        // Paleta oficial Golden Touch · carbón neutro descansado a la vista
+        gt: {
+          bg0: '#1c1f24',
+          bg1: '#20242a',
+          bg2: '#262a31',
+          bg3: '#2d323a',
+          surface: '#23272e',
+          surface2: '#2b3038',
+          surface3: '#353b45',
+          border: '#333944',
+          borderStrong: '#434a56',
+        },
         // Paleta corporativa ESCOLTAS: naranja, dorado, gris metálico y negro.
         brand: {
           50: '#fff4e6',

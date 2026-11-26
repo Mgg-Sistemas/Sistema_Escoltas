@@ -174,7 +174,7 @@ router.get(
   asyncHandler(async (req, res) => {
     const { data, error } = await supabase
       .from('usuarios_autorizados')
-      .select('*, usuario:profiles(id, nombre_completo, email, role, username)')
+      .select('*, usuario:profiles(id, full_name, email, role, usuario)')
       .order('created_at');
 
     if (error) throw mapSupabaseError(error, 'No fue posible consultar autorizados.');
@@ -198,7 +198,7 @@ router.post(
         activo: true,
         created_by: req.user.id,
       })
-      .select('*, usuario:profiles(id, nombre_completo, email, role, username)')
+      .select('*, usuario:profiles(id, full_name, email, role, usuario)')
       .single();
 
     if (error) throw mapSupabaseError(error, 'No fue posible autorizar al usuario.');

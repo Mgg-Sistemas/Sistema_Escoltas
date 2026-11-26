@@ -158,7 +158,7 @@ router.post(
         motivo,
         fecha_efectiva: fecha_efectiva || new Date().toISOString().split('T')[0],
         creado_por: req.user.id,
-        actor_name: req.user.nombre_completo,
+        actor_name: req.user.full_name || req.user.email || 'Sistema',
       })
       .select('*')
       .single();
@@ -347,7 +347,7 @@ router.post(
         fecha: fecha || new Date().toISOString().split('T')[0],
         turno: turno || 'Diurno',
         supervisor_id: req.user.id,
-        supervisor_nombre: req.user.nombre_completo,
+        supervisor_nombre: req.user.full_name || req.user.email || 'Supervisor',
         temas,
         acuerdos,
         avances,

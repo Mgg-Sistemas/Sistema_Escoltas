@@ -11,7 +11,9 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Moon,
   Settings2,
+  ShieldCheck,
   Truck,
   UserCog,
   UsersRound,
@@ -23,21 +25,35 @@ import { useRealtime } from '../context/RealtimeContext.jsx';
 import { Badge, Button } from './ui.jsx';
 import { iniciales } from '../lib/data.js';
 
-const NAVEGACION = [
-  { to: '/', label: 'Inicio', icon: LayoutDashboard, descripcion: 'Resumen general', exacto: true },
-  { to: '/escoltas', label: 'Escoltas', icon: UsersRound, descripcion: 'Personal y fichas', modulo: 'escoltas' },
-  { to: '/distribucion', label: 'Distribución', icon: CalendarRange, descripcion: 'Asignaciones y turnos', modulo: 'distribucion' },
-  { to: '/permisos', label: 'Permisos', icon: ClipboardCheck, descripcion: 'Solicitudes y revisiones', modulo: 'permisos' },
-  { to: '/asistencias', label: 'Asistencias', icon: CalendarCheck2, descripcion: 'Entradas y salidas', modulo: 'asistencias' },
-  { to: '/rrhh', label: 'RRHH', icon: Briefcase, descripcion: 'Personal y nóminas GT', modulo: 'rrhh' },
-  { to: '/choferes', label: 'Choferes', icon: Truck, descripcion: 'Rutas, viajes y flota', modulo: 'choferes' },
-  { to: '/nomina', label: 'Nómina', icon: WalletCards, descripcion: 'Periodos y cálculos', modulo: 'nomina' },
-  { to: '/pagos', label: 'Pagos', icon: CreditCard, descripcion: 'Pagos y comprobantes', modulo: 'pagos' },
-  { to: '/usuarios', label: 'Usuarios', icon: UserCog, descripcion: 'Cuentas y claves', modulo: 'usuarios' },
-  { to: '/roles-permisos', label: 'Roles y permisos', icon: KeyRound, descripcion: 'Matriz de acceso', modulo: 'roles-permisos' },
-  { to: '/ajustes', label: 'Ajustes', icon: Settings2, descripcion: 'Configuración del sistema', modulo: 'ajustes' },
-  { to: '/cambiar-clave', label: 'Cambiar clave', icon: KeyRound, descripcion: 'Seguridad de la cuenta' },
-  { to: '/ayuda', label: 'Ayuda', icon: CircleHelp, descripcion: 'Guía y preguntas', modulo: 'ayuda' },
+const SECCIONES_NAVEGACION = [
+  {
+    titulo: 'Operación',
+    items: [
+      { to: '/', label: 'Inicio', icon: LayoutDashboard, descripcion: 'Resumen general', exacto: true },
+      { to: '/escoltas', label: 'Escoltas', icon: UsersRound, descripcion: 'Personal y fichas', modulo: 'escoltas' },
+      { to: '/choferes', label: 'Choferes', icon: Truck, descripcion: 'Rutas, viajes y flota', modulo: 'choferes' },
+      { to: '/distribucion', label: 'Distribución', icon: CalendarRange, descripcion: 'Asignaciones y turnos', modulo: 'distribucion' },
+      { to: '/permisos', label: 'Permisos', icon: ClipboardCheck, descripcion: 'Solicitudes y revisiones', modulo: 'permisos' },
+      { to: '/asistencias', label: 'Asistencias', icon: CalendarCheck2, descripcion: 'Entradas y salidas', modulo: 'asistencias' },
+    ],
+  },
+  {
+    titulo: 'Gestión',
+    items: [
+      { to: '/rrhh', label: 'RRHH', icon: Briefcase, descripcion: 'Personal, contratos y anticipos', modulo: 'rrhh' },
+      { to: '/nomina', label: 'Nómina', icon: WalletCards, descripcion: 'Periodos y cálculos', modulo: 'nomina' },
+      { to: '/pagos', label: 'Pagos', icon: CreditCard, descripcion: 'Pagos y comprobantes', modulo: 'pagos' },
+    ],
+  },
+  {
+    titulo: 'Sistema y Acceso',
+    items: [
+      { to: '/usuarios', label: 'Usuarios', icon: UserCog, descripcion: 'Cuentas y claves', modulo: 'usuarios' },
+      { to: '/roles-permisos', label: 'Roles y permisos', icon: KeyRound, descripcion: 'Matriz de acceso', modulo: 'roles-permisos' },
+      { to: '/ajustes', label: 'Ajustes', icon: Settings2, descripcion: 'Configuración general', modulo: 'ajustes' },
+      { to: '/ayuda', label: 'Ayuda', icon: CircleHelp, descripcion: 'Guía y preguntas', modulo: 'ayuda' },
+    ],
+  },
 ];
 
 const ETIQUETAS_RUTA = {
@@ -64,18 +80,18 @@ function EnlaceNav({ item, alNavegar, barra = false }) {
       end={item.exacto}
       onClick={alNavegar}
       className={({ isActive }) =>
-        `group flex font-semibold transition-all ${
+        `group flex font-medium transition-all ${
           barra
             ? 'min-h-14 flex-col items-center justify-center gap-0.5 rounded-none px-1 py-1 text-center text-[11px]'
-            : 'min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm'
+            : 'min-h-10 items-center gap-2.5 rounded-xl px-3 py-2 text-sm'
         } ${
           isActive
             ? barra
-              ? 'text-brand-400 font-bold'
-              : 'bg-brand-600 text-white shadow-md ring-1 ring-brand-400/30'
+              ? 'text-[#ff8a00] font-bold'
+              : 'bg-[#ff8a00] text-white shadow-md font-bold'
             : barra
-              ? 'text-slate-400 hover:text-slate-200'
-              : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
+              ? 'text-[#9aa6b5] hover:text-[#e7ecf3]'
+              : 'text-[#9aa6b5] hover:bg-[#2b3038] hover:text-[#e7ecf3]'
         }`
       }
     >
@@ -84,8 +100,8 @@ function EnlaceNav({ item, alNavegar, barra = false }) {
           <Icono
             className={`h-4.5 w-4.5 shrink-0 ${
               isActive
-                ? barra ? 'text-brand-400' : 'text-white'
-                : 'text-slate-400 group-hover:text-brand-400'
+                ? barra ? 'text-[#ff8a00]' : 'text-white'
+                : 'text-[#ff8a00]/70 group-hover:text-[#ff8a00]'
             }`}
             aria-hidden="true"
           />
@@ -104,9 +120,17 @@ export default function Layout() {
   const [drawerAbierto, setDrawerAbierto] = useState(false);
   const [cerrandoSesion, setCerrandoSesion] = useState(false);
 
-  const items = useMemo(
-    () => NAVEGACION.filter((item) => !item.modulo || puede(item.modulo)),
-    [puede],
+  // Filtramos por permisos respetando las secciones GT
+  const seccionesFiltradas = useMemo(() => {
+    return SECCIONES_NAVEGACION.map((sec) => ({
+      ...sec,
+      items: sec.items.filter((item) => !item.modulo || puede(item.modulo)),
+    })).filter((sec) => sec.items.length > 0);
+  }, [puede]);
+
+  const todosLosItems = useMemo(
+    () => seccionesFiltradas.flatMap((sec) => sec.items),
+    [seccionesFiltradas],
   );
 
   useEffect(() => {
@@ -128,35 +152,35 @@ export default function Layout() {
       await signOut();
       navigate('/login', { replace: true });
     } catch {
-      // AuthContext handles local signout
+      // Manejado por AuthContext
     } finally {
       setCerrandoSesion(false);
     }
   };
 
   const movilPrincipal = [
-    items[0],
-    items.find((item) => item.to === '/escoltas'),
-    items.find((item) => item.to === '/rrhh') || items.find((item) => item.to === '/choferes'),
-    items.find((item) => item.to === '/nomina') || items.find((item) => item.to === '/asistencias'),
+    todosLosItems[0],
+    todosLosItems.find((item) => item.to === '/escoltas'),
+    todosLosItems.find((item) => item.to === '/choferes') || todosLosItems.find((item) => item.to === '/rrhh'),
+    todosLosItems.find((item) => item.to === '/nomina') || todosLosItems.find((item) => item.to === '/usuarios'),
   ].filter(Boolean);
 
   return (
-    <div className="min-h-screen bg-[#0e1217] text-slate-100">
-      {/* Barra superior oscura */}
-      <header className="sticky top-0 z-30 border-b border-slate-800 bg-[#161b22]/95 backdrop-blur shadow-sm">
+    <div className="min-h-screen bg-[#1c1f24] text-[#e7ecf3]">
+      {/* Barra superior oscura carbón GT */}
+      <header className="sticky top-0 z-30 border-b border-[#333944] bg-[#23272e]/95 backdrop-blur shadow-sm">
         <div className="mx-auto flex h-16 max-w-[1600px] items-center gap-3 px-4 sm:px-6">
           <button
             type="button"
             aria-label="Abrir menú"
             onClick={() => setDrawerAbierto(true)}
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-300 hover:bg-slate-800 md:hidden"
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[#9aa6b5] hover:bg-[#2b3038] hover:text-white md:hidden"
           >
             <Menu className="h-6 w-6" aria-hidden="true" />
           </button>
 
           <div className="flex min-w-0 items-center gap-3">
-            <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-950/80 ring-1 ring-brand-800/60 shadow-inner">
+            <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#2b3038] border border-[#333944] shadow-inner">
               <img
                 src="/logo-escoltas.png"
                 alt="Emblema de Seguridad Escoltas"
@@ -164,33 +188,57 @@ export default function Layout() {
               />
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-extrabold leading-tight text-slate-100 sm:text-base">Sistema de Escoltas</p>
-              <p className="hidden text-xs text-slate-400 sm:block">Control · RRHH · Choferes · Nómina</p>
+              <div className="flex items-center gap-2">
+                <p className="truncate text-sm font-extrabold leading-tight text-[#e7ecf3] sm:text-base">Sistema de Escoltas</p>
+                <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-[#ff8a00]/15 border border-[#ff8a00]/30 px-2 py-0.5 text-[10px] font-bold text-[#ff8a00]">
+                  <Moon className="h-2.5 w-2.5" /> GT Dark
+                </span>
+              </div>
+              <p className="hidden text-xs text-[#9aa6b5] sm:block">Control · RRHH · Choferes · Nómina · Roles</p>
             </div>
           </div>
 
-          <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+          <div className="ml-auto flex items-center gap-2 sm:gap-3">
             <span
-              className={`mr-0.5 inline-flex h-2.5 w-2.5 shrink-0 rounded-full ${conectado ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]' : 'bg-amber-400'}`}
+              className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium border ${
+                conectado
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                  : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+              }`}
               title={`Tiempo real: ${estadoTiempoReal}`}
-              aria-label={conectado ? 'Datos en tiempo real conectados' : 'Reconectando datos en tiempo real'}
-            />
+            >
+              <span className={`h-2 w-2 rounded-full ${conectado ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+              <span className="hidden sm:inline">{conectado ? 'En vivo' : 'Conectando'}</span>
+            </span>
+
+            {puede('ajustes') && (
+              <NavLink
+                to="/ajustes"
+                aria-label="Ajustes del sistema"
+                title="Ajustes"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-[#9aa6b5] transition-colors hover:bg-[#2b3038] hover:text-[#ff8a00]"
+              >
+                <Settings2 className="h-4.5 w-4.5" aria-hidden="true" />
+              </NavLink>
+            )}
+
             <NavLink
               to="/ayuda"
               aria-label="Ir a la ayuda"
               title="Ayuda"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-800 hover:text-brand-400"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-[#9aa6b5] transition-colors hover:bg-[#2b3038] hover:text-[#ff8a00]"
             >
-              <CircleHelp className="h-5 w-5" aria-hidden="true" />
+              <CircleHelp className="h-4.5 w-4.5" aria-hidden="true" />
             </NavLink>
-            <div className="hidden items-center gap-2 border-l border-slate-800 pl-3 md:flex">
+
+            <div className="hidden items-center gap-2 border-l border-[#333944] pl-3 md:flex">
               <div className="text-right">
-                <p className="max-w-[160px] truncate text-sm font-semibold text-slate-200">
-                  {profile?.full_name || user?.email || 'Usuario'}
+                <p className="max-w-[160px] truncate text-sm font-semibold text-[#e7ecf3]">
+                  {profile?.full_name || profile?.usuario || user?.email || 'Usuario'}
                 </p>
-                <p className="text-xs text-slate-400">{roleLabel}</p>
+                <p className="text-xs text-[#9aa6b5]">{roleLabel}</p>
               </div>
-              <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-950/80 border border-brand-800/60 text-xs font-bold text-brand-300">
+              <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#2b3038] border border-[#ff8a00]/40 text-xs font-bold text-[#ff8a00]">
                 {iniciales(profile) || 'US'}
               </div>
               <Button
@@ -208,28 +256,35 @@ export default function Layout() {
         </div>
       </header>
 
-      {/* Sidebar escritorio oscuro */}
-      <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 flex-col border-r border-slate-800 bg-[#161b22] md:flex shadow-panel">
-        <div className="flex h-16 items-center border-b border-slate-800 px-5">
-          <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Menú principal</span>
+      {/* Sidebar escritorio oscuro (Gris carbón GT #23272e) */}
+      <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 flex-col border-r border-[#333944] bg-[#23272e] md:flex shadow-panel">
+        <div className="flex h-16 items-center border-b border-[#333944] px-5 gap-2">
+          <ShieldCheck className="h-5 w-5 text-[#ff8a00]" />
+          <span className="text-xs font-bold uppercase tracking-wider text-[#9aa6b5]">Navegación</span>
         </div>
-        <nav className="scrollbar-thin flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="Navegación principal">
-          {items.map((item) => (
-            <EnlaceNav key={item.to} item={item} />
+
+        <nav className="scrollbar-thin flex-1 space-y-4 overflow-y-auto px-3 py-4" aria-label="Navegación principal">
+          {seccionesFiltradas.map((seccion) => (
+            <div key={seccion.titulo} className="space-y-1">
+              <div className="px-3 pb-1 pt-1 text-[11px] font-bold uppercase tracking-wider text-[#6a7585]">
+                {seccion.titulo}
+              </div>
+              {seccion.items.map((item) => (
+                <EnlaceNav key={item.to} item={item} />
+              ))}
+            </div>
           ))}
         </nav>
-        <div className="border-t border-slate-800 p-4">
-          <div className="rounded-xl bg-[#0e1217]/90 border border-slate-800 p-3">
-            <div className="flex items-center gap-2">
+
+        <div className="border-t border-[#333944] p-3">
+          <div className="rounded-xl bg-[#1c1f24] border border-[#333944] p-3">
+            <div className="flex items-center justify-between">
               <Badge tone="naranja">{roleLabel}</Badge>
-              <span
-                className={`text-xs font-medium ${conectado ? 'text-emerald-400' : 'text-amber-400'}`}
-                title={`Tiempo real: ${estadoTiempoReal}`}
-              >
-                ● {conectado ? 'En vivo' : 'Conectando…'}
+              <span className="text-[11px] text-[#29c081] font-medium flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#29c081] animate-ping" /> Activo
               </span>
             </div>
-            <p className="mt-2 truncate text-xs text-slate-400 font-mono">{user?.email}</p>
+            <p className="mt-2 truncate text-xs text-[#9aa6b5] font-mono">{user?.email}</p>
           </div>
         </div>
       </aside>
@@ -237,11 +292,11 @@ export default function Layout() {
       {/* Drawer móvil */}
       {drawerAbierto && (
         <div className="fixed inset-0 z-[60] md:hidden" role="dialog" aria-modal="true" aria-label="Menú de navegación">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setDrawerAbierto(false)} aria-hidden="true" />
-          <div className="relative flex h-full w-[85%] max-w-xs flex-col bg-[#161b22] border-r border-slate-800 shadow-panel animate-fade-in">
-            <div className="flex items-center justify-between border-b border-slate-800 px-4 py-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setDrawerAbierto(false)} aria-hidden="true" />
+          <div className="relative flex h-full w-[85%] max-w-xs flex-col bg-[#23272e] border-r border-[#333944] shadow-panel animate-fade-in">
+            <div className="flex items-center justify-between border-b border-[#333944] px-4 py-4">
               <div className="flex items-center gap-2">
-                <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-brand-950/80 ring-1 ring-brand-800/60">
+                <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#2b3038] border border-[#333944]">
                   <img
                     src="/logo-escoltas.png"
                     alt="Emblema de Seguridad Escoltas"
@@ -249,32 +304,41 @@ export default function Layout() {
                   />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-slate-100">Sistema de Escoltas</p>
-                  <p className="text-xs text-slate-400">Menú principal</p>
+                  <p className="text-sm font-bold text-[#e7ecf3]">Sistema de Escoltas</p>
+                  <p className="text-xs text-[#9aa6b5]">Menú principal</p>
                 </div>
               </div>
               <button
                 type="button"
                 aria-label="Cerrar menú"
                 onClick={() => setDrawerAbierto(false)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-[#9aa6b5] hover:bg-[#2b3038] hover:text-white"
               >
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
-            <nav className="scrollbar-thin flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="Navegación móvil">
-              {items.map((item) => (
-                <EnlaceNav key={item.to} item={item} alNavegar={() => setDrawerAbierto(false)} />
+
+            <nav className="scrollbar-thin flex-1 space-y-4 overflow-y-auto px-3 py-4" aria-label="Navegación móvil">
+              {seccionesFiltradas.map((seccion) => (
+                <div key={seccion.titulo} className="space-y-1">
+                  <div className="px-3 pb-1 pt-1 text-[11px] font-bold uppercase tracking-wider text-[#6a7585]">
+                    {seccion.titulo}
+                  </div>
+                  {seccion.items.map((item) => (
+                    <EnlaceNav key={item.to} item={item} alNavegar={() => setDrawerAbierto(false)} />
+                  ))}
+                </div>
               ))}
             </nav>
-            <div className="border-t border-slate-800 p-4">
+
+            <div className="border-t border-[#333944] p-4">
               <div className="mb-3 flex items-center gap-3">
-                <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-950/80 border border-brand-800/60 text-sm font-bold text-brand-300">
+                <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#2b3038] border border-[#ff8a00]/50 text-sm font-bold text-[#ff8a00]">
                   {iniciales(profile) || 'US'}
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-200">{profile?.full_name || user?.email}</p>
-                  <p className="text-xs text-slate-400">{roleLabel}</p>
+                  <p className="truncate text-sm font-semibold text-[#e7ecf3]">{profile?.full_name || user?.email}</p>
+                  <p className="text-xs text-[#9aa6b5]">{roleLabel}</p>
                 </div>
               </div>
               <Button variant="outline" fullWidth onClick={cerrarSesion} loading={cerrandoSesion} leftIcon={LogOut}>
@@ -285,15 +349,15 @@ export default function Layout() {
         </div>
       )}
 
-      {/* Contenido principal */}
-      <main className="mx-auto max-w-[1600px] px-4 pb-32 pt-6 sm:px-6 md:ml-64 md:pb-12 md:pt-8">
-        <nav aria-label="Ruta de navegación" className="mb-5 flex flex-wrap items-center gap-1.5 text-xs text-slate-400">
+      {/* Contenido principal con fondo carbón descansado GT */}
+      <main className="mx-auto max-w-[1600px] px-4 pb-32 pt-6 sm:px-6 md:ml-64 md:pb-12 md:pt-8 bg-[#1c1f24] min-h-[calc(100vh-64px)]">
+        <nav aria-label="Ruta de navegación" className="mb-5 flex flex-wrap items-center gap-1.5 text-xs text-[#9aa6b5]">
           {migas.map((miga, indice) => (
             <React.Fragment key={miga.to}>
-              {indice > 0 && <span aria-hidden="true" className="text-slate-600">/</span>}
+              {indice > 0 && <span aria-hidden="true" className="text-[#6a7585]">/</span>}
               <NavLink
                 to={miga.to}
-                className={indice === migas.length - 1 ? 'font-semibold text-brand-400' : 'hover:text-slate-200'}
+                className={indice === migas.length - 1 ? 'font-semibold text-[#ff8a00]' : 'hover:text-[#e7ecf3]'}
               >
                 {miga.label}
               </NavLink>
@@ -305,7 +369,7 @@ export default function Layout() {
 
       {/* Barra inferior móvil */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-slate-800 bg-[#161b22]/95 pb-safe backdrop-blur md:hidden shadow-lg"
+        className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-[#333944] bg-[#23272e]/95 pb-safe backdrop-blur md:hidden shadow-lg"
         aria-label="Navegación rápida"
       >
         {movilPrincipal.map((item) => (
@@ -321,8 +385,8 @@ export default function Layout() {
           onClick={() => setDrawerAbierto(true)}
           className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-[11px] font-semibold transition-colors ${
             !movilPrincipal.some((item) => location.pathname.startsWith(item.to) && item.to !== '/')
-              ? 'text-brand-400 font-bold'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'text-[#ff8a00] font-bold'
+              : 'text-[#9aa6b5] hover:text-[#e7ecf3]'
           }`}
         >
           <Menu className="h-5 w-5" aria-hidden="true" />

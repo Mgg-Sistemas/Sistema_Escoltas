@@ -79,7 +79,7 @@ export default function Usuarios() {
     try {
       const [listaPerfiles, listaEscoltas, datosRoles, listaAut] = await Promise.all([
         api.listarUsuarios(),
-        listar(TABLAS.escoltas, { orden: { columna: 'nombre_completo', ascendente: true } }).catch(() => []),
+        listar(TABLAS.escoltas, { select: 'id,nombres,apellidos,cedula,codigo', ordenarPor: 'nombres', ascendente: true }).catch(() => []),
         api.obtenerRoles().catch(() => ({ roles: [], matriz: [] })),
         api.listarAutorizados().catch(() => []),
       ]);
@@ -115,8 +115,9 @@ export default function Usuarios() {
     const termino = busqueda.toLowerCase();
     return perfiles.filter(
       (perfil) =>
-        perfil.nombre_completo?.toLowerCase().includes(termino) ||
+        (perfil.full_name || perfil.nombre_completo || perfil.usuario || '').toLowerCase().includes(termino) ||
         perfil.email?.toLowerCase().includes(termino) ||
+        perfil.usuario?.toLowerCase().includes(termino) ||
         perfil.username?.toLowerCase().includes(termino) ||
         perfil.role?.toLowerCase().includes(termino),
     );
@@ -258,12 +259,12 @@ export default function Usuarios() {
       render: (fila) => (
         <div>
           <div className="font-semibold text-slate-100 flex items-center gap-1.5">
-            <span>{fila.nombre_completo || 'Sin nombre'}</span>
+            <span>{fila.full_name || fila.nombre_completo || fila.usuario || 'Sin nombre'}</span>
             {fila.id === usuarioActual?.id && (
               <span className="text-[10px] bg-brand-500/20 text-brand-400 font-bold px-1.5 py-0.2 rounded">TÚ</span>
             )}
           </div>
-          <div className="text-xs text-slate-400 font-mono">@{fila.username} · {fila.email}</div>
+          <div className="text-xs text-slate-400 font-mono">@{fila.usuario || fila.username || 'usuario'} · {fila.email}</div>
         </div>
       ),
     },
@@ -500,7 +501,7 @@ export default function Usuarios() {
                   autorizados.map((aut) => (
                     <tr key={aut.id} className="hover:bg-slate-800/40">
                       <td className="py-3 px-4 font-semibold text-slate-100">
-                        {aut.usuario?.nombre_completo || aut.usuario?.email || 'Usuario'}
+                        {aut.usuario?.full_name || aut.usuario?.nombre_completo || aut.usuario?.usuario || aut.usuario?.email || 'Usuario'}
                       </td>
                       <td className="py-3 px-4 uppercase font-mono font-bold text-brand-400">{aut.modulo}</td>
                       <td className="py-3 px-4 capitalize">{aut.accion}</td>
@@ -567,7 +568,7 @@ export default function Usuarios() {
                 { value: '', label: 'Sin vincular' },
                 ...escoltas.map((esc) => ({
                   value: esc.id,
-                  label: `${esc.nombre_completo} (C.I: ${esc.cedula || 'N/A'})`,
+                  label: `${nombreCompleto(esc)} (C.I: ${esc.cedula || 'N/A'})`,
                 })),
               ]}
             />
@@ -596,7 +597,7 @@ export default function Usuarios() {
               { value: '', label: 'Seleccionar usuario...' },
               ...perfiles.map((p) => ({
                 value: p.id,
-                label: `${p.nombre_completo} (@${p.username})`,
+                label: `${p.full_name || p.nombre_completo || p.usuario} (@${p.usuario || p.username || ''})`,
               })),
             ]}
           />

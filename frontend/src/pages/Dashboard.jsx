@@ -144,13 +144,15 @@ export default function Dashboard() {
 
   const accesos = useMemo(() => {
     const lista = [];
-    if (puede('escoltas')) lista.push({ to: '/escoltas', label: 'Fichas de escoltas', descripcion: 'Alta, edición y consulta', icono: UserPlus, color: 'bg-brand-50 text-brand-700' });
-    if (puede('distribucion')) lista.push({ to: '/distribucion', label: 'Distribución', descripcion: 'Asignar clientes y turnos', icono: CalendarRange, color: 'bg-indigo-50 text-indigo-700' });
-    lista.push({ to: '/permisos', label: 'Permisos', descripcion: 'Solicitar y revisar', icono: ClipboardCheck, color: 'bg-amber-50 text-amber-700' });
-    lista.push({ to: '/asistencias', label: 'Asistencias', descripcion: 'Registrar entrada y salida', icono: CalendarCheck2, color: 'bg-emerald-50 text-emerald-700' });
-    if (puede('nomina')) lista.push({ to: '/nomina', label: 'Nómina', descripcion: 'Cerrar periodos y calcular', icono: WalletCards, color: 'bg-violet-50 text-violet-700' });
-    if (puede('pagos')) lista.push({ to: '/pagos', label: 'Pagos', descripcion: 'Registrar y confirmar', icono: CreditCard, color: 'bg-rose-50 text-rose-700' });
-    if (puede('usuarios')) lista.push({ to: '/usuarios', label: 'Usuarios', descripcion: 'Administrar roles', icono: ShieldCheck, color: 'bg-slate-800 text-slate-300' });
+    if (puede('escoltas')) lista.push({ to: '/escoltas', label: 'Fichas de escoltas', descripcion: 'Alta, edición y consulta', icono: UserPlus, color: 'bg-[#ff8a00]/15 text-[#ff8a00] border border-[#ff8a00]/30' });
+    if (puede('choferes')) lista.push({ to: '/choferes', label: 'Choferes y Flota', descripcion: 'Viajes, rutas y viáticos GT', icono: Truck, color: 'bg-amber-500/15 text-amber-400 border border-amber-500/30' });
+    if (puede('rrhh')) lista.push({ to: '/rrhh', label: 'Recursos Humanos', descripcion: 'Personal, expedientes y anticipos', icono: UsersRound, color: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' });
+    if (puede('distribucion')) lista.push({ to: '/distribucion', label: 'Distribución', descripcion: 'Asignar clientes y turnos', icono: CalendarRange, color: 'bg-blue-500/15 text-blue-400 border border-blue-500/30' });
+    lista.push({ to: '/permisos', label: 'Permisos', descripcion: 'Solicitar y revisar', icono: ClipboardCheck, color: 'bg-amber-500/15 text-amber-400 border border-amber-500/30' });
+    lista.push({ to: '/asistencias', label: 'Asistencias', descripcion: 'Registrar entrada y salida', icono: CalendarCheck2, color: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' });
+    if (puede('nomina')) lista.push({ to: '/nomina', label: 'Nómina', descripcion: 'Cerrar periodos y calcular', icono: WalletCards, color: 'bg-violet-500/15 text-violet-400 border border-violet-500/30' });
+    if (puede('pagos')) lista.push({ to: '/pagos', label: 'Pagos', descripcion: 'Registrar y confirmar', icono: CreditCard, color: 'bg-rose-500/15 text-rose-400 border border-rose-500/30' });
+    if (puede('usuarios')) lista.push({ to: '/usuarios', label: 'Usuarios y Cuentas', descripcion: 'Directorio y accesos', icono: ShieldCheck, color: 'bg-slate-700/30 text-slate-300 border border-slate-600/30' });
     return lista;
   }, [puede]);
 

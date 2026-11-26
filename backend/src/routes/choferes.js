@@ -52,7 +52,7 @@ router.post(
         observaciones,
         activo: true,
         created_by: req.user.id,
-        actor_name: req.user.nombre_completo,
+        actor_name: req.user.full_name || req.user.email || 'Sistema',
       })
       .select('*, personal:personal(*), vehiculo:vehiculos_catalogo(*)')
       .single();
@@ -148,7 +148,7 @@ router.post(
         tarifa_usd: Number(tarifa_usd),
         nota,
         created_by: req.user.id,
-        actor_name: req.user.nombre_completo,
+        actor_name: req.user.full_name || req.user.email || 'Sistema',
       })
       .select('*, chofer:choferes_conductores(*, personal:personal(*)), vehiculo:vehiculos_catalogo(*)')
       .single();
@@ -242,7 +242,7 @@ router.post(
         comprobante,
         nota,
         created_by: req.user.id,
-        actor_name: req.user.nombre_completo,
+        actor_name: req.user.full_name || req.user.email || 'Sistema',
       })
       .select('*')
       .single();
@@ -304,7 +304,7 @@ router.post(
         estado: 'pendiente',
         nota,
         created_by: req.user.id,
-        actor_name: req.user.nombre_completo,
+        actor_name: req.user.full_name || req.user.email || 'Sistema',
       })
       .select('*')
       .single();

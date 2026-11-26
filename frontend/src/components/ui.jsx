@@ -63,12 +63,12 @@ export function Button({
 
 export function Card({ title, subtitle, actions, children, className = '', bodyClassName = '' }) {
   return (
-    <section className={`rounded-2xl border border-slate-700/60 bg-[#161b22] text-slate-100 shadow-card ${className}`}>
+    <section className={`rounded-2xl border border-[#333944] bg-[#23272e] text-[#e7ecf3] shadow-card ${className}`}>
       {(title || actions) && (
-        <header className="flex flex-col gap-3 border-b border-slate-800/80 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <header className="flex flex-col gap-3 border-b border-[#333944] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            {title && <h2 className="text-base font-bold text-slate-100 sm:text-lg">{title}</h2>}
-            {subtitle && <p className="mt-1 text-sm text-slate-400">{subtitle}</p>}
+            {title && <h2 className="text-base font-bold text-[#e7ecf3] sm:text-lg">{title}</h2>}
+            {subtitle && <p className="mt-1 text-sm text-[#9aa6b5]">{subtitle}</p>}
           </div>
           {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
         </header>
@@ -100,7 +100,7 @@ export function StatCard({ label, value, hint, icon: Icon, tone = 'brand', loadi
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-slate-700/60 bg-[#161b22] p-5 shadow-card">
+      <div className="rounded-2xl border border-[#333944] bg-[#23272e] p-5 shadow-card">
         <Skeleton className="h-10 w-10 rounded-xl" />
         <Skeleton className="mt-4 h-4 w-24" />
         <Skeleton className="mt-2 h-8 w-16" />
@@ -110,15 +110,15 @@ export function StatCard({ label, value, hint, icon: Icon, tone = 'brand', loadi
   }
 
   return (
-    <div className="rounded-2xl border border-slate-700/60 bg-[#161b22] p-5 shadow-card transition-shadow hover:shadow-md">
+    <div className="rounded-2xl border border-[#333944] bg-[#23272e] p-5 shadow-card transition-shadow hover:shadow-md">
       {Icon && (
         <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${tonos[tone] || tonos.brand}`}>
           <Icon className="h-5 w-5" aria-hidden="true" />
         </div>
       )}
-      <p className="mt-4 text-sm font-medium text-slate-400">{label}</p>
-      <p className="mt-1 text-2xl font-bold tracking-tight text-slate-100">{value ?? '—'}</p>
-      {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
+      <p className="mt-4 text-sm font-medium text-[#9aa6b5]">{label}</p>
+      <p className="mt-1 text-2xl font-bold tracking-tight text-[#e7ecf3]">{value ?? '—'}</p>
+      {hint && <p className="mt-1 text-xs text-[#6a7585]">{hint}</p>}
     </div>
   );
 }
@@ -126,7 +126,7 @@ export function StatCard({ label, value, hint, icon: Icon, tone = 'brand', loadi
 // ---------- Formularios ----------
 
 const campoBase =
-  'block w-full rounded-xl border border-slate-700 bg-[#0d1117] px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:bg-slate-800 disabled:text-slate-500';
+  'block w-full rounded-xl border border-[#333944] bg-[#2b3038] px-3.5 py-2.5 text-sm text-[#e7ecf3] placeholder:text-[#6a7585] transition-colors focus:border-[#ff8a00] focus:outline-none focus:ring-2 focus:ring-[#ff8a00]/20 disabled:bg-[#1c1f24] disabled:text-[#6a7585]';
 
 export function Field({ label, htmlFor, help, error, required = false, children, className = '' }) {
   return (
@@ -227,23 +227,23 @@ export function Modal({
   return (
     <div className="fixed inset-0 z-[70] flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label={tituloModal}>
       <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-[2px]" onClick={cerrar} aria-hidden="true" />
-      <div className={`relative flex max-h-[94dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-slate-700/80 bg-[#161b22] text-slate-100 shadow-2xl animate-fade-in sm:rounded-2xl ${TAMANOS_MODAL[size] || TAMANOS_MODAL.md}`}>
-        <header className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-800 px-5 py-4 sm:px-6">
+      <div className={`relative flex max-h-[94dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-[#333944] bg-[#23272e] text-[#e7ecf3] shadow-2xl animate-fade-in sm:rounded-2xl ${TAMANOS_MODAL[size] || TAMANOS_MODAL.md}`}>
+        <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[#333944] px-5 py-4 sm:px-6">
           <div className="min-w-0">
-            <h2 className="text-lg font-bold text-slate-100">{tituloModal}</h2>
-            {descripcionModal && <p className="mt-1 text-sm leading-relaxed text-slate-400">{descripcionModal}</p>}
+            <h2 className="text-lg font-bold text-[#e7ecf3]">{tituloModal}</h2>
+            {descripcionModal && <p className="mt-1 text-sm leading-relaxed text-[#9aa6b5]">{descripcionModal}</p>}
           </div>
           <button
             type="button"
             onClick={cerrar}
             aria-label="Cerrar ventana"
-            className="-mr-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+            className="-mr-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[#9aa6b5] transition-colors hover:bg-[#2b3038] hover:text-white"
           >
             <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </header>
         <div className="scrollbar-thin flex-1 overflow-y-auto px-5 py-5 sm:px-6">{children}</div>
-        {footer && <footer className="shrink-0 border-t border-slate-800 bg-[#0d1117]/80 px-5 py-4 sm:px-6">{footer}</footer>}
+        {footer && <footer className="shrink-0 border-t border-[#333944] bg-[#1c1f24] px-5 py-4 sm:px-6">{footer}</footer>}
       </div>
     </div>
   );

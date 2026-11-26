@@ -235,7 +235,7 @@ export default function Ajustes() {
             <div className="space-y-3 text-sm">
               <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-700/60">
                 <span className="text-xs text-slate-400">Nombre Completo</span>
-                <p className="font-semibold text-slate-100 mt-0.5">{user?.nombre_completo || 'Usuario del Sistema'}</p>
+                <p className="font-semibold text-slate-100 mt-0.5">{user?.full_name || user?.nombre_completo || user?.usuario || 'Usuario del Sistema'}</p>
               </div>
 
               <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-700/60">
