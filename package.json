@@ -17,6 +17,7 @@
     "dev:frontend": "npm --prefix frontend run dev",
     "build": "npm --prefix frontend run build",
     "start": "npm --prefix backend run start",
+    "bot:update": "node scripts/update-bot.js",
     "bootstrap:admin": "npm --prefix backend run bootstrap:admin"
   },
   "devDependencies": {

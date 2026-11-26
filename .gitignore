@@ -22,6 +22,7 @@ supabase/.temp/
 supabase/seed.local.sql
 
 # Logs y sistema
+logs/
 *.log
 npm-debug.log*
 .DS_Store

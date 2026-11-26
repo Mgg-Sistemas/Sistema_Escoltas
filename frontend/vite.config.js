@@ -1,5 +1,43 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import { execSync } from 'node:child_process';
+import path from 'node:path';
+import { readFileSync } from 'node:fs';
+
+function appVersion() {
+  const env = (
+    process.env.VITE_APP_VERSION || process.env.APP_VERSION ||
+    process.env.GITHUB_SHA || process.env.SOURCE_COMMIT || ''
+  ).trim();
+  if (env) return env.slice(0, 12);
+  try {
+    return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+  } catch {
+    // Si no está disponible git en el entorno
+  }
+  try {
+    const pkg = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf8'));
+    return `v${pkg.version ?? '1.0.0'}`;
+  } catch {
+    return 'v1.0.0';
+  }
+}
+
+const APP_VERSION = appVersion();
+
+const versionJsonPlugin = {
+  name: 'version-json-plugin',
+  generateBundle() {
+    this.emitFile({
+      type: 'asset',
+      fileName: 'version.json',
+      source: JSON.stringify({
+        version: APP_VERSION,
+        builtAt: new Date().toISOString(),
+      }),
+    });
+  },
+};
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
@@ -16,8 +54,9 @@ export default defineConfig(({ mode }) => {
 
   return {
     publicDir: '../public',
-    plugins: [react()],
+    plugins: [react(), versionJsonPlugin],
     define: {
+      'import.meta.env.VITE_APP_VERSION': JSON.stringify(APP_VERSION),
       'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(supabaseAnonKey),
       'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(supabaseUrl),
     },

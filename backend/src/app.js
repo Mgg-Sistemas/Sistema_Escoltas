@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execSync } from 'node:child_process';
 import { config } from './config.js';
 import { authenticate } from './middleware/auth.js';
 import { errorHandler, notFoundHandler } from './middleware/error.js';
@@ -65,9 +66,38 @@ function origenPermitido(origen, callback) {
 app.use(cors({ origin: origenPermitido, credentials: origenes !== '*' }));
 app.use(express.json({ limit: '2mb' }));
 
-// Rutas públicas: salud y recuperación de contraseña (antes de autenticación).
+// Rutas públicas: salud, versión y recuperación de contraseña (antes de autenticación).
 app.use('/api/health', healthRoutes);
 app.use('/api/auth', authPublicRouter);
+
+app.get(['/version.json', '/api/version'], (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const distVersion = path.resolve(__dirname, '../../frontend/dist/version.json');
+
+  if (fs.existsSync(distVersion)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(distVersion, 'utf8'));
+      return res.json(data);
+    } catch {}
+  }
+
+  let commit = 'dev';
+  try {
+    commit = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+  } catch {}
+
+  return res.json({
+    version: commit,
+    actualizando: false,
+    mensaje: 'El sistema esta actualizandose, por favor haga click aca para tener la ultima version.',
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // SSE: valida el JWT por cabecera o query (?token=), porque EventSource
 // no puede enviar cabeceras. Se monta antes del middleware global.

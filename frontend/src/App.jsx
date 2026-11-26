@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { ArrowLeft, CircleHelp, Loader2, ShieldAlert, ShieldCheck } from 'lucide-react';
 import Layout from './components/Layout.jsx';
+import BannerActualizacion from './components/BannerActualizacion.jsx';
 import { Button } from './components/ui.jsx';
 import { useAuth } from './context/AuthContext.jsx';
 import Login from './pages/Login.jsx';
@@ -78,37 +79,42 @@ export default function App() {
   }
 
   return (
-    <Routes>
-      <Route path="/login" element={autenticado ? <Navigate to="/" replace /> : <Login />} />
-      <Route
-        path="/recuperar-clave"
-        element={autenticado ? <Navigate to="/" replace /> : <RecuperarClave />}
-      />
-      <Route
-        path="/cambiar-clave"
-        element={autenticado ? <CambiarClave /> : <Navigate to="/login" replace />}
-      />
-      <Route
-        path="/restablecer-clave"
-        element={autenticado ? <CambiarClave /> : <Navigate to="/login" replace />}
-      />
-      <Route element={autenticado ? <Layout /> : <Navigate to="/login" replace />}>
-        <Route index element={<Dashboard />} />
-        <Route path="escoltas" element={<Escoltas />} />
-        <Route path="distribucion" element={<Distribucion />} />
-        <Route path="permisos" element={<Permisos />} />
-        <Route path="asistencias" element={<Asistencias />} />
-        <Route path="rrhh" element={<RoleRoute roles={['admin', 'supervisor', 'contador', 'rrhh']} modulo="Recursos Humanos"><Rrhh /></RoleRoute>} />
-        <Route path="choferes" element={<RoleRoute roles={['admin', 'supervisor', 'contador', 'chofer']} modulo="Choferes"><Choferes /></RoleRoute>} />
-        <Route path="nomina" element={<RoleRoute roles={['admin', 'contador']} modulo="Nómina"><Nomina /></RoleRoute>} />
-        <Route path="pagos" element={<RoleRoute roles={['admin', 'contador']} modulo="Pagos"><Pagos /></RoleRoute>} />
-        <Route path="usuarios" element={<RoleRoute roles={['admin']} modulo="Usuarios"><Usuarios /></RoleRoute>} />
-        <Route path="roles-permisos" element={<RoleRoute roles={['admin']} modulo="Roles y permisos"><RolesPermisos /></RoleRoute>} />
-        <Route path="ajustes" element={<RoleRoute roles={['admin']} modulo="Ajustes"><Ajustes /></RoleRoute>} />
-        <Route path="ayuda" element={<Ayuda />} />
-      </Route>
-      <Route path="*" element={<Navigate to={autenticado ? '/' : '/login'} replace />} />
-    </Routes>
+    <div className="min-h-screen bg-[#0e1217] text-slate-100 flex flex-col">
+      <BannerActualizacion />
+      <div className="flex-1">
+        <Routes>
+          <Route path="/login" element={autenticado ? <Navigate to="/" replace /> : <Login />} />
+          <Route
+            path="/recuperar-clave"
+            element={autenticado ? <Navigate to="/" replace /> : <RecuperarClave />}
+          />
+          <Route
+            path="/cambiar-clave"
+            element={autenticado ? <CambiarClave /> : <Navigate to="/login" replace />}
+          />
+          <Route
+            path="/restablecer-clave"
+            element={autenticado ? <CambiarClave /> : <Navigate to="/login" replace />}
+          />
+          <Route element={autenticado ? <Layout /> : <Navigate to="/login" replace />}>
+            <Route index element={<Dashboard />} />
+            <Route path="escoltas" element={<Escoltas />} />
+            <Route path="distribucion" element={<Distribucion />} />
+            <Route path="permisos" element={<Permisos />} />
+            <Route path="asistencias" element={<Asistencias />} />
+            <Route path="rrhh" element={<RoleRoute roles={['admin', 'supervisor', 'contador', 'rrhh']} modulo="Recursos Humanos"><Rrhh /></RoleRoute>} />
+            <Route path="choferes" element={<RoleRoute roles={['admin', 'supervisor', 'contador', 'chofer']} modulo="Choferes"><Choferes /></RoleRoute>} />
+            <Route path="nomina" element={<RoleRoute roles={['admin', 'contador']} modulo="Nómina"><Nomina /></RoleRoute>} />
+            <Route path="pagos" element={<RoleRoute roles={['admin', 'contador']} modulo="Pagos"><Pagos /></RoleRoute>} />
+            <Route path="usuarios" element={<RoleRoute roles={['admin']} modulo="Usuarios"><Usuarios /></RoleRoute>} />
+            <Route path="roles-permisos" element={<RoleRoute roles={['admin']} modulo="Roles y permisos"><RolesPermisos /></RoleRoute>} />
+            <Route path="ajustes" element={<RoleRoute roles={['admin']} modulo="Ajustes"><Ajustes /></RoleRoute>} />
+            <Route path="ayuda" element={<Ayuda />} />
+          </Route>
+          <Route path="*" element={<Navigate to={autenticado ? '/' : '/login'} replace />} />
+        </Routes>
+      </div>
+    </div>
   );
 }
 
