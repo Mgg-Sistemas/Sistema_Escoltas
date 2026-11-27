@@ -13,6 +13,8 @@
     "@supabase/supabase-js": "^2.45.4",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.20",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.9",
     "lucide-react": "^0.441.0",
     "postcss": "^8.4.47",
     "qrcode": "^1.5.4",

@@ -6,6 +6,7 @@ import {
   Calendar,
   Clock,
   Coins,
+  Download,
   FileSpreadsheet,
   FileText,
   History,
@@ -65,6 +66,7 @@ export default function Rrhh() {
   const [busqueda, setBusqueda] = useState('');
   const [personal, setPersonal] = useState([]);
   const [anticipos, setAnticipos] = useState([]);
+  const [exportandoAnticipos, setExportandoAnticipos] = useState(false);
   const [tabulador, setTabulador] = useState([]);
   const [minutas, setMinutas] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -152,6 +154,24 @@ export default function Rrhh() {
       cargarDatos();
     } catch (err) {
       toast.error(err.message || 'Error al actualizar sueldo');
+    }
+  };
+
+  const descargarAnticipos = async (registros, individual = false) => {
+    setExportandoAnticipos(true);
+    try {
+      const { construirAnticiposPdf } = await import('../lib/anticiposPdf.js');
+      const porId = new Map(personal.map((persona) => [persona.id, persona]));
+      const datos = registros.map((registro) => ({
+        ...registro,
+        personal: registro.personal ?? porId.get(registro.personal_id),
+      }));
+      const pdf = await construirAnticiposPdf(datos, { individual });
+      pdf.save(individual ? 'escoltas-ficha-anticipo-prestamo.pdf' : 'escoltas-anticipos-prestamos.pdf');
+    } catch (error) {
+      toast.error(error.message || 'No se pudo preparar el PDF.');
+    } finally {
+      setExportandoAnticipos(false);
     }
   };
 
@@ -396,11 +416,13 @@ export default function Rrhh() {
       {/* PESTAÑA 2: ANTICIPOS Y PRÉSTAMOS */}
       {pestanaActiva === 'anticipos' && (
         <Card className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-100">Anticipos y Préstamos Activos</h2>
-            <div className="text-xs text-slate-400">
-              Descuento automático configurable por quincena
-            </div>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold text-slate-100">Anticipos y préstamos</h2>
+            <Button type="button" variant="outline" leftIcon={Download}
+              disabled={cargando || exportandoAnticipos || !anticipos.length}
+              onClick={() => descargarAnticipos(anticipos)}>
+              Descargar reporte PDF
+            </Button>
           </div>
 
           <div className="overflow-x-auto">
@@ -413,12 +435,13 @@ export default function Rrhh() {
                   <th className="py-3 px-4">Cuotas</th>
                   <th className="py-3 px-4">Saldo Pendiente</th>
                   <th className="py-3 px-4">Estado</th>
+                  <th className="py-3 px-4">PDF</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
                 {anticipos.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-400">
+                    <td colSpan={7} className="py-8 text-center text-slate-400">
                       No hay anticipos ni préstamos registrados.
                     </td>
                   </tr>
@@ -442,6 +465,12 @@ export default function Rrhh() {
                         <Badge tone={ant.estado === 'activo' ? 'amarillo' : 'verde'}>
                           {ant.estado}
                         </Badge>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Button type="button" size="sm" variant="outline" leftIcon={Download}
+                          disabled={exportandoAnticipos} onClick={() => descargarAnticipos([ant], true)}>
+                          Ficha PDF
+                        </Button>
                       </td>
                     </tr>
                   ))
