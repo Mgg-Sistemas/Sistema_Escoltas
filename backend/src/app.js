@@ -73,6 +73,53 @@ app.get('/healthz', (req, res) => res.status(200).send('OK'));
 app.use('/api/auth', authPublicRouter);
 app.use(['/api/tasas', '/tasas'], tasasRoutes);
 
+// Validación pública de carnet (datos mínimos y seguros sin requerir login)
+app.get('/api/public/verificar-carnet/:id', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  try {
+    const { id } = req.params;
+    let query = config.supabase
+      ? config.supabase.from('escoltas').select('id, codigo, nombres, apellidos, cedula, estado, notas, foto_url')
+      : null;
+
+    // Usar cliente de supabase de backend
+    const { supabase: sbAdmin } = await import('./lib/supabase.js');
+    let q = sbAdmin.from('escoltas').select('id, codigo, nombres, apellidos, cedula, estado, notas, foto_url');
+    if (id.includes('-') && id.length > 20) {
+      q = q.eq('id', id);
+    } else {
+      q = q.eq('codigo', id);
+    }
+
+    const { data, error } = await q.maybeSingle();
+    if (error || !data) {
+      return res.status(404).json({ error: 'Credencial no encontrada o no válida' });
+    }
+
+    // Devolver únicamente datos mínimos públicos oficiales
+    const notasTexto = String(data.notas || '');
+    const cargoTag = notasTexto.match(/\[CARGO:([^\]]+)\]/)?.[1];
+    const areaTag = notasTexto.match(/\[AREA:([^\]]+)\]/)?.[1];
+    const turnoTag = notasTexto.match(/\[TURNO:([^\]]+)\]/)?.[1];
+
+    return res.json({
+      valido: true,
+      codigo: data.codigo,
+      titular: `${data.nombres} ${data.apellidos}`.trim(),
+      cedula: data.cedula,
+      cargo: cargoTag || 'Personal Operativo',
+      area: areaTag || 'Seguridad y Custodia',
+      turno: turnoTag || 'Diurno',
+      estado: data.estado === 'activo' ? 'ACTIVO / VERIFICADO' : 'SUSPENDIDO / INACTIVO',
+      foto_url: data.foto_url || null,
+      vigencia: '31 / 12 / 2027',
+      fecha_consulta: new Date().toISOString(),
+    });
+  } catch (err) {
+    return res.status(500).json({ error: 'Error interno al validar credencial' });
+  }
+});
+
 app.get(['/version.json', '/api/version'], (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.setHeader('Pragma', 'no-cache');

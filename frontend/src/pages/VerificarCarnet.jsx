@@ -33,35 +33,28 @@ export default function VerificarCarnet() {
       }
 
       try {
-        // Buscar por id (uuid) o por codigo
-        let query = supabase.from('escoltas').select('*');
-        if (idOrCodigo.includes('-') && idOrCodigo.length > 20) {
-          query = query.eq('id', idOrCodigo);
-        } else {
-          query = query.eq('codigo', idOrCodigo);
+        // Consultar el endpoint público seguro (sin necesidad de sesión)
+        const resp = await fetch(`/api/public/verificar-carnet/${encodeURIComponent(idOrCodigo)}`);
+        if (!resp.ok) {
+          const errData = await resp.json().catch(() => ({}));
+          throw new Error(errData.error || 'Credencial no encontrada o no válida.');
         }
 
-        const { data, error: err } = await query.maybeSingle();
-
-        if (err) throw err;
+        const data = await resp.json();
         if (!activo) return;
 
-        if (!data) {
-          setError(`No se encontró ningún registro para el código ${idOrCodigo}.`);
-        } else {
-          // Parsear metadatos
-          const notasTexto = String(data.notas || '');
-          const cargoTag = notasTexto.match(/\[CARGO:([^\]]+)\]/)?.[1];
-          const areaTag = notasTexto.match(/\[AREA:([^\]]+)\]/)?.[1];
-          const turnoTag = notasTexto.match(/\[TURNO:([^\]]+)\]/)?.[1];
-
-          setEscolta({
-            ...data,
-            cargo: cargoTag || 'Escolta Operativo',
-            area: areaTag || 'Seguridad y Custodia',
-            turno: turnoTag || 'Diurno',
-          });
-        }
+        setEscolta({
+          codigo: data.codigo,
+          nombres: data.titular,
+          apellidos: '',
+          cedula: data.cedula,
+          cargo: data.cargo,
+          area: data.area,
+          turno: data.turno,
+          estado: data.estado,
+          foto_url: data.foto_url,
+          vigencia: data.vigencia,
+        });
       } catch (e) {
         if (activo) setError(e.message || 'Error al validar credencial.');
       } finally {

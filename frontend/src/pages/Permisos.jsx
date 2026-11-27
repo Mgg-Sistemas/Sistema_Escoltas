@@ -218,6 +218,31 @@ export default function Permisos() {
 
   return (
     <div className="space-y-6">
+      {/* Vista resumida de acción rápida para teléfonos */}
+      <div className="block md:hidden rounded-2xl border border-slate-800 bg-[#161a22] p-4 shadow-md space-y-3">
+        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+          <div className="flex items-center gap-2">
+            <CalendarClock className="h-4 w-4 text-[#ff8a00]" />
+            <span className="text-xs font-black uppercase text-slate-200">Resumen de Permisos</span>
+          </div>
+          <span className="text-xs font-bold text-slate-400">{pendientes} pendientes</span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="min-w-0 pr-2">
+            <span className="text-[10px] text-slate-400 font-bold uppercase block">Última Petición</span>
+            <strong className="text-xs font-black text-white truncate block">
+              {filtrados[0] ? `${nombreTipo(mapas.tipos[filtrados[0].tipo_id])} (${estadoLabel(filtrados[0].estado)})` : 'Sin solicitudes'}
+            </strong>
+          </div>
+          {puedeSolicitar && (
+            <Button size="sm" variant="primary" leftIcon={Plus} onClick={abrirSolicitud}>
+              Nueva Solicitud
+            </Button>
+          )}
+        </div>
+      </div>
+
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Permisos</h1>
