@@ -6,6 +6,8 @@ const claseAcceso =
   'flex min-h-24 w-full flex-col items-start justify-center gap-2 rounded-2xl border border-slate-800 bg-[#161a22] p-4 text-left text-sm font-bold text-white hover:border-[#ff8a00] hover:bg-[#1c222b] transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#ff8a00] shadow-md';
 
 export default function VistaTelefono({ accesos, alNavegar, alAbrirMenu }) {
+  // Límite estricto de 6 controles en pantalla (hasta 5 accesos + 1 botón Más, o 6 accesos si no hay menú)
+  const accesosVisibles = alAbrirMenu ? accesos.slice(0, 5) : accesos.slice(0, 6);
 
   return (
     <section className="mx-auto w-full max-w-md rounded-3xl border border-slate-800 bg-[#0e1217] p-5 sm:p-6 shadow-2xl select-none" aria-label="Inicio para teléfono">
@@ -25,9 +27,9 @@ export default function VistaTelefono({ accesos, alNavegar, alAbrirMenu }) {
         </div>
       </header>
 
-      {/* Grid oficial de 6 botones limpios (accesos permitidos + Más) */}
+      {/* Grid oficial de máximo 6 botones limpios (accesos permitidos + Más) */}
       <nav aria-label="Accesos principales" className="grid grid-cols-2 gap-3.5">
-        {accesos.map(({ to, etiqueta, icon: Icono }) => (
+        {accesosVisibles.map(({ to, etiqueta, icon: Icono }) => (
           <Link key={to} to={to + "?telefono=1"} onClick={alNavegar} className={claseAcceso}>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800 border border-slate-700/60 text-[#ff8a00]">
               {Icono ? <Icono className="h-5 w-5" aria-hidden="true" /> : <ShieldCheck className="h-5 w-5" aria-hidden="true" />}

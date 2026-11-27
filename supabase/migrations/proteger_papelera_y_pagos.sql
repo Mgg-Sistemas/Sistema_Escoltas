@@ -33,9 +33,9 @@ DECLARE
   v_ids_purgados text[] := ARRAY[]::text[];
   v_tiene_deps boolean;
 BEGIN
-  -- Validar autorización: permite sesión de usuario (auth.uid) o invocación desde backend de servicio con p_actor_id
-  IF current_user = 'service_role' THEN
-    IF p_actor_id IS NULL OR NOT EXISTS (
+  -- Validar autorización: permite p_actor_id verificado en perfiles o sesión auth.uid
+  IF p_actor_id IS NOT NULL THEN
+    IF NOT EXISTS (
       SELECT 1 FROM public.profiles WHERE id = p_actor_id AND role = 'admin'
     ) THEN
       RAISE EXCEPTION 'Acceso denegado: El actor indicado no tiene rol administrador';
@@ -116,9 +116,9 @@ DECLARE
   v_total_pagado numeric(12,2) := 0;
   v_pago_id uuid;
 BEGIN
-  -- Validar autorización: permite sesión de usuario o invocación desde backend de servicio con p_user_id
-  IF current_user = 'service_role' THEN
-    IF p_user_id IS NULL OR NOT EXISTS (
+  -- Validar autorización: permite p_user_id verificado en perfiles o sesión auth.uid
+  IF p_user_id IS NOT NULL THEN
+    IF NOT EXISTS (
       SELECT 1 FROM public.profiles WHERE id = p_user_id AND role IN ('admin', 'contador')
     ) THEN
       RAISE EXCEPTION 'Acceso denegado: El usuario indicado no tiene rol administrador o contador';
