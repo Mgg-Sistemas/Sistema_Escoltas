@@ -400,10 +400,13 @@ export default function Dashboard() {
       {/* FILA 1: 4 INDICADORES CLAVE (KPIs EXACTOS DE LA MAQUETA) */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {/* KPI 1: Personal Activo */}
-        <div className="rounded-2xl border border-[#333944] bg-[#23272e] p-5 shadow-panel transition hover:border-[#ff8a00]/40">
+        <Link
+          to="/escoltas"
+          className="group block rounded-2xl border border-[#333944] bg-[#23272e] p-5 shadow-panel transition hover:border-[#ff8a00] hover:bg-[#282d35] hover:scale-[1.02] cursor-pointer"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Personal Activo</span>
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#ff8a00]/15 text-[#ff8a00] border border-[#ff8a00]/30">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-slate-200 transition">Personal Activo</span>
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#ff8a00]/15 text-[#ff8a00] border border-[#ff8a00]/30 group-hover:bg-[#ff8a00]/25 transition">
               <UsersRound className="h-5 w-5" />
             </span>
           </div>
@@ -414,13 +417,16 @@ export default function Dashboard() {
             </span>
           </div>
           <p className="mt-1 text-xs text-slate-400">Escoltas y vigilantes registrados</p>
-        </div>
+        </Link>
 
         {/* KPI 2: En Turno (Hoy) */}
-        <div className="rounded-2xl border border-[#333944] bg-[#23272e] p-5 shadow-panel transition hover:border-[#ff8a00]/40">
+        <Link
+          to="/distribucion"
+          className="group block rounded-2xl border border-[#333944] bg-[#23272e] p-5 shadow-panel transition hover:border-amber-400 hover:bg-[#282d35] hover:scale-[1.02] cursor-pointer"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">En Turno (Hoy)</span>
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-slate-200 transition">En Turno (Hoy)</span>
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 group-hover:bg-amber-500/25 transition">
               <CalendarCheck2 className="h-5 w-5" />
             </span>
           </div>
@@ -429,13 +435,16 @@ export default function Dashboard() {
             <span className="text-xs font-bold text-amber-400">{porcentajeTurno}% de cobertura</span>
           </div>
           <p className="mt-1 text-xs text-slate-400">Personal asignado en guardia activa</p>
-        </div>
+        </Link>
 
         {/* KPI 3: En Descanso */}
-        <div className="rounded-2xl border border-[#333944] bg-[#23272e] p-5 shadow-panel transition hover:border-[#ff8a00]/40">
+        <Link
+          to="/permisos"
+          className="group block rounded-2xl border border-[#333944] bg-[#23272e] p-5 shadow-panel transition hover:border-blue-400 hover:bg-[#282d35] hover:scale-[1.02] cursor-pointer"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">En Descanso</span>
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/15 text-blue-400 border border-blue-500/30">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-slate-200 transition">En Descanso</span>
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/15 text-blue-400 border border-blue-500/30 group-hover:bg-blue-500/25 transition">
               <Bed className="h-5 w-5" />
             </span>
           </div>
@@ -444,13 +453,16 @@ export default function Dashboard() {
             <span className="text-xs font-bold text-blue-400">{porcentajeDescanso}% del total</span>
           </div>
           <p className="mt-1 text-xs text-slate-400">Rotación y descanso compensatorio</p>
-        </div>
+        </Link>
 
         {/* KPI 4: Nómina del Período */}
-        <div className="rounded-2xl border border-[#333944] bg-[#23272e] p-5 shadow-panel transition hover:border-[#ff8a00]/40">
+        <Link
+          to="/nomina"
+          className="group block rounded-2xl border border-[#333944] bg-[#23272e] p-5 shadow-panel transition hover:border-emerald-400 hover:bg-[#282d35] hover:scale-[1.02] cursor-pointer"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Nómina del Período</span>
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-slate-200 transition">Nómina del Período</span>
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 group-hover:bg-emerald-500/25 transition">
               <DollarSign className="h-5 w-5" />
             </span>
           </div>
@@ -465,7 +477,7 @@ export default function Dashboard() {
           <p className="mt-1 text-xs text-oro">
             {resumen?.periodo_abierto ? (resumen.periodo_abierto.nombre || `Período ${resumen.periodo_abierto.fecha_inicio} a ${resumen.periodo_abierto.fecha_fin}`) : 'Sin período de nómina abierto'}
           </p>
-        </div>
+        </Link>
       </div>
 
       {/* FILA 2: DISPONIBILIDAD OPERATIVA + ASIGNACIÓN DE SERVICIOS + ALERTAS OPERATIVAS */}
