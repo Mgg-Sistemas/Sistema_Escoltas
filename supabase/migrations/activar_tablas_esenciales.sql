@@ -1,20 +1,19 @@
 -- =====================================================================
--- TABLAS ESENCIALES: RR. HH. Y CHOFERES (COMPATIBLE CON GT Y ESCOLTAS)
+-- TABLAS ESENCIALES: RECURSOS HUMANOS (RR. HH.) Y SEGURIDAD
 -- =====================================================================
 
 SET search_path = public, extensions;
 
--- 1. Ampliación de restricciones de roles para admitir chofer y rrhh
+-- 1. Ampliación de restricciones de roles para admitir 'rrhh'
 ALTER TABLE public.roles DROP CONSTRAINT IF EXISTS roles_nombre_check;
-ALTER TABLE public.roles ADD CONSTRAINT roles_nombre_check CHECK (nombre IN ('admin', 'supervisor', 'contador', 'escolta', 'chofer', 'rrhh'));
+ALTER TABLE public.roles ADD CONSTRAINT roles_nombre_check CHECK (nombre IN ('admin', 'supervisor', 'contador', 'escolta', 'rrhh'));
 
 ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
-ALTER TABLE public.profiles ADD CONSTRAINT profiles_role_check CHECK (role IN ('admin', 'supervisor', 'contador', 'escolta', 'chofer', 'rrhh'));
+ALTER TABLE public.profiles ADD CONSTRAINT profiles_role_check CHECK (role IN ('admin', 'supervisor', 'contador', 'escolta', 'rrhh'));
 
 INSERT INTO public.roles (nombre, descripcion, activo, es_sistema)
 VALUES
-  ('chofer', 'Chofer y Conductor de Flota', true, true),
-  ('rrhh', 'Recursos Humanos y Fichas', true, true)
+  ('rrhh', 'Recursos Humanos y Personal', true, true)
 ON CONFLICT (nombre) DO UPDATE SET activo = true;
 
 -- 2. Custom Roles y Roles Permisos
@@ -33,19 +32,17 @@ VALUES
   ('supervisor', 'Supervisor de Operaciones', 'Control operativo', '#2563eb', true),
   ('contador', 'Contabilidad y Finanzas', 'Nómina y pagos', '#16a34a', true),
   ('escolta', 'Escolta / Seguridad', 'Seguridad operativa', '#7c3aed', true),
-  ('chofer', 'Chofer / Conductor', 'Transporte y flota', '#ea580c', true),
   ('rrhh', 'Recursos Humanos', 'Personal y fichas', '#0891b2', true)
 ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO public.roles_permisos (role, permisos, vistas_telefono, solo_telefono)
 VALUES
-  ('chofer', '{"dashboard":"lectura","choferes":"escritura","asistencias":"escritura"}'::jsonb, '["dashboard","choferes"]'::jsonb, true),
   ('rrhh', '{"dashboard":"lectura","rrhh":"full","escoltas":"escritura","nomina":"escritura","asistencias":"escritura","permisos":"escritura"}'::jsonb, '["dashboard","rrhh"]'::jsonb, false)
 ON CONFLICT (role) DO UPDATE SET
   permisos = EXCLUDED.permisos,
   vistas_telefono = EXCLUDED.vistas_telefono;
 
--- 3. Módulo RRHH: Empresas y Personal
+-- 3. Módulo RRHH: Empresas, Personal, Historiales y Autorizados
 CREATE TABLE IF NOT EXISTS public.rrhh_empresas (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   codigo text NOT NULL UNIQUE,
@@ -85,7 +82,6 @@ CREATE TABLE IF NOT EXISTS public.personal (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
--- Historial salarial y de cargos
 CREATE TABLE IF NOT EXISTS public.personal_sueldos (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   personal_id uuid NOT NULL REFERENCES public.personal(id) ON DELETE CASCADE,
@@ -129,11 +125,9 @@ VALUES
   ('Escolta VIP / Protección Cercana', 'I', 'Operaciones', 350, 'USD'),
   ('Escolta Conductor / Blindado', 'II', 'Operaciones', 400, 'USD'),
   ('Jefe de Seguridad / Supervisor', 'III', 'Supervisión', 500, 'USD'),
-  ('Chofer de Apoyo / Logística', 'I', 'Logística', 300, 'USD'),
   ('Custodio de Valores / Guardia', 'I', 'Operaciones', 320, 'USD')
 ON CONFLICT (cargo) DO UPDATE SET sueldo_base = EXCLUDED.sueldo_base;
 
--- Usuarios Autorizados para aprobaciones
 CREATE TABLE IF NOT EXISTS public.usuarios_autorizados (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   usuario_id uuid NOT NULL REFERENCES public.profiles (id) ON DELETE CASCADE,
@@ -174,105 +168,7 @@ CREATE TABLE IF NOT EXISTS public.minutas (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
--- 4. Módulo Choferes: Flota, Conductores y Viajes
-CREATE TABLE IF NOT EXISTS public.vehiculos_catalogo (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  placa text NOT NULL UNIQUE,
-  alias text,
-  tipo text NOT NULL DEFAULT 'camioneta',
-  marca text,
-  modelo text,
-  anio integer,
-  color text,
-  estado_flota text NOT NULL DEFAULT 'operativo' CHECK (estado_flota IN ('operativo', 'taller', 'inactivo')),
-  activo boolean NOT NULL DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-
-INSERT INTO public.vehiculos_catalogo (placa, alias, tipo, marca, modelo, anio, color, estado_flota)
-VALUES
-  ('A10BC2D', 'UNIDAD-01', 'camioneta', 'Toyota', 'Hilux 4x4 Blindada', 2023, 'Negro Metalizado', 'operativo'),
-  ('A23DF4E', 'UNIDAD-02', 'camioneta', 'Toyota', 'Land Cruiser 200', 2022, 'Gris Grafito', 'operativo'),
-  ('A88JK9M', 'UNIDAD-03', 'camioneta', 'Ford', 'F-250 Super Duty', 2021, 'Blanco Perla', 'operativo')
-ON CONFLICT (placa) DO NOTHING;
-
-CREATE TABLE IF NOT EXISTS public.choferes_clasificaciones_viaje (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  clave text NOT NULL UNIQUE,
-  nombre text NOT NULL,
-  icono text NOT NULL DEFAULT '🚚',
-  tarifa_usd numeric(12,2) NOT NULL DEFAULT 0,
-  activo boolean NOT NULL DEFAULT true,
-  orden integer NOT NULL DEFAULT 100,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-
-INSERT INTO public.choferes_clasificaciones_viaje (clave, nombre, icono, tarifa_usd, orden)
-VALUES
-  ('VIAJE CORTO', 'Viaje Corto (Urbano / Local)', '🚚', 25.00, 1),
-  ('VIAJE LARGO', 'Viaje Largo (Interurbano / Troncal)', '🛣️', 50.00, 2),
-  ('VIAJE INTERNO', 'Viaje Interno (Patio / Mina / Planta)', '🏭', 10.00, 3),
-  ('ESCOLTA RUTA', 'Custodia y Escolta en Tránsito', '🛡️', 75.00, 4)
-ON CONFLICT (clave) DO NOTHING;
-
-CREATE TABLE IF NOT EXISTS public.choferes_conductores (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  personal_id uuid NOT NULL UNIQUE REFERENCES public.personal(id) ON DELETE CASCADE,
-  licencia_grado text,
-  licencia_numero text,
-  licencia_vence date,
-  tarifa_viaje_usd numeric(12,2) NOT NULL DEFAULT 0,
-  vehiculo_asignado_id uuid REFERENCES public.vehiculos_catalogo(id) ON DELETE SET NULL,
-  activo boolean NOT NULL DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-
-CREATE TABLE IF NOT EXISTS public.choferes_viajes (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  numero text UNIQUE,
-  chofer_id uuid NOT NULL REFERENCES public.choferes_conductores(id) ON DELETE RESTRICT,
-  vehiculo_id uuid REFERENCES public.vehiculos_catalogo(id) ON DELETE SET NULL,
-  origen text NOT NULL,
-  destino text NOT NULL,
-  paradas jsonb NOT NULL DEFAULT '[]'::jsonb,
-  carga text,
-  fecha_salida timestamptz NOT NULL DEFAULT now(),
-  llegada_prevista timestamptz,
-  estado text NOT NULL DEFAULT 'programado' CHECK (estado IN ('programado', 'en_ruta', 'finalizado', 'cancelado')),
-  tarifa_usd numeric(12,2) NOT NULL DEFAULT 0,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-
-CREATE TABLE IF NOT EXISTS public.choferes_viaticos (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  viaje_id uuid REFERENCES public.choferes_viajes(id) ON DELETE SET NULL,
-  chofer_id uuid NOT NULL REFERENCES public.choferes_conductores(id) ON DELETE CASCADE,
-  concepto text NOT NULL,
-  monto numeric(12,2) NOT NULL CHECK (monto > 0),
-  moneda text NOT NULL DEFAULT 'USD',
-  fecha date NOT NULL DEFAULT current_date,
-  estado text NOT NULL DEFAULT 'aprobado' CHECK (estado IN ('solicitado', 'aprobado', 'pagado', 'rechazado')),
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-
-CREATE TABLE IF NOT EXISTS public.choferes_pagos (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  numero text UNIQUE,
-  chofer_id uuid NOT NULL REFERENCES public.choferes_conductores(id) ON DELETE RESTRICT,
-  viaje_id uuid REFERENCES public.choferes_viajes(id) ON DELETE SET NULL,
-  monto numeric(12,2) NOT NULL CHECK (monto >= 0),
-  moneda text NOT NULL DEFAULT 'USD',
-  fecha_pago date NOT NULL DEFAULT current_date,
-  concepto text NOT NULL,
-  estado text NOT NULL DEFAULT 'pagado' CHECK (estado IN ('pendiente', 'pagado', 'anulado')),
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-
--- 5. Habilitar RLS y Políticas de lectura/escritura
+-- 4. Habilitar RLS y Políticas de lectura/escritura
 ALTER TABLE public.custom_roles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.roles_permisos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.usuarios_autorizados ENABLE ROW LEVEL SECURITY;
@@ -283,12 +179,6 @@ ALTER TABLE public.personal_cargos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.rrhh_tabulador ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.anticipos_prestamos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.minutas ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.vehiculos_catalogo ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.choferes_clasificaciones_viaje ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.choferes_conductores ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.choferes_viajes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.choferes_viaticos ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.choferes_pagos ENABLE ROW LEVEL SECURITY;
 
 DO $$
 DECLARE
@@ -296,8 +186,7 @@ DECLARE
   tablas text[] := ARRAY[
     'custom_roles', 'roles_permisos', 'usuarios_autorizados', 'rrhh_empresas', 'personal',
     'personal_sueldos', 'personal_cargos', 'rrhh_tabulador', 'anticipos_prestamos',
-    'minutas', 'vehiculos_catalogo', 'choferes_clasificaciones_viaje',
-    'choferes_conductores', 'choferes_viajes', 'choferes_viaticos', 'choferes_pagos'
+    'minutas'
   ];
 BEGIN
   FOREACH t IN ARRAY tablas LOOP

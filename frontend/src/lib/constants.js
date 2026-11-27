@@ -1,11 +1,10 @@
-export const ROLES = ['admin', 'supervisor', 'contador', 'escolta', 'chofer', 'rrhh'];
+export const ROLES = ['admin', 'supervisor', 'contador', 'escolta', 'rrhh'];
 
 export const ROLES_LABELS = {
   admin: 'Administrador',
   supervisor: 'Supervisor',
   contador: 'Contador',
   escolta: 'Escolta',
-  chofer: 'Chofer',
   rrhh: 'Recursos Humanos',
 };
 
@@ -14,7 +13,6 @@ export const ROLES_DESCRIPCION = {
   supervisor: 'Distribución de escoltas, rutas, asistencias y revisión de permisos.',
   contador: 'Periodos de nómina, cálculo de pagos y cierre de nómina.',
   escolta: 'Consultar tus datos, registrar asistencia y solicitar permisos.',
-  chofer: 'Consultar viajes asignados, gastos en ruta y registro de kilometraje.',
   rrhh: 'Gestión de personal, expedientes, descansos, tabulador y minutas.',
 };
 
@@ -27,7 +25,6 @@ export const ROLES_POR_MODULO = {
   nomina: ROLES,
   pagos: ROLES,
   rrhh: ROLES,
-  choferes: ROLES,
   usuarios: ROLES,
   'roles-permisos': ROLES,
   ajustes: ROLES,
@@ -45,7 +42,6 @@ export const MODULOS_SISTEMA = [
   { key: 'nomina', label: 'Nómina', descripcion: 'Periodos y detalles.' },
   { key: 'pagos', label: 'Pagos', descripcion: 'Registro y confirmación.' },
   { key: 'rrhh', label: 'Recursos Humanos', descripcion: 'Fichas de personal, contratos, anticipos y minutas.' },
-  { key: 'choferes', label: 'Choferes y Flota', descripcion: 'Expedientes de conductores, viajes y unidades.' },
   { key: 'usuarios', label: 'Usuarios', descripcion: 'Cuentas y claves.' },
   { key: 'roles', label: 'Roles', descripcion: 'Roles y matriz de acceso.' },
   { key: 'ajustes', label: 'Ajustes', descripcion: 'Configuración general.' },

@@ -3,7 +3,6 @@ export const VISTAS_TELEFONO = [
   { modulo: 'asistencias', ruta: '/asistencias', etiqueta: 'Asistencia' },
   { modulo: 'permisos', ruta: '/permisos', etiqueta: 'Permisos' },
   { modulo: 'escoltas', ruta: '/escoltas', etiqueta: 'Personal' },
-  { modulo: 'choferes', ruta: '/choferes', etiqueta: 'Choferes' },
   { modulo: 'rrhh', ruta: '/rrhh', etiqueta: 'RR. HH.' },
   { modulo: 'nomina', ruta: '/nomina', etiqueta: 'Nómina' },
 ];
