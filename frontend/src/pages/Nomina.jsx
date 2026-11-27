@@ -62,6 +62,72 @@ const PESTANAS_MODULO = [
   { id: 'recibos', label: 'Recibos y Comprobantes', icon: ReceiptText, desc: 'Generación, impresión y consulta de recibos' },
 ];
 
+const MESES = [
+  'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
+  'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'
+];
+
+export function generarNombrePeriodo(fechaInicio, fechaFin) {
+  if (!fechaInicio || !fechaFin) return '';
+  const [, mI, dI] = fechaInicio.split('-').map(Number);
+  const [, , dF] = fechaFin.split('-').map(Number);
+  if (!mI) return '';
+  const mesNombre = MESES[mI - 1] || 'MES';
+  const mitad = (dI <= 5 && dF <= 15) ? 'PRIMERA MITAD' : 'SEGUNDA MITAD';
+  const diaI = String(dI).padStart(2, '0');
+  const diaF = String(dF).padStart(2, '0');
+  return `${mitad} DEL MES DE ${mesNombre} DEL ${diaI} AL ${diaF}`;
+}
+
+export function sugerirPeriodoQuincenal(periodosExistentes = []) {
+  const ordenados = [...periodosExistentes]
+    .filter((p) => p.fecha_fin)
+    .sort((a, b) => b.fecha_fin.localeCompare(a.fecha_fin));
+  const ultimo = ordenados[0];
+
+  let anio, mes, quincena;
+
+  if (ultimo) {
+    const [uAnio, uMes, uDia] = ultimo.fecha_fin.split('-').map(Number);
+    if (uDia <= 15) {
+      anio = uAnio;
+      mes = uMes;
+      quincena = 2;
+    } else {
+      if (uMes === 12) {
+        anio = uAnio + 1;
+        mes = 1;
+      } else {
+        anio = uAnio;
+        mes = uMes + 1;
+      }
+      quincena = 1;
+    }
+  } else {
+    const hoy = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Caracas' }).format(new Date());
+    const [hAnio, hMes, hDia] = hoy.split('-').map(Number);
+    anio = hAnio;
+    mes = hMes;
+    quincena = hDia <= 15 ? 1 : 2;
+  }
+
+  const mesStr = String(mes).padStart(2, '0');
+  const mesNombre = MESES[mes - 1];
+  const ultimoDia = new Date(anio, mes, 0).getDate();
+
+  if (quincena === 1) {
+    const fecha_inicio = `${anio}-${mesStr}-01`;
+    const fecha_fin = `${anio}-${mesStr}-15`;
+    const nombre = `PRIMERA MITAD DEL MES DE ${mesNombre} DEL 01 AL 15`;
+    return { nombre, fecha_inicio, fecha_fin };
+  } else {
+    const fecha_inicio = `${anio}-${mesStr}-15`;
+    const fecha_fin = `${anio}-${mesStr}-${ultimoDia}`;
+    const nombre = `SEGUNDA MITAD DEL MES DE ${mesNombre} DEL 15 AL ${ultimoDia}`;
+    return { nombre, fecha_inicio, fecha_fin };
+  }
+}
+
 const FORM_PERIODO = { nombre: '', fecha_inicio: '', fecha_fin: '' };
 const FORM_DETALLE = {
   escolta_id: '', sueldo_base: '0', bonos: '0', descuentos: '0',
@@ -159,7 +225,8 @@ export default function Nomina() {
   // Funciones Nómina
   const abrirPeriodo = (desdeAlta = false) => {
     continuarAlta.current = desdeAlta === true;
-    setFormPeriodo(FORM_PERIODO);
+    const sugerido = sugerirPeriodoQuincenal(periodos);
+    setFormPeriodo(sugerido);
     setErrores({});
     setModalPeriodo(true);
   };
@@ -815,7 +882,13 @@ export default function Nomina() {
               required
               value={formPeriodo.fecha_inicio}
               error={errores.fecha_inicio}
-              onChange={(e) => setFormPeriodo((p) => ({ ...p, fecha_inicio: e.target.value }))}
+              onChange={(e) => {
+                const nuevaInicio = e.target.value;
+                setFormPeriodo((p) => {
+                  const sugerido = generarNombrePeriodo(nuevaInicio, p.fecha_fin);
+                  return { ...p, fecha_inicio: nuevaInicio, ...(sugerido ? { nombre: sugerido } : {}) };
+                });
+              }}
             />
             <Input
               label="Fecha de Fin"
@@ -823,7 +896,13 @@ export default function Nomina() {
               required
               value={formPeriodo.fecha_fin}
               error={errores.fecha_fin}
-              onChange={(e) => setFormPeriodo((p) => ({ ...p, fecha_fin: e.target.value }))}
+              onChange={(e) => {
+                const nuevaFin = e.target.value;
+                setFormPeriodo((p) => {
+                  const sugerido = generarNombrePeriodo(p.fecha_inicio, nuevaFin);
+                  return { ...p, fecha_fin: nuevaFin, ...(sugerido ? { nombre: sugerido } : {}) };
+                });
+              }}
             />
           </div>
         </div>

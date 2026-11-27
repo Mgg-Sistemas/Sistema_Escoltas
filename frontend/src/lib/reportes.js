@@ -1,84 +1,167 @@
-const COLORES = ['#CC4400', '#166534', '#854D0E'];
-const FONDOS = ['#FFF1E8', '#ECFDF3', '#FFF8DB'];
-const fecha = () => new Intl.DateTimeFormat('es-VE', { dateStyle: 'short', timeZone: 'America/Caracas' }).format(new Date());
-const textoPdf = (valor) => String(valor ?? '').replace(/[^\x20-\xFF]/g, ' ');
+import { MARGEN_PDF, MARGENES_TABLA_PDF, anchoUtilPdf, pdfSafe, obtenerLogoDataUrl } from './pdfLogo.js';
 
-export async function generarPdf({ titulo, columnas, filas, tarjetas, firmas = [] }) {
-  const [{ jsPDF }, { default: autoTable }] = await Promise.all([import('jspdf'), import('jspdf-autotable')]);
-  const pdf = new jsPDF({ unit: 'pt', format: 'letter', orientation: columnas.length > 6 ? 'landscape' : 'portrait' });
+const COLORES_TARJETAS = ['#D97706', '#166534', '#2563EB', '#7C3AED'];
+const FONDOS_TARJETAS = ['#FFFBEB', '#F0FDF4', '#EFF6FF', '#F5F3FF'];
+const BORDES_TARJETAS = ['#FDE68A', '#BBF7D0', '#BFDBFE', '#DDD6FE'];
+
+const fecha = () =>
+  new Intl.DateTimeFormat('es-VE', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    timeZone: 'America/Caracas',
+  }).format(new Date());
+
+export async function generarPdf({ titulo, columnas, filas, tarjetas = [], firmas = [] }) {
+  const [{ jsPDF }, { default: autoTable }, logoDataUrl] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable'),
+    obtenerLogoDataUrl(),
+  ]);
+
+  const pdf = new jsPDF({
+    unit: 'pt',
+    format: 'letter',
+    orientation: columnas.length > 6 ? 'landscape' : 'portrait',
+  });
+
   const ancho = pdf.internal.pageSize.getWidth();
   const alto = pdf.internal.pageSize.getHeight();
-  const margen = 40;
-  const disponible = ancho - margen * 2;
-  pdf.setProperties({ title: titulo, author: 'ESCOLTAS' });
-  pdf.setFillColor('#25282B');
-  pdf.roundedRect(margen, 36, disponible, 76, 8, 8, 'F');
-  pdf.setFillColor('#FF6600');
-  pdf.rect(margen + 12, 50, 4, 48, 'F');
+  const margen = MARGEN_PDF; // 56.7 pt (2 cm estrictos según regla GT)
+  const disponible = anchoUtilPdf(ancho);
+
+  pdf.setProperties({ title: titulo, author: 'SISTEMA ESCOLTAS' });
+
+  // Encabezado institucional estilo Golden Touch con colores del sistema
+  const headerY = margen;
+  const altoLogo = 46;
+  const anchoLogo = 46;
+
+  if (logoDataUrl) {
+    try {
+      pdf.addImage(logoDataUrl, 'PNG', margen, headerY, anchoLogo, altoLogo);
+    } catch {}
+  }
+
+  const textoX = logoDataUrl ? margen + anchoLogo + 14 : margen;
+  const textoAncho = disponible - (logoDataUrl ? anchoLogo + 14 : 0);
+
+  // Subtítulo institucional con naranja de marca
   pdf.setFont('helvetica', 'bold');
-  pdf.setTextColor('#FFB800');
-  pdf.setFontSize(9);
-  pdf.text('ESCOLTAS  /  SEGURIDAD Y VIGILANCIA', margen + 26, 58);
-  pdf.setTextColor('#FFFFFF');
-  pdf.setFontSize(20);
-  pdf.text(textoPdf(titulo), margen + 26, 82);
+  pdf.setFontSize(8.5);
+  pdf.setTextColor('#FF8A00');
+  pdf.text('SISTEMA ESCOLTAS  ·  SEGURIDAD Y VIGILANCIA', textoX, headerY + 11);
+
+  // Título principal del documento
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(16);
+  pdf.setTextColor('#1E232B');
+  pdf.text(pdfSafe(titulo), textoX, headerY + 28, { maxWidth: textoAncho });
+
+  // Fecha y carácter oficial
   pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(9);
-  pdf.text('Emitido el ' + fecha(), margen + 26, 98);
+  pdf.setFontSize(8.5);
+  pdf.setTextColor('#64748B');
+  pdf.text(`Emitido el ${fecha()}  ·  Documento Oficial`, textoX, headerY + 42);
 
-  const anchoTarjeta = (disponible - (tarjetas.length - 1) * 10) / tarjetas.length;
-  tarjetas.forEach(([etiqueta, valor], i) => {
-    const x = margen + i * (anchoTarjeta + 10);
-    pdf.setFillColor(FONDOS[i % FONDOS.length]);
-    pdf.roundedRect(x, 128, anchoTarjeta, 52, 8, 8, 'F');
-    pdf.setTextColor(COLORES[i % COLORES.length]);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(10);
-    pdf.text(textoPdf(etiqueta), x + 12, 147);
-    pdf.setFontSize(13);
-    pdf.text(textoPdf(valor), x + 12, 167, { maxWidth: anchoTarjeta - 24 });
-  });
+  // Línea divisoria naranja (acento GT)
+  const separadorY = headerY + 54;
+  pdf.setDrawColor('#FF8A00');
+  pdf.setLineWidth(1.5);
+  pdf.line(margen, separadorY, ancho - margen, separadorY);
 
+  let siguienteY = separadorY + 16;
+
+  // Tarjetas KPI / Indicadores clave
+  if (tarjetas && tarjetas.length > 0) {
+    const anchoTarjeta = (disponible - (tarjetas.length - 1) * 10) / tarjetas.length;
+    const altoTarjeta = 44;
+    tarjetas.forEach(([etiqueta, valor], i) => {
+      const x = margen + i * (anchoTarjeta + 10);
+      const colorTexto = COLORES_TARJETAS[i % COLORES_TARJETAS.length];
+      const fondo = FONDOS_TARJETAS[i % FONDOS_TARJETAS.length];
+      const borde = BORDES_TARJETAS[i % BORDES_TARJETAS.length];
+
+      pdf.setFillColor(fondo);
+      pdf.setDrawColor(borde);
+      pdf.setLineWidth(0.75);
+      pdf.roundedRect(x, siguienteY, anchoTarjeta, altoTarjeta, 6, 6, 'FD');
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(8);
+      pdf.setTextColor('#64748B');
+      pdf.text(pdfSafe(etiqueta), x + 10, siguienteY + 16);
+
+      pdf.setFontSize(12);
+      pdf.setTextColor(colorTexto);
+      pdf.text(pdfSafe(valor), x + 10, siguienteY + 34, { maxWidth: anchoTarjeta - 20 });
+    });
+    siguienteY += altoTarjeta + 16;
+  }
+
+  // Tabla principal con márgenes y diseño GT
   autoTable(pdf, {
-    startY: 198,
-    margin: { top: margen, left: margen, right: margen, bottom: 52 },
-    head: [columnas.map(textoPdf)],
-    body: filas.map((fila) => fila.map(textoPdf)),
+    startY: siguienteY,
+    margin: MARGENES_TABLA_PDF,
+    head: [columnas.map(pdfSafe)],
+    body: filas.map((fila) => fila.map(pdfSafe)),
     rowPageBreak: 'avoid',
-    styles: { font: 'helvetica', fontSize: 9, cellPadding: 7, overflow: 'linebreak' },
-    headStyles: { fillColor: '#25282B', textColor: '#FFFFFF' },
-    alternateRowStyles: { fillColor: '#F2F2F2' },
+    styles: {
+      font: 'helvetica',
+      fontSize: 8.5,
+      cellPadding: 6,
+      overflow: 'linebreak',
+      textColor: '#1E293B',
+      lineColor: '#E2E8F0',
+      lineWidth: 0.5,
+    },
+    headStyles: {
+      fillColor: '#1E232B',
+      textColor: '#FFFFFF',
+      fontStyle: 'bold',
+      fontSize: 8.5,
+      halign: 'left',
+    },
+    alternateRowStyles: {
+      fillColor: '#F8FAFC',
+    },
   });
 
-  if (firmas.length) {
-    let y = pdf.lastAutoTable.finalY + 42;
-    if (y > alto - 85) {
+  // Firmas de validación
+  if (firmas && firmas.length > 0) {
+    let y = pdf.lastAutoTable.finalY + 36;
+    if (y > alto - margen - 60) {
       pdf.addPage();
-      y = 96;
+      y = margen + 40;
     }
     const anchoFirma = (disponible - (firmas.length - 1) * 20) / firmas.length;
-    pdf.setDrawColor('#A6A6A6');
-    pdf.setTextColor('#404040');
+    pdf.setDrawColor('#94A3B8');
+    pdf.setLineWidth(0.75);
+    pdf.setTextColor('#334155');
     pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(9);
+    pdf.setFontSize(8.5);
     firmas.forEach((firma, indice) => {
       const x = margen + indice * (anchoFirma + 20);
       pdf.line(x, y, x + anchoFirma, y);
-      pdf.text(textoPdf(firma), x + anchoFirma / 2, y + 14, { align: 'center' });
+      pdf.text(pdfSafe(firma), x + anchoFirma / 2, y + 14, { align: 'center' });
     });
   }
 
-  const paginas = pdf.getNumberOfPages();
-  for (let i = 1; i <= paginas; i++) {
+  // Pie de página estricto de 2 cm en todas las páginas
+  const totalPaginas = pdf.getNumberOfPages();
+  for (let i = 1; i <= totalPaginas; i++) {
     pdf.setPage(i);
-    pdf.setDrawColor('#D9D9D9');
-    pdf.line(margen, alto - 37, ancho - margen, alto - 37);
-    pdf.setTextColor('#404040');
+    const pieY = alto - margen;
+    pdf.setDrawColor('#E2E8F0');
+    pdf.setLineWidth(0.75);
+    pdf.line(margen, pieY, ancho - margen, pieY);
+
     pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(8);
-    pdf.text('ESCOLTAS | Uso interno', margen, alto - 23);
-    pdf.text(i + ' / ' + paginas, ancho - margen, alto - 23, { align: 'right' });
+    pdf.setFontSize(7.5);
+    pdf.setTextColor('#64748B');
+    pdf.text('SISTEMA ESCOLTAS  ·  SEGURIDAD Y VIGILANCIA  |  Documento Oficial', margen, pieY + 12);
+    pdf.text(`Página ${i} de ${totalPaginas}`, ancho - margen, pieY + 12, { align: 'right' });
   }
+
   return pdf;
 }
 
@@ -98,7 +181,7 @@ export async function generarExcel(columnas, filas) {
   hoja.columns = columnas.map((header) => ({ header, width: Math.max(17, Math.min(36, header.length + 6)) }));
   const cabecera = hoja.getRow(1);
   cabecera.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-  cabecera.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF25282B' } };
+  cabecera.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E232B' } };
   hoja.addRows(filas);
   hoja.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: columnas.length } };
   return libro.xlsx.writeBuffer();

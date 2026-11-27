@@ -1,5 +1,8 @@
+import { MARGEN_PDF, MARGENES_TABLA_PDF, anchoUtilPdf, pdfSafe, obtenerLogoDataUrl } from './pdfLogo.js';
+
 const fechaPdf = new Intl.DateTimeFormat('es-VE', {
-  dateStyle: 'short',
+  dateStyle: 'medium',
+  timeStyle: 'short',
   timeZone: 'America/Caracas',
 });
 
@@ -8,21 +11,11 @@ const montoPdf = new Intl.NumberFormat('es-VE', {
   maximumFractionDigits: 2,
 });
 
-const MARGEN = 40;
-const TINTA = '#25282B';
-const NARANJA = '#CC4400';
+const NARANJA = '#D97706';
 const VERDE = '#166534';
-const DORADO = '#854D0E';
+const AZUL = '#2563EB';
 
-function textoSeguro(texto) {
-  return String(texto ?? '').replace(/[^\u0020-\u00ff]/g, ' ').trim();
-}
-
-function monedaDe(registro) {
-  return registro.moneda || 'USD';
-}
-
-function dinero(valor, moneda) {
+function dinero(valor, moneda = 'USD') {
   return valor == null || valor === '' ? 'Sin dato' : moneda + ' ' + montoPdf.format(valor);
 }
 
@@ -36,33 +29,57 @@ const TIPOS = { anticipo: 'Anticipo', prestamo: 'Préstamo' };
 export async function construirAnticiposPdf(registros, { individual = false } = {}) {
   if (!registros.length) throw new Error('No hay registros para exportar.');
 
-  const [{ jsPDF }, { default: autoTable }] = await Promise.all([
+  const [{ jsPDF }, { default: autoTable }, logoDataUrl] = await Promise.all([
     import('jspdf'),
     import('jspdf-autotable'),
+    obtenerLogoDataUrl(),
   ]);
 
   const pdf = new jsPDF({ unit: 'pt', format: 'letter' });
   const ancho = pdf.internal.pageSize.getWidth();
   const alto = pdf.internal.pageSize.getHeight();
-  const anchoUtil = ancho - MARGEN * 2;
-  const titulo = individual ? 'Ficha de anticipo o préstamo' : 'Anticipos y préstamos';
-  pdf.setProperties({ title: titulo, author: 'ESCOLTAS' });
+  const margen = MARGEN_PDF;
+  const anchoUtil = anchoUtilPdf(ancho);
+  const titulo = individual ? 'Ficha de Anticipo o Préstamo' : 'Relación de Anticipos y Préstamos';
+  pdf.setProperties({ title: titulo, author: 'SISTEMA ESCOLTAS' });
 
-  pdf.setFillColor(TINTA);
-  pdf.roundedRect(MARGEN, 36, anchoUtil, 76, 8, 8, 'F');
-  pdf.setFillColor('#FF6600');
-  pdf.rect(MARGEN + 12, 50, 4, 48, 'F');
-  pdf.setTextColor('#FFB800');
+  // Encabezado institucional estilo GT
+  const headerY = margen;
+  const altoLogo = 46;
+  const anchoLogo = 46;
+
+  if (logoDataUrl) {
+    try {
+      pdf.addImage(logoDataUrl, 'PNG', margen, headerY, anchoLogo, altoLogo);
+    } catch {}
+  }
+
+  const textoX = logoDataUrl ? margen + anchoLogo + 14 : margen;
+  const textoAncho = anchoUtil - (logoDataUrl ? anchoLogo + 14 : 0);
+
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(9);
-  pdf.text('ESCOLTAS  /  RECURSOS HUMANOS', MARGEN + 26, 58);
-  pdf.setTextColor('#FFFFFF');
-  pdf.setFontSize(21);
-  pdf.text(titulo, MARGEN + 26, 81);
-  pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(9);
-  pdf.text('Emitido el ' + fechaPdf.format(new Date()), MARGEN + 26, 98);
+  pdf.setFontSize(8.5);
+  pdf.setTextColor('#FF8A00');
+  pdf.text('SISTEMA ESCOLTAS  ·  RECURSOS HUMANOS', textoX, headerY + 11);
 
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(16);
+  pdf.setTextColor('#1E232B');
+  pdf.text(pdfSafe(titulo), textoX, headerY + 28, { maxWidth: textoAncho });
+
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(8.5);
+  pdf.setTextColor('#64748B');
+  pdf.text(`Emitido el ${fechaPdf.format(new Date())}  ·  Documento Oficial`, textoX, headerY + 42);
+
+  const separadorY = headerY + 54;
+  pdf.setDrawColor('#FF8A00');
+  pdf.setLineWidth(1.5);
+  pdf.line(margen, separadorY, ancho - margen, separadorY);
+
+  let siguienteY = separadorY + 16;
+
+  // Cálculo de totales
   const grupos = new Map();
   const totales = new Map();
   for (const registro of registros) {
@@ -71,96 +88,117 @@ export async function construirAnticiposPdf(registros, { individual = false } = 
     if (!grupos.has(clave)) grupos.set(clave, { persona, registros: [] });
     grupos.get(clave).registros.push(registro);
 
-    const moneda = monedaDe(registro);
-    if (!totales.has(moneda)) totales.set(moneda, { otorgado: 0, aplicado: 0, pendiente: 0, incompleto: false });
+    const moneda = registro.moneda || 'USD';
+    if (!totales.has(moneda)) totales.set(moneda, { otorgado: 0, aplicado: 0, pendiente: 0 });
     const total = totales.get(moneda);
     const monto = Number(registro.monto_total ?? 0);
     total.otorgado += monto;
-    if (registro.saldo_pendiente == null || registro.saldo_pendiente === '') {
-      total.incompleto = true;
-    } else {
-      const saldo = Number(registro.saldo_pendiente);
-      total.pendiente += saldo;
-      total.aplicado += monto - saldo;
-    }
+    const saldo = Number(registro.saldo_pendiente ?? monto);
+    total.pendiente += saldo;
+    total.aplicado += monto - saldo;
   }
 
-  let y = 128;
+  // Tarjetas de resumen
   const tarjetas = [
-    ['Otorgado', 'otorgado', NARANJA, '#FFF1E8'],
-    ['Aplicado al saldo', 'aplicado', VERDE, '#ECFDF3'],
-    ['Saldo pendiente', 'pendiente', DORADO, '#FFF8DB'],
+    ['Total Otorgado', 'otorgado', NARANJA, '#FFFBEB', '#FDE68A'],
+    ['Total Descontado / Aplicado', 'aplicado', VERDE, '#F0FDF4', '#BBF7D0'],
+    ['Saldo Total Pendiente', 'pendiente', AZUL, '#EFF6FF', '#BFDBFE'],
   ];
   const anchoTarjeta = (anchoUtil - 20) / 3;
-  const altoTarjeta = 38 + 15 * totales.size;
-  tarjetas.forEach(([etiqueta, clave, color, fondo], i) => {
-    const x = MARGEN + i * (anchoTarjeta + 10);
+  const altoTarjeta = 44 + (totales.size > 1 ? (totales.size - 1) * 12 : 0);
+
+  tarjetas.forEach(([etiqueta, clave, color, fondo, borde], i) => {
+    const x = margen + i * (anchoTarjeta + 10);
     pdf.setFillColor(fondo);
-    pdf.roundedRect(x, y, anchoTarjeta, altoTarjeta, 8, 8, 'F');
-    pdf.setTextColor(color);
+    pdf.setDrawColor(borde);
+    pdf.setLineWidth(0.75);
+    pdf.roundedRect(x, siguienteY, anchoTarjeta, altoTarjeta, 6, 6, 'FD');
+
     pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(10);
-    pdf.text(etiqueta, x + 12, y + 18);
-    pdf.setFontSize(12);
-    [...totales.entries()].forEach(([moneda, total], fila) => {
-      const valor = total.incompleto && clave !== 'otorgado' ? moneda + ' | Sin dato completo' : dinero(total[clave], moneda);
-      pdf.text(valor, x + 12, y + 38 + fila * 15, { maxWidth: anchoTarjeta - 24 });
-    });
-  });
-  y += altoTarjeta + 20;
-
-  for (const { persona, registros: registrosPersona } of grupos.values()) {
-    if (y + 120 > alto - 52) {
-      pdf.addPage();
-      y = MARGEN;
-    }
-    const nombre = textoSeguro([persona?.nombre, persona?.apellido].filter(Boolean).join(' ')) || 'Personal sin ficha vinculada';
-    pdf.setFillColor('#F2F2F2');
-    pdf.roundedRect(MARGEN, y, anchoUtil, 42, 6, 6, 'F');
-    pdf.setTextColor(TINTA);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(12);
-    pdf.text(pdf.splitTextToSize(nombre, anchoUtil - 24)[0], MARGEN + 12, y + 17);
-    pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(9);
-    pdf.text(textoSeguro(persona?.ficha_nro ? 'Ficha ' + persona.ficha_nro : 'Sin número de ficha'), MARGEN + 12, y + 31);
-
-    autoTable(pdf, {
-      startY: y + 49,
-      margin: { top: MARGEN, left: MARGEN, right: MARGEN, bottom: 52 },
-      rowPageBreak: 'avoid',
-      head: [['Fecha y tipo', 'Motivo', 'Otorgado', 'Cuotas', 'Saldo', 'Estado']],
-      body: [...registrosPersona].sort((a, b) =>
-        String(a.fecha || a.created_at || '').localeCompare(String(b.fecha || b.created_at || '')),
-      ).map((registro) => {
-        const moneda = monedaDe(registro);
-        return [
-          fechaRegistro(registro.fecha || registro.created_at) + '\n' + (TIPOS[registro.tipo] || textoSeguro(registro.tipo) || '-'),
-          textoSeguro(registro.motivo) || '-',
-          dinero(registro.monto_total, moneda),
-          registro.cuotas ? registro.cuotas + ' x ' + dinero(registro.monto_cuota, moneda) : '-',
-          dinero(registro.saldo_pendiente, moneda),
-          textoSeguro(registro.estado) || '-',
-        ];
-      }),
-      styles: { font: 'helvetica', fontSize: 9, cellPadding: 7, textColor: TINTA, valign: 'middle' },
-      headStyles: { fillColor: TINTA, textColor: '#FFFFFF' },
-      alternateRowStyles: { fillColor: '#F7F7F7' },
-      columnStyles: { 0: { cellWidth: 76 }, 2: { cellWidth: 85, halign: 'right' }, 3: { cellWidth: 92 }, 4: { cellWidth: 85, halign: 'right', textColor: DORADO, fontStyle: 'bold' } },
-    });
-    y = pdf.lastAutoTable.finalY + 18;
-  }
-
-  const paginas = pdf.getNumberOfPages();
-  for (let pagina = 1; pagina <= paginas; pagina++) {
-    pdf.setPage(pagina);
-    pdf.setDrawColor('#D9D9D9');
-    pdf.line(MARGEN, alto - 37, ancho - MARGEN, alto - 37);
-    pdf.setTextColor('#404040');
-    pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(8);
-    pdf.text('ESCOLTAS | Uso interno', MARGEN, alto - 23);
-    pdf.text(pagina + ' / ' + paginas, ancho - MARGEN, alto - 23, { align: 'right' });
+    pdf.setTextColor('#64748B');
+    pdf.text(etiqueta, x + 10, siguienteY + 16);
+
+    let ty = siguienteY + 32;
+    pdf.setFontSize(11);
+    pdf.setTextColor(color);
+    for (const [moneda, t] of totales.entries()) {
+      pdf.text(dinero(t[clave], moneda), x + 10, ty);
+      ty += 12;
+    }
+  });
+
+  siguienteY += altoTarjeta + 18;
+
+  // Preparar filas para la tabla
+  const columnas = ['Personal / Ficha', 'Tipo', 'Fecha', 'Monto Total', 'Cuotas', 'Descontado', 'Saldo'];
+  const filas = [];
+
+  for (const { persona, registros: lista } of grupos.values()) {
+    const nombre = [persona?.nombre, persona?.apellido].filter(Boolean).join(' ') || 'Sin nombre';
+    const ficha = persona?.ficha_nro ? ` (${persona.ficha_nro})` : '';
+    const personalTexto = `${nombre}${ficha}`;
+
+    for (const reg of lista) {
+      const moneda = reg.moneda || 'USD';
+      const total = Number(reg.monto_total ?? 0);
+      const saldo = Number(reg.saldo_pendiente ?? total);
+      const amortizado = total - saldo;
+
+      filas.push([
+        pdfSafe(personalTexto),
+        TIPOS[reg.tipo] || 'Anticipo',
+        fechaRegistro(reg.fecha_solicitud || reg.created_at),
+        dinero(total, moneda),
+        reg.cuotas ? String(reg.cuotas) : '1',
+        dinero(amortizado, moneda),
+        dinero(saldo, moneda),
+      ]);
+    }
   }
+
+  autoTable(pdf, {
+    startY: siguienteY,
+    margin: MARGENES_TABLA_PDF,
+    head: [columnas.map(pdfSafe)],
+    body: filas.map((fila) => fila.map(pdfSafe)),
+    rowPageBreak: 'avoid',
+    styles: {
+      font: 'helvetica',
+      fontSize: 8.5,
+      cellPadding: 6,
+      overflow: 'linebreak',
+      textColor: '#1E293B',
+      lineColor: '#E2E8F0',
+      lineWidth: 0.5,
+    },
+    headStyles: {
+      fillColor: '#1E232B',
+      textColor: '#FFFFFF',
+      fontStyle: 'bold',
+      fontSize: 8.5,
+      halign: 'left',
+    },
+    alternateRowStyles: {
+      fillColor: '#F8FAFC',
+    },
+  });
+
+  // Pie de página oficial de 2 cm
+  const totalPaginas = pdf.getNumberOfPages();
+  for (let i = 1; i <= totalPaginas; i++) {
+    pdf.setPage(i);
+    const pieY = alto - margen;
+    pdf.setDrawColor('#E2E8F0');
+    pdf.setLineWidth(0.75);
+    pdf.line(margen, pieY, ancho - margen, pieY);
+
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(7.5);
+    pdf.setTextColor('#64748B');
+    pdf.text('SISTEMA ESCOLTAS  ·  SEGURIDAD Y VIGILANCIA  |  Documento Oficial', margen, pieY + 12);
+    pdf.text(`Página ${i} de ${totalPaginas}`, ancho - margen, pieY + 12, { align: 'right' });
+  }
+
   return pdf;
 }
