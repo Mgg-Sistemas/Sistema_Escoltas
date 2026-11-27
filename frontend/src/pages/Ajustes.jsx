@@ -11,7 +11,6 @@ import {
   Palette,
   Save,
   ShieldCheck,
-  SlidersHorizontal,
   Sun,
   User,
 } from 'lucide-react';
@@ -112,7 +111,7 @@ export default function Ajustes() {
 
   return (
     <div className="space-y-6">
-      {!cargando && role === "admin" && ['tasa_dolar_referencia', 'dias_descanso_semanal', 'empresa_nombre', 'empresa_rif'].some((clave) => !ajustesEditables.has(clave)) && (
+      {!cargando && role === "admin" && ['empresa_nombre', 'empresa_rif'].some((clave) => !ajustesEditables.has(clave)) && (
         <p className="text-sm text-slate-400">Los campos deshabilitados aún requieren configuración en el sistema.</p>
       )}
       <ReporteModulo titulo="Configuración del sistema" archivo="configuracion" columnas={["Ajuste","Categoría","Editable"]}
@@ -122,7 +121,7 @@ export default function Ajustes() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-100">Ajustes y Configuración</h1>
           <p className="mt-1 text-sm text-slate-400">
-            Control de apariencia, tema visual oscuro, parámetros operacionales y datos de la empresa estilo Golden Touch.
+            Control de apariencia, tema visual y datos de la empresa estilo Golden Touch.
           </p>
         </div>
 
@@ -208,88 +207,46 @@ export default function Ajustes() {
             </div>
           </Card>
 
-          {/* PARÁMETROS OPERATIVOS */}
-          <Card bodyClassName="space-y-6">
-            <div className="border-b border-slate-700/60 pb-4">
-              <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
-                <SlidersHorizontal className="h-5 w-5 text-brand-400" />
-                <span>Parámetros Operacionales</span>
-              </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Valores de referencia para cálculos automáticos en nóminas, viáticos y descansos.
-              </p>
-            </div>
+          {/* Tasas del Mercado en Vivo: BCV, Euro, PMP Binance */}
+          {tasasEnVivo && (
+            <div className="rounded-xl border border-slate-700/60 bg-slate-900/40 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-200 text-xs flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-[#29c081] animate-pulse" />
+                  Tasas del Mercado Oficial y P2P en Tiempo Real
+                </span>
+                <span className="text-[10px] text-slate-500 font-mono">Actualización automática</span>
+              </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input
-                label="Tasa de Referencia Oficial BCV (USD / Bs)"
-                type="number"
-                step="0.01"
-                disabled={!puedeGuardar('tasa_dolar_referencia')}
-                value={valores.tasa_dolar_referencia ?? ''}
-                onChange={(e) => handleChange('tasa_dolar_referencia', e.target.value)}
-              />
-              <Input
-                label="Días de Descanso Reglamentarios por Ciclo"
-                type="number"
-                disabled={!puedeGuardar('dias_descanso_semanal')}
-                value={valores.dias_descanso_semanal ?? ''}
-                onChange={(e) => handleChange('dias_descanso_semanal', e.target.value)}
-              />
-            </div>
-
-            {/* Tasas del Mercado en Vivo: BCV, Euro, PMP Binance */}
-            {tasasEnVivo && (
-              <div className="rounded-xl border border-slate-700/60 bg-slate-900/40 p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-200 text-xs flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-[#29c081] animate-pulse" />
-                    Tasas del Mercado Oficial y P2P en Tiempo Real
-                  </span>
-                  <span className="text-[10px] text-slate-500 font-mono">Actualización automática</span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                {/* Tasa Dólar BCV */}
+                <div className="rounded-xl border border-slate-700/60 bg-[#1c1f24] p-3 shadow-sm">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">🇺🇸 Dólar Oficial BCV</span>
+                  <p className="text-lg font-black text-slate-100 mt-1">
+                    Bs. {Number(tasasEnVivo.bcv_usd).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                  {/* Tasa Dólar BCV */}
-                  <div className="rounded-xl border border-slate-700/60 bg-[#1c1f24] p-3 shadow-sm">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">🇺🇸 Dólar Oficial BCV</span>
-                    <p className="text-lg font-black text-slate-100 mt-1">
-                      Bs. {Number(tasasEnVivo.bcv_usd).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </p>
-                    <button
-                      type="button"
-                      disabled={!puedeGuardar('tasa_dolar_referencia')}
-                      onClick={() => {
-                        handleChange('tasa_dolar_referencia', String(tasasEnVivo.bcv_usd));
-                        toast.success('Tasa BCV aplicada a los parámetros operacionales.');
-                      }}
-                      className="mt-2 text-[11px] font-bold text-[#ff8a00] hover:underline flex items-center gap-1"
-                    >
-                      Aplicar esta tasa BCV →
-                    </button>
-                  </div>
+                {/* Tasa Euro BCV */}
+                <div className="rounded-xl border border-slate-700/60 bg-[#1c1f24] p-3 shadow-sm">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">🇪🇺 Euro Oficial BCV</span>
+                  <p className="text-lg font-black text-oro mt-1">
+                    Bs. {Number(tasasEnVivo.bcv_eur).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                  <span className="text-[10px] text-slate-500 mt-2 block">Banco Central de Venezuela</span>
+                </div>
 
-                  {/* Tasa Euro BCV */}
-                  <div className="rounded-xl border border-slate-700/60 bg-[#1c1f24] p-3 shadow-sm">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">🇪🇺 Euro Oficial BCV</span>
-                    <p className="text-lg font-black text-oro mt-1">
-                      Bs. {Number(tasasEnVivo.bcv_eur).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </p>
-                    <span className="text-[10px] text-slate-500 mt-2 block">Banco Central de Venezuela</span>
-                  </div>
-
-                  {/* Tasa PMP Binance */}
-                  <div className="rounded-xl border border-slate-700/60 bg-[#1c1f24] p-3 shadow-sm">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">🟡 PMP Binance P2P</span>
-                    <p className="text-lg font-black text-amber-400 mt-1">
-                      Bs. {Number(tasasEnVivo.pmp_binance).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </p>
-                    <span className="text-[10px] text-slate-500 mt-2 block">Promedio Ponderado USDT</span>
-                  </div>
+                {/* Tasa PMP Binance */}
+                <div className="rounded-xl border border-slate-700/60 bg-[#1c1f24] p-3 shadow-sm">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">🟡 PMP Binance P2P</span>
+                  <p className="text-lg font-black text-amber-400 mt-1">
+                    Bs. {Number(tasasEnVivo.pmp_binance).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                  <span className="text-[10px] text-slate-500 mt-2 block">Promedio Ponderado USDT</span>
                 </div>
               </div>
-            )}
-          </Card>
+            </div>
+          )}
 
           {/* DATOS DE LA EMPRESA */}
           <Card bodyClassName="space-y-6">
