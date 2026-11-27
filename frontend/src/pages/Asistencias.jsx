@@ -1,3 +1,4 @@
+import ReporteModulo from "../components/ReporteModulo.jsx";
 import { useOutletContext } from 'react-router-dom';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRealtimeRecarga } from '../hooks/useRealtime.js';
@@ -245,6 +246,8 @@ export default function Asistencias() {
 
   return (
     <div className="space-y-6">
+      <ReporteModulo titulo="Asistencias" archivo="asistencias" columnas={["Personal","Fecha","Entrada","Salida","Horas","Estado"]}
+        filas={filtrados.map((r) => [nombreCompleto(mapas.escoltas[r.escolta_id]), r.fecha, r.check_in, r.check_out, Number(r.horas ?? calcularHoras(r.check_in, r.check_out)), r.estado])} deshabilitado={cargando} />
       {/* Vista resumida de acción rápida para teléfonos (Acción Principal Primero) */}
       <div className={telefono ? 'space-y-3' : 'space-y-3 md:hidden'}>
         <div className="rounded-2xl border border-slate-800 bg-[#161a22] p-4 shadow-md space-y-3">

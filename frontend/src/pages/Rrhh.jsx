@@ -1,3 +1,4 @@
+import ReporteModulo from "../components/ReporteModulo.jsx";
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Banknote,
@@ -59,9 +60,10 @@ const FORM_PERSONAL_INICIAL = {
   activo: true,
 };
 
-export default function Rrhh() {
+export default function Rrhh({ soloPersonal = false }) {
   const toast = useToast();
-  const [pestanaActiva, setPestanaActiva] = useState('personal');
+  const [pestanaRrhh, setPestanaActiva] = useState('anticipos');
+  const pestanaActiva = soloPersonal ? 'personal' : pestanaRrhh;
   const [empresaFiltro, setEmpresaFiltro] = useState('');
   const [busqueda, setBusqueda] = useState('');
   const [personal, setPersonal] = useState([]);
@@ -101,6 +103,11 @@ export default function Rrhh() {
   const cargarDatos = useCallback(async () => {
     setCargando(true);
     try {
+      if (soloPersonal) {
+        const fichas = await api.listarPersonal({ empresa: empresaFiltro || undefined, q: busqueda || undefined });
+        setPersonal(fichas || []);
+        return;
+      }
       const [resPersonal, resAnticipos, resTabulador, resMinutas] = await Promise.all([
         api.listarPersonal({ empresa: empresaFiltro || undefined, q: busqueda || undefined }),
         api.listarAnticipos(),
@@ -116,7 +123,7 @@ export default function Rrhh() {
     } finally {
       setCargando(false);
     }
-  }, [empresaFiltro, busqueda, toast]);
+  }, [empresaFiltro, busqueda, soloPersonal, toast]);
 
   useEffect(() => {
     cargarDatos();
@@ -313,12 +320,32 @@ export default function Rrhh() {
 
   return (
     <div className="space-y-6">
+      {soloPersonal ? (
+        <ReporteModulo titulo="Fichas administrativas" archivo="fichas-administrativas"
+          columnas={['Ficha', 'Nombre', 'Cargo', 'Estado']}
+          filas={personalFiltrado.map((r) => [r.ficha_nro, [r.nombre, r.apellido].filter(Boolean).join(' '), r.cargo, r.activo ? 'Activo' : 'Inactivo'])} deshabilitado={cargando} />
+      ) : pestanaActiva === 'anticipos' ? (
+        <ReporteModulo titulo="Anticipos y préstamos" archivo="anticipos-prestamos"
+          columnas={['Personal', 'Tipo', 'Moneda', 'Otorgado', 'Cuotas', 'Saldo', 'Estado']}
+          filas={anticipos.map((r) => {
+            const persona = r.personal ?? personal.find((p) => p.id === r.personal_id);
+            return [[persona?.nombre, persona?.apellido].filter(Boolean).join(' '), r.tipo, r.moneda ?? 'USD',
+              Number(r.monto_total), Number(r.cuotas), r.saldo_pendiente == null ? null : Number(r.saldo_pendiente), r.estado];
+          })}
+          pdfPersonalizado={() => descargarAnticipos(anticipos)} deshabilitado={cargando} />
+      ) : (
+        <ReporteModulo titulo="Recursos humanos" archivo="rrhh"
+          columnas={pestanaActiva === 'minutas' ? ['Fecha', 'Minuta', 'Estado'] : ['Ficha', 'Nombre', 'Estado']}
+          filas={pestanaActiva === 'minutas' ? minutas.map((r) => [r.fecha, r.titulo, r.estado])
+            : personalFiltrado.map((r) => [r.ficha_nro, [r.nombre, r.apellido].filter(Boolean).join(' '), r.activo ? 'Activo' : 'Inactivo'])}
+          deshabilitado={cargando} />
+      )}
       {/* Encabezado */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-100">Recursos Humanos</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-100">{soloPersonal ? "Fichas administrativas" : "Recursos Humanos"}</h1>
           <p className="mt-1 text-sm text-slate-400">
-            Gestión integral de personal, nómina, anticipos, descansos, tabulador salarial y minutas estilo GT.
+            {soloPersonal ? "Datos laborales, cargos y sueldos del personal." : "Anticipos, nómina, descansos, tabulador y minutas."}
           </p>
         </div>
 
@@ -355,9 +382,8 @@ export default function Rrhh() {
         )}
       </div>
 
-      {/* Navegación por pestañas */}
-      <div className="flex flex-wrap gap-2 border-b border-slate-700/60 pb-3">
-        {PESTANAS.map((pestana) => {
+      {!soloPersonal && <div className="flex flex-wrap gap-2 border-b border-slate-700/60 pb-3">
+        {PESTANAS.filter(({ id }) => id !== "personal").map((pestana) => {
           const Icon = pestana.icon;
           const activa = pestanaActiva === pestana.id;
           return (
@@ -376,9 +402,9 @@ export default function Rrhh() {
             </button>
           );
         })}
-      </div>
+      </div>}
 
-      {/* PESTAÑA 1: PERSONAL */}
+      {/* Fichas administrativas, desde Personal */}
       {pestanaActiva === 'personal' && (
         <Card className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -418,11 +444,6 @@ export default function Rrhh() {
         <Card className="space-y-4">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-semibold text-slate-100">Anticipos y préstamos</h2>
-            <Button type="button" variant="outline" leftIcon={Download}
-              disabled={cargando || exportandoAnticipos || !anticipos.length}
-              onClick={() => descargarAnticipos(anticipos)}>
-              Descargar reporte PDF
-            </Button>
           </div>
 
           <div className="overflow-x-auto">

@@ -1,3 +1,4 @@
+import ReporteModulo from "../components/ReporteModulo.jsx";
 import { useOutletContext } from 'react-router-dom';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRealtimeRecarga } from '../hooks/useRealtime.js';
@@ -221,6 +222,8 @@ export default function Permisos() {
 
   return (
     <div className="space-y-6">
+      <ReporteModulo titulo="Descansos y permisos" archivo="permisos" columnas={["Personal","Tipo","Inicio","Fin","Estado"]}
+        filas={filtrados.map((r) => [nombreCompleto(mapas.escoltas[r.escolta_id]), nombreTipo(mapas.tipos[r.tipo_id]), r.fecha_inicio, r.fecha_fin, r.estado])} indicadores={[["Pendientes", pendientes]]} deshabilitado={cargando} />
       {/* Vista resumida de acción rápida para teléfonos */}
       <div className={telefono ? 'space-y-3' : 'space-y-3 md:hidden'}>
         <div className="rounded-2xl border border-slate-800 bg-[#161a22] p-4 shadow-md space-y-3">

@@ -101,6 +101,7 @@ export default function App() {
           <Route element={autenticado ? <Layout /> : <Navigate to="/login" replace />}>
             <Route index element={<Dashboard />} />
             <Route path="escoltas" element={<Escoltas />} />
+            <Route path="escoltas/administrativo" element={<RoleRoute roles={["admin", "supervisor", "contador", "rrhh"]} modulo="las fichas administrativas"><Rrhh soloPersonal /></RoleRoute>} />
             <Route path="distribucion" element={<Distribucion />} />
             <Route path="permisos" element={<Permisos />} />
             <Route path="asistencias" element={<Asistencias />} />

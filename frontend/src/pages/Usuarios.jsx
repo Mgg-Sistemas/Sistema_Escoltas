@@ -1,3 +1,4 @@
+import ReporteModulo from "../components/ReporteModulo.jsx";
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { VISTAS_TELEFONO } from '../lib/vistasTelefono.js';
 import { useSearchParams } from 'react-router-dom';
@@ -355,6 +356,8 @@ export default function Usuarios() {
 
   return (
     <div className="space-y-6">
+      <ReporteModulo titulo="Usuarios y seguridad" archivo="usuarios" columnas={["Usuario","Nombre","Rol","Estado"]}
+        filas={perfilesFiltrados.map((r) => [r.usuario, r.full_name, r.role, r.active ? 'Activo' : 'Inactivo'])} deshabilitado={cargando} />
       {/* Encabezado */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>

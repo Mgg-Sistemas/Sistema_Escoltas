@@ -1,4 +1,5 @@
-import { useOutletContext } from 'react-router-dom';
+import ReporteModulo from "../components/ReporteModulo.jsx";
+import { Link, useOutletContext } from 'react-router-dom';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRealtimeRecarga } from '../hooks/useRealtime.js';
 import {
@@ -413,6 +414,8 @@ export default function Escoltas() {
 
   return (
     <div className="space-y-6">
+      <ReporteModulo titulo="Personal" archivo="personal" columnas={["Código","Nombre","Categoría","Cargo","Estado"]}
+        filas={filtrados.map((r) => [r.codigo, nombreCompleto(r), r.categoria, r.cargo, r.estado])} indicadores={[["Activos", filtrados.filter((r) => r.estado === "activo").length]]} deshabilitado={cargando} />
       {/* Cabecera Principal con Identidad Corporativa */}
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-800 pb-5">
         <div>
@@ -460,6 +463,12 @@ export default function Escoltas() {
           )}
         </div>
       </header>
+
+      {!telefono && ['admin', 'supervisor', 'contador', 'rrhh'].includes(role) && (
+        <Link to="/escoltas/administrativo" className="inline-flex min-h-11 items-center rounded-xl border border-brand-500/40 px-4 text-sm font-semibold text-brand-400">
+          Fichas administrativas
+        </Link>
+      )}
 
       {/* Vista resumida de acción rápida para teléfonos */}
       <div className={telefono ? 'space-y-3' : 'space-y-3 md:hidden'}>

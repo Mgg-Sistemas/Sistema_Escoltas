@@ -1,3 +1,4 @@
+import ReporteModulo from "../components/ReporteModulo.jsx";
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Activity,
@@ -81,6 +82,8 @@ export default function Auditoria() {
 
   return (
     <div className="space-y-6">
+      <ReporteModulo titulo="Auditoría" archivo="auditoria" columnas={["Fecha","Módulo","Operación"]}
+        filas={filtrados.map((r) => [r.created_at, r.tabla, r.operacion])} deshabilitado={cargando} />
       <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-800 pb-5">
         <div>
           <div className="flex items-center gap-2.5">

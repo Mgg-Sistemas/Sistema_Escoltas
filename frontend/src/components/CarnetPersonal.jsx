@@ -119,6 +119,10 @@ export default function CarnetPersonal({ escolta, grado = 'Escolta Operativo', a
           .section-title { font-size: 14px; font-weight: bold; text-transform: uppercase; color: #475569; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; margin-bottom: 12px; }
           .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px; }
           .field { background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 8px; }
+          * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+          .field:nth-child(3n+1) { background: #fff1e8; }
+          .field:nth-child(3n+2) { background: #ecfdf3; }
+          .field:nth-child(3n) { background: #fff8db; }
           .field-label { font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase; }
           .field-val { font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 2px; }
           .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 60px; text-align: center; }

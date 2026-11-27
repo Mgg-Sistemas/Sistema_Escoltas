@@ -1,3 +1,4 @@
+import ReporteModulo from "../components/ReporteModulo.jsx";
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
@@ -207,6 +208,8 @@ export default function Choferes() {
 
   return (
     <div className="space-y-6">
+      <ReporteModulo titulo="Choferes y viajes" archivo="choferes" columnas={["Origen","Destino","Salida","Estado"]}
+        filas={viajes.map((r) => [r.origen, r.destino, r.fecha_salida, r.estado])} deshabilitado={cargando} />
       {/* Encabezado */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>

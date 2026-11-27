@@ -1,3 +1,4 @@
+import ReporteModulo from "../components/ReporteModulo.jsx";
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRealtimeRecarga } from '../hooks/useRealtime.js';
 import { Link, useNavigate } from 'react-router-dom';
@@ -385,6 +386,8 @@ export default function Dashboard() {
   // VISTA ADMINISTRATIVA Y OPERATIVA COMPLETA (para Administradores y Supervisores)
   return (
     <div className="space-y-6">
+      <ReporteModulo titulo="Resumen del sistema" archivo="resumen" columnas={["Indicador","Cantidad"]}
+        filas={[['Personal', conteos.escoltas], ['Permisos pendientes', conteos.pendientes], ['Asistencias hoy', conteos.asistenciasHoy], ['Periodos', conteos.periodos]]} deshabilitado={cargando} />
       {/* Encabezado General del Panel Operativo */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>

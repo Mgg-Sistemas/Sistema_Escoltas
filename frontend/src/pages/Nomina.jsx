@@ -1,3 +1,4 @@
+import ReporteModulo from "../components/ReporteModulo.jsx";
 import { useOutletContext } from 'react-router-dom';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRealtimeRecarga } from '../hooks/useRealtime.js';
@@ -352,6 +353,12 @@ export default function Nomina() {
           body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #111; margin: 0; padding: 25px; }
           .header { border-bottom: 2px solid #ff8a00; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
           .header h1 { margin: 0; color: #1c1f24; font-size: 20px; }
+          * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+          .metricas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+          .metrica { padding: 10px 12px; border-radius: 8px; background: #fff1e8; color: #994000; }
+          .metrica:nth-child(2) { background: #fff8db; color: #854d0e; }
+          .metrica:nth-child(3) { background: #ecfdf3; color: #166534; }
+          .metrica strong { display: block; margin-top: 5px; }
           .header p { margin: 2px 0 0; color: #ff8a00; font-weight: bold; font-size: 12px; text-transform: uppercase; }
           .badge { background: #dcfce7; color: #15803d; border: 1px solid #86efac; padding: 4px 10px; border-radius: 999px; font-weight: bold; font-size: 11px; }
           .box { border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 16px; }
@@ -374,6 +381,12 @@ export default function Nomina() {
           <div>
             <span class="badge">COMPROBANTE VÁLIDO</span>
           </div>
+        </div>
+
+        <div class="metricas">
+          <div class="metrica">Base <strong>${formatearMoneda(recibo.sueldo_base ?? recibo.monto)}</strong></div>
+          <div class="metrica">Deducciones <strong>${formatearMoneda(recibo.descuentos ?? 0)}</strong></div>
+          <div class="metrica">Neto <strong>${formatearMoneda(recibo.total ?? recibo.monto)}</strong></div>
         </div>
 
         <div class="box">
@@ -424,6 +437,8 @@ export default function Nomina() {
 
   return (
     <div className="space-y-6">
+      <ReporteModulo titulo="Nómina y pagos" archivo="nomina-pagos" columnas={["Personal","Fecha","Monto","Estado"]}
+        filas={pestanaActiva === 'nomina' ? detallesDelPeriodo.map((r) => [nombreCompleto(escoltasPorId[r.escolta_id]), periodoActivo?.fecha_inicio, totalNomina(r), r.estado]) : pagosFiltrados.map((r) => [nombreCompleto(escoltasPorId[r.escolta_id]), r.fecha_pago, Number(r.monto), r.estado])} deshabilitado={cargando} />
       {/* Cabecera Principal */}
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-800 pb-5">
         <div>

@@ -1,3 +1,4 @@
+import ReporteModulo from "../components/ReporteModulo.jsx";
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Bell,
@@ -105,6 +106,8 @@ export default function Ajustes() {
 
   return (
     <div className="space-y-6">
+      <ReporteModulo titulo="Configuración del sistema" archivo="configuracion" columnas={["Ajuste","Categoría","Editable"]}
+        filas={ajustes.filter((r) => r.publico === true).map((r) => [r.clave, r.categoria, r.editable ? 'Sí' : 'No'])} deshabilitado={cargando} />
       {/* Encabezado */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
