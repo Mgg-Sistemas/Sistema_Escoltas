@@ -563,7 +563,7 @@ export default function Escoltas() {
             <input
               type="search"
               value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
+              onChange={(e) => setBusqueda(e.target.value.toLocaleUpperCase("es"))}
               placeholder="Buscar por nombre, código, cédula, cargo o área…"
               className="block min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-[#ff8a00] focus:outline-none focus:ring-2 focus:ring-[#ff8a00]/20"
             />

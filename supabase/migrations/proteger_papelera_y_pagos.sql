@@ -20,7 +20,7 @@ EXCEPTION WHEN OTHERS THEN
 END $$;
 
 -- 2. Función atómica para vaciado de papelera protegiendo historial
-CREATE OR REPLACE FUNCTION public.vaciar_papelera_escoltas()
+CREATE OR REPLACE FUNCTION public.vaciar_papelera_escoltas(p_actor_id uuid DEFAULT NULL)
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -33,16 +33,24 @@ DECLARE
   v_ids_purgados text[] := ARRAY[]::text[];
   v_tiene_deps boolean;
 BEGIN
-  -- Restricción estricta de autorización: Solo Administrador
-  IF NOT public.is_admin() THEN
-    RAISE EXCEPTION 'Acceso denegado: Solo administradores pueden vaciar la papelera';
+  -- Validar autorización: permite sesión de usuario (auth.uid) o invocación desde backend de servicio con p_actor_id
+  IF current_user = 'service_role' THEN
+    IF p_actor_id IS NULL OR NOT EXISTS (
+      SELECT 1 FROM public.profiles WHERE id = p_actor_id AND role = 'admin'
+    ) THEN
+      RAISE EXCEPTION 'Acceso denegado: El actor indicado no tiene rol administrador';
+    END IF;
+  ELSE
+    IF NOT public.is_admin() THEN
+      RAISE EXCEPTION 'Acceso denegado: Solo administradores pueden vaciar la papelera';
+    END IF;
   END IF;
 
-  -- Bloquea las filas candidatas para evitar condiciones de carrera concurrentes
+  -- Seleccionar EXCLUSIVAMENTE registros marcados explícitamente en papelera (evita tocar bajas laborales inactivas)
   FOR v_candidato IN 
     SELECT id, nombres, apellidos, cedula 
       FROM public.escoltas 
-     WHERE estado = 'inactivo' 
+     WHERE notas ILIKE '%[PAPELERA:true]%'
        FOR UPDATE SKIP LOCKED
   LOOP
     -- Comprobación estricta de cualquier dependencia histórica, operativa o financiera
@@ -108,9 +116,17 @@ DECLARE
   v_total_pagado numeric(12,2) := 0;
   v_pago_id uuid;
 BEGIN
-  -- Restricción estricta de autorización: Solo Administrador o Contador
-  IF NOT (public.is_admin() OR public.is_contador()) THEN
-    RAISE EXCEPTION 'Acceso denegado: Solo administradores o contadores pueden procesar pagos de nómina';
+  -- Validar autorización: permite sesión de usuario o invocación desde backend de servicio con p_user_id
+  IF current_user = 'service_role' THEN
+    IF p_user_id IS NULL OR NOT EXISTS (
+      SELECT 1 FROM public.profiles WHERE id = p_user_id AND role IN ('admin', 'contador')
+    ) THEN
+      RAISE EXCEPTION 'Acceso denegado: El usuario indicado no tiene rol administrador o contador';
+    END IF;
+  ELSE
+    IF NOT (public.is_admin() OR public.is_contador()) THEN
+      RAISE EXCEPTION 'Acceso denegado: Solo administradores o contadores pueden procesar pagos de nómina';
+    END IF;
   END IF;
 
   -- Bloquear el periodo para evitar pagos concurrentes simultáneos

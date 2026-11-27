@@ -128,7 +128,7 @@ export default function Auditoria() {
               type="search"
               value={busqueda}
               onChange={(e) => {
-                setBusqueda(e.target.value);
+                setBusqueda(e.target.value.toLocaleUpperCase("es"));
                 setPagina(1);
               }}
               placeholder="Buscar por tabla, ID o contenido…"

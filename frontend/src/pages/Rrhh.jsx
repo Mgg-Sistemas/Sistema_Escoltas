@@ -406,18 +406,22 @@ export default function Rrhh({ soloPersonal = false }) {
 
       {/* Fichas administrativas, desde Personal */}
       {pestanaActiva === 'personal' && (
-        <Card className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex flex-1 items-center gap-2 max-w-md">
-              <Search className="h-4 w-4 text-slate-400" />
+        <Card bodyClassName="space-y-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
+            <div className="relative w-full sm:max-w-lg">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
               <Input
-                placeholder="Buscar por nombre, cédula, ficha o cargo..."
+                type="search"
+                aria-label="Buscar fichas administrativas"
+                className="pl-10"
+                placeholder="Nombre, cédula, ficha o cargo"
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="w-full sm:w-auto sm:shrink-0">
               <Select
+                aria-label="Filtrar por empresa"
                 value={empresaFiltro}
                 onChange={(e) => setEmpresaFiltro(e.target.value)}
                 options={[
@@ -441,7 +445,7 @@ export default function Rrhh({ soloPersonal = false }) {
 
       {/* PESTAÑA 2: ANTICIPOS Y PRÉSTAMOS */}
       {pestanaActiva === 'anticipos' && (
-        <Card className="space-y-4">
+        <Card bodyClassName="space-y-4">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-semibold text-slate-100">Anticipos y préstamos</h2>
           </div>
@@ -505,19 +509,19 @@ export default function Rrhh({ soloPersonal = false }) {
       {/* PESTAÑA 3: NÓMINA */}
       {pestanaActiva === 'nomina' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="space-y-2">
+          <Card bodyClassName="space-y-2">
             <span className="text-xs uppercase font-medium text-slate-400">Plantilla Activa</span>
             <p className="text-2xl font-bold text-slate-100">{personal.filter((p) => p.activo).length}</p>
             <p className="text-xs text-slate-400">Personal en nómina corriente</p>
           </Card>
-          <Card className="space-y-2">
+          <Card bodyClassName="space-y-2">
             <span className="text-xs uppercase font-medium text-slate-400">Total Sueldo Base Mensual</span>
             <p className="text-2xl font-bold text-emerald-400">
               {formatoDinero(personal.filter((p) => p.activo).reduce((sum, p) => sum + (Number(p.sueldo_base) || 0), 0))} USD
             </p>
             <p className="text-xs text-slate-400">Monto global base estimado</p>
           </Card>
-          <Card className="space-y-2">
+          <Card bodyClassName="space-y-2">
             <span className="text-xs uppercase font-medium text-slate-400">Anticipos Activos</span>
             <p className="text-2xl font-bold text-amber-400">
               {formatoDinero(anticipos.filter((a) => a.estado === 'activo').reduce((sum, a) => sum + (Number(a.saldo_pendiente) || 0), 0))} USD
@@ -529,7 +533,7 @@ export default function Rrhh({ soloPersonal = false }) {
 
       {/* PESTAÑA 4: DESCANSOS */}
       {pestanaActiva === 'descansos' && (
-        <Card className="space-y-4">
+        <Card bodyClassName="space-y-4">
           <h2 className="text-lg font-semibold text-slate-100">Control de Descansos y Vacaciones</h2>
           <p className="text-sm text-slate-400 leading-relaxed">
             Módulo homologado con Golden Touch: cálculo automático de 15 días anuales reglamentarios, cómputo de vacaciones acumuladas y programación de descansos por turnos rotativos.
@@ -557,7 +561,7 @@ export default function Rrhh({ soloPersonal = false }) {
 
       {/* PESTAÑA 5: TABULADOR Y CARGOS */}
       {pestanaActiva === 'administrativo' && (
-        <Card className="space-y-4">
+        <Card bodyClassName="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-100">Tabulador Salarial Vigente</h2>
             <div className="text-xs text-slate-400">Escala de sueldos de referencia</div>
@@ -591,7 +595,7 @@ export default function Rrhh({ soloPersonal = false }) {
 
       {/* PESTAÑA 6: MINUTAS */}
       {pestanaActiva === 'minutas' && (
-        <Card className="space-y-4">
+        <Card bodyClassName="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-100">Minutas Operativas y Acuerdos</h2>
             <div className="text-xs text-slate-400">Reuniones de coordinación y seguimiento</div>
@@ -837,7 +841,7 @@ export default function Rrhh({ soloPersonal = false }) {
               className="w-full rounded-xl border border-slate-700 bg-slate-900/80 p-3 text-sm text-slate-100 placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               rows={3}
               value={formMinuta.temas}
-              onChange={(e) => setFormMinuta({ ...formMinuta, temas: e.target.value })}
+              onChange={(e) => setFormMinuta({ ...formMinuta, temas: e.target.value.toLocaleUpperCase("es") })}
               placeholder="Asignación de unidades blindadas&#10;Revisión de turnos de escolta"
             />
           </div>
@@ -847,7 +851,7 @@ export default function Rrhh({ soloPersonal = false }) {
               className="w-full rounded-xl border border-slate-700 bg-slate-900/80 p-3 text-sm text-slate-100 placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               rows={3}
               value={formMinuta.acuerdos}
-              onChange={(e) => setFormMinuta({ ...formMinuta, acuerdos: e.target.value })}
+              onChange={(e) => setFormMinuta({ ...formMinuta, acuerdos: e.target.value.toLocaleUpperCase("es") })}
               placeholder="Chequeo preventivo de vehículos los viernes"
             />
           </div>

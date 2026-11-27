@@ -447,7 +447,7 @@ export default function Usuarios() {
 
       {/* VISTA 2: ROLES Y PERMISOS */}
       {vista === 'roles' && (
-        <Card className="space-y-6">
+        <Card bodyClassName="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-700/60 pb-4">
             <div>
               <h2 className="text-lg font-semibold text-slate-100">Matriz de Acceso por Módulo</h2>
@@ -547,7 +547,7 @@ export default function Usuarios() {
 
       {/* VISTA 3: USUARIOS AUTORIZADOS */}
       {vista === 'autorizados' && (
-        <Card className="space-y-4">
+        <Card bodyClassName="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-100">Usuarios con Permiso de Aprobación</h2>
             <div className="text-xs text-slate-400">Aprobación de pagos, compras y firmas operativas</div>
@@ -615,7 +615,7 @@ export default function Usuarios() {
               required
               placeholder="ej. jleiva"
               value={formulario.usuario}
-              onChange={(e) => setFormulario({ ...formulario, usuario: e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, '') })}
+              onChange={(e) => setFormulario({ ...formulario, usuario: e.target.value.toLocaleUpperCase('es').replace(/[^A-Z0-9._-]/g, '') })}
             />
             <Input
               label="Teléfono"

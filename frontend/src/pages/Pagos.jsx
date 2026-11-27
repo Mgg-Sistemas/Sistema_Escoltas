@@ -218,7 +218,7 @@ export default function Pagos() {
             <input
               type="search"
               value={busqueda}
-              onChange={(evento) => setBusqueda(evento.target.value)}
+              onChange={(evento) => setBusqueda(evento.target.value.toLocaleUpperCase("es"))}
               placeholder="Buscar pago…"
               aria-label="Buscar pagos"
               className="min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
@@ -322,7 +322,7 @@ export default function Pagos() {
             help="Normalmente se registra pendiente y se confirma al verificar la transferencia."
           />
           <Input
-            label="Referencia / comprobante" value={formulario.referencia} containerClassName="sm:col-span-2"
+            label="Referencia / comprobante" conservarFormato value={formulario.referencia} containerClassName="sm:col-span-2"
             onChange={(evento) => cambiar('referencia', evento.target.value)}
             placeholder="Ej. Transferencia 123456789"
             help="Número de operación o enlace que permita verificar el pago."

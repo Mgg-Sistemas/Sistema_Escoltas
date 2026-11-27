@@ -45,7 +45,9 @@ router.post(
   asyncHandler(async (req, res) => {
     // 1. Intentar primero mediante la función atómica en PostgreSQL si está disponible
     try {
-      const { data: rpcRes, error: rpcErr } = await supabase.rpc('vaciar_papelera_escoltas');
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('vaciar_papelera_escoltas', {
+        p_actor_id: req.user.id,
+      });
       if (!rpcErr && rpcRes && typeof rpcRes.purgados === 'number') {
         if (rpcRes.purgados > 0) {
           await audit({

@@ -149,12 +149,32 @@ export function Field({ label, htmlFor, help, error, required = false, children,
   );
 }
 
-export function Input({ label, help, error, required, className = '', containerClassName = '', id, ...props }) {
+function convertirMayusculas(evento) {
+  if (evento.nativeEvent?.isComposing) return;
+  const campo = evento.currentTarget;
+  const { value, selectionStart, selectionEnd, selectionDirection } = campo;
+  const texto = value.toLocaleUpperCase('es');
+  if (texto === value) return;
+  campo.value = texto;
+  if (selectionStart !== null && selectionEnd !== null) {
+    campo.setSelectionRange(
+      value.slice(0, selectionStart).toLocaleUpperCase('es').length,
+      value.slice(0, selectionEnd).toLocaleUpperCase('es').length,
+      selectionDirection,
+    );
+  }
+}
+
+export function Input({ label, help, error, required, className = '', containerClassName = '', id, type = 'text', autoComplete, conservarFormato = false, onChange, ...props }) {
+  const usarMayusculas = !conservarFormato && ['text', 'search'].includes(type)
+    && !autoComplete?.split(' ').some((token) => ['current-password', 'new-password', 'email'].includes(token));
   const generado = useId();
   const inputId = id || generado;
   return (
     <Field label={label} htmlFor={inputId} help={help} error={error} required={required} className={containerClassName}>
-      <input id={inputId} className={`${campoBase} ${error ? 'border-rose-500' : ''} ${className}`} aria-invalid={Boolean(error)} {...props} />
+      <input id={inputId} type={type} autoComplete={autoComplete}
+        onChange={usarMayusculas ? (evento) => { convertirMayusculas(evento); onChange?.(evento); } : onChange}
+        className={`${campoBase} ${error ? 'border-rose-500' : ''} ${className}`} aria-invalid={Boolean(error)} {...props} />
     </Field>
   );
 }
@@ -176,12 +196,14 @@ export function Select({ label, help, error, required, options = [], children, c
   );
 }
 
-export function Textarea({ label, help, error, required, rows = 3, className = '', containerClassName = '', id, ...props }) {
+export function Textarea({ label, help, error, required, rows = 3, className = '', containerClassName = '', id, onChange, ...props }) {
   const generado = useId();
   const textareaId = id || generado;
   return (
     <Field label={label} htmlFor={textareaId} help={help} error={error} required={required} className={containerClassName}>
-      <textarea id={textareaId} rows={rows} className={`${campoBase} resize-y ${error ? 'border-rose-500' : ''} ${className}`} aria-invalid={Boolean(error)} {...props} />
+      <textarea id={textareaId} rows={rows}
+        onChange={(evento) => { convertirMayusculas(evento); onChange?.(evento); }}
+        className={`${campoBase} resize-y ${error ? 'border-rose-500' : ''} ${className}`} aria-invalid={Boolean(error)} {...props} />
     </Field>
   );
 }

@@ -87,13 +87,13 @@ export default function VerificarCarnet() {
         </div>
 
         {cargando ? (
-          <Card className="p-6 space-y-4">
+          <Card className="p-6" bodyClassName="space-y-4">
             <Skeleton className="h-20 w-20 rounded-full mx-auto" />
             <Skeleton className="h-5 w-3/4 mx-auto" />
             <Skeleton className="h-4 w-1/2 mx-auto" />
           </Card>
         ) : error ? (
-          <Card className="p-6 text-center space-y-3 border-rose-500/30 bg-rose-950/20">
+          <Card className="p-6 text-center border-rose-500/30 bg-rose-950/20" bodyClassName="space-y-3">
             <ShieldAlert className="h-12 w-12 text-rose-400 mx-auto" />
             <h2 className="text-lg font-bold text-rose-200">Credencial no verificada</h2>
             <p className="text-sm text-slate-400">{error}</p>
@@ -104,7 +104,7 @@ export default function VerificarCarnet() {
             </Link>
           </Card>
         ) : (
-          <Card className="p-6 space-y-5 border-emerald-500/40 bg-[#161a22]">
+          <Card className="p-6 border-emerald-500/40 bg-[#161a22]" bodyClassName="space-y-5">
             {/* Estado de validación */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <span className="text-xs font-bold text-slate-400">ESTADO REGISTRAL</span>

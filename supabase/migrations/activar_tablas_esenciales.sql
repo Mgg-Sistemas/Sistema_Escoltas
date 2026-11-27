@@ -85,6 +85,66 @@ CREATE TABLE IF NOT EXISTS public.personal (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- Historial salarial y de cargos
+CREATE TABLE IF NOT EXISTS public.personal_sueldos (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  personal_id uuid NOT NULL REFERENCES public.personal(id) ON DELETE CASCADE,
+  sueldo_anterior numeric(12,2) NOT NULL DEFAULT 0,
+  sueldo_nuevo numeric(12,2) NOT NULL DEFAULT 0,
+  moneda text NOT NULL DEFAULT 'USD',
+  motivo text NOT NULL,
+  fecha_efectiva date NOT NULL DEFAULT current_date,
+  creado_por text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.personal_cargos (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  personal_id uuid NOT NULL REFERENCES public.personal(id) ON DELETE CASCADE,
+  cargo_anterior text,
+  cargo_nuevo text NOT NULL,
+  departamento_anterior text,
+  departamento_nuevo text,
+  motivo text,
+  fecha_cambio date NOT NULL DEFAULT current_date,
+  creado_por text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.rrhh_tabulador (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  cargo text NOT NULL UNIQUE,
+  nivel text NOT NULL DEFAULT 'I',
+  departamento text DEFAULT 'Operaciones',
+  sueldo_base numeric(12,2) NOT NULL DEFAULT 0,
+  moneda text NOT NULL DEFAULT 'USD',
+  vigencia_desde date NOT NULL DEFAULT current_date,
+  activo boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+INSERT INTO public.rrhh_tabulador (cargo, nivel, departamento, sueldo_base, moneda)
+VALUES
+  ('Escolta VIP / Protección Cercana', 'I', 'Operaciones', 350, 'USD'),
+  ('Escolta Conductor / Blindado', 'II', 'Operaciones', 400, 'USD'),
+  ('Jefe de Seguridad / Supervisor', 'III', 'Supervisión', 500, 'USD'),
+  ('Chofer de Apoyo / Logística', 'I', 'Logística', 300, 'USD'),
+  ('Custodio de Valores / Guardia', 'I', 'Operaciones', 320, 'USD')
+ON CONFLICT (cargo) DO UPDATE SET sueldo_base = EXCLUDED.sueldo_base;
+
+-- Usuarios Autorizados para aprobaciones
+CREATE TABLE IF NOT EXISTS public.usuarios_autorizados (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  usuario_id uuid NOT NULL REFERENCES public.profiles (id) ON DELETE CASCADE,
+  modulo text NOT NULL,
+  accion text NOT NULL DEFAULT 'aprobar',
+  activo boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  created_by uuid REFERENCES public.profiles (id) ON DELETE SET NULL,
+  CONSTRAINT usuarios_autorizados_uq UNIQUE (usuario_id, modulo, accion)
+);
+
 CREATE TABLE IF NOT EXISTS public.anticipos_prestamos (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   personal_id uuid NOT NULL REFERENCES public.personal(id) ON DELETE CASCADE,
@@ -136,6 +196,26 @@ VALUES
   ('A23DF4E', 'UNIDAD-02', 'camioneta', 'Toyota', 'Land Cruiser 200', 2022, 'Gris Grafito', 'operativo'),
   ('A88JK9M', 'UNIDAD-03', 'camioneta', 'Ford', 'F-250 Super Duty', 2021, 'Blanco Perla', 'operativo')
 ON CONFLICT (placa) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS public.choferes_clasificaciones_viaje (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  clave text NOT NULL UNIQUE,
+  nombre text NOT NULL,
+  icono text NOT NULL DEFAULT '🚚',
+  tarifa_usd numeric(12,2) NOT NULL DEFAULT 0,
+  activo boolean NOT NULL DEFAULT true,
+  orden integer NOT NULL DEFAULT 100,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+INSERT INTO public.choferes_clasificaciones_viaje (clave, nombre, icono, tarifa_usd, orden)
+VALUES
+  ('VIAJE CORTO', 'Viaje Corto (Urbano / Local)', '🚚', 25.00, 1),
+  ('VIAJE LARGO', 'Viaje Largo (Interurbano / Troncal)', '🛣️', 50.00, 2),
+  ('VIAJE INTERNO', 'Viaje Interno (Patio / Mina / Planta)', '🏭', 10.00, 3),
+  ('ESCOLTA RUTA', 'Custodia y Escolta en Tránsito', '🛡️', 75.00, 4)
+ON CONFLICT (clave) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS public.choferes_conductores (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -194,11 +274,17 @@ CREATE TABLE IF NOT EXISTS public.choferes_pagos (
 
 -- 5. Habilitar RLS y Políticas de lectura/escritura
 ALTER TABLE public.custom_roles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.roles_permisos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.usuarios_autorizados ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.rrhh_empresas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.personal ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.personal_sueldos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.personal_cargos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.rrhh_tabulador ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.anticipos_prestamos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.minutas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.vehiculos_catalogo ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.choferes_clasificaciones_viaje ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.choferes_conductores ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.choferes_viajes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.choferes_viaticos ENABLE ROW LEVEL SECURITY;
@@ -208,9 +294,10 @@ DO $$
 DECLARE
   t text;
   tablas text[] := ARRAY[
-    'custom_roles', 'rrhh_empresas', 'personal', 'anticipos_prestamos',
-    'minutas', 'vehiculos_catalogo', 'choferes_conductores', 'choferes_viajes',
-    'choferes_viaticos', 'choferes_pagos'
+    'custom_roles', 'roles_permisos', 'usuarios_autorizados', 'rrhh_empresas', 'personal',
+    'personal_sueldos', 'personal_cargos', 'rrhh_tabulador', 'anticipos_prestamos',
+    'minutas', 'vehiculos_catalogo', 'choferes_clasificaciones_viaje',
+    'choferes_conductores', 'choferes_viajes', 'choferes_viaticos', 'choferes_pagos'
   ];
 BEGIN
   FOREACH t IN ARRAY tablas LOOP

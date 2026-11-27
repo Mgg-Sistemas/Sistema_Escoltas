@@ -495,7 +495,7 @@ export default function Dashboard() {
       {/* FILA 2: DISPONIBILIDAD 360 + ASIGNACIÓN DE SERVICIOS + ALERTAS OPERATIVAS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* PANEL 1: DISPONIBILIDAD Y DISTRIBUCIÓN OPERATIVA */}
-        <Card className="space-y-5">
+        <Card bodyClassName="space-y-5">
           <div className="flex items-center justify-between border-b border-[#333944] pb-3">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-5 w-5 text-[#ff8a00]" />
@@ -546,7 +546,7 @@ export default function Dashboard() {
         </Card>
 
         {/* PANEL 2: ASIGNACIÓN DE SERVICIOS POR ÁREA (HOY) */}
-        <Card className="space-y-4">
+        <Card bodyClassName="space-y-4">
           <div className="flex items-center justify-between border-b border-[#333944] pb-3">
             <div className="flex items-center gap-2">
               <MapPin className="h-5 w-5 text-amber-400" />
@@ -579,7 +579,7 @@ export default function Dashboard() {
         </Card>
 
         {/* PANEL 3: ALERTAS OPERATIVAS */}
-        <Card className="space-y-4">
+        <Card bodyClassName="space-y-4">
           <div className="flex items-center justify-between border-b border-[#333944] pb-3">
             <div className="flex items-center gap-2">
               <ShieldAlert className="h-5 w-5 text-[#ef4f5e]" />
@@ -619,7 +619,7 @@ export default function Dashboard() {
       </div>
 
       {/* FILA 3: MATRIZ SEMANAL DE TURNOS Y DESCANSOS (SOLO INFORMATIVO EN DASHBOARD) */}
-      <Card className="space-y-4">
+      <Card bodyClassName="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-[#333944] pb-3">
           <div>
             <div className="flex items-center gap-2">
@@ -711,7 +711,7 @@ export default function Dashboard() {
       {/* FILA 4: PRÓXIMOS DESCANSOS + RESUMEN FINANCIERO NÓMINA + ACTIVIDAD */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* PRÓXIMOS DESCANSOS */}
-        <Card className="space-y-4">
+        <Card bodyClassName="space-y-4">
           <div className="flex items-center justify-between border-b border-[#333944] pb-3">
             <div className="flex items-center gap-2">
               <Bed className="h-5 w-5 text-oro" />
@@ -741,7 +741,7 @@ export default function Dashboard() {
         </Card>
 
         {/* RESUMEN DE NÓMINA */}
-        <Card className="space-y-4">
+        <Card bodyClassName="space-y-4">
           <div className="flex items-center justify-between border-b border-[#333944] pb-3">
             <div className="flex items-center gap-2">
               <WalletCards className="h-5 w-5 text-emerald-400" />
@@ -783,7 +783,7 @@ export default function Dashboard() {
         </Card>
 
         {/* ACTIVIDAD RECIENTE EN VIVO */}
-        <Card className="space-y-4">
+        <Card bodyClassName="space-y-4">
           <div className="flex items-center justify-between border-b border-[#333944] pb-3">
             <div className="flex items-center gap-2">
               <Clock className="h-5 w-5 text-slate-300" />

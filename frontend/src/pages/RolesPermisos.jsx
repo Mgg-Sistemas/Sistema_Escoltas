@@ -236,7 +236,7 @@ export default function RolesPermisos() {
       </div>
 
       {/* Panel de permisos del rol seleccionado */}
-      <Card className="space-y-6">
+      <Card bodyClassName="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-700/60 pb-4">
           <div>
             <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
@@ -321,6 +321,7 @@ export default function RolesPermisos() {
         <form onSubmit={handleCrearNuevoRol} className="space-y-4 text-slate-200">
           <Input
             label="Identificador Clave (sin espacios)"
+            conservarFormato
             required
             placeholder="ej. jefe_seguridad"
             value={formNuevoRol.key}

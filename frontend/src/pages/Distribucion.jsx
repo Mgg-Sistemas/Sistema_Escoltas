@@ -298,7 +298,7 @@ export default function Distribucion() {
             <input
               type="search"
               value={busqueda}
-              onChange={(evento) => setBusqueda(evento.target.value)}
+              onChange={(evento) => setBusqueda(evento.target.value.toLocaleUpperCase("es"))}
               placeholder="Buscar escolta, cliente o turno…"
               aria-label="Buscar asignaciones"
               className="min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"

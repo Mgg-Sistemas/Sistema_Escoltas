@@ -92,7 +92,7 @@ export default function Ayuda() {
         <input
           type="search"
           value={busqueda}
-          onChange={(evento) => setBusqueda(evento.target.value)}
+          onChange={(evento) => setBusqueda(evento.target.value.toLocaleUpperCase("es"))}
           placeholder="Buscar turno, permiso, recibo…"
           aria-label="Buscar en el manual"
           className="min-h-12 w-full rounded-xl border border-slate-700 bg-slate-900 pl-11 pr-4 text-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-400"

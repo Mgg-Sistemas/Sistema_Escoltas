@@ -268,27 +268,27 @@ export default function Choferes() {
       {pestanaActiva === 'tablero' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <Card className="space-y-2">
+            <Card bodyClassName="space-y-2">
               <span className="text-xs uppercase font-medium text-slate-400">Choferes Registrados</span>
               <p className="text-2xl font-bold text-slate-100">{metricas.totalChoferes}</p>
               <p className="text-xs text-slate-400">{metricas.activos} en servicio activo</p>
             </Card>
-            <Card className="space-y-2">
+            <Card bodyClassName="space-y-2">
               <span className="text-xs uppercase font-medium text-slate-400">Viajes en Ruta Hoy</span>
               <p className="text-2xl font-bold text-amber-400">{metricas.enRuta}</p>
               <p className="text-xs text-slate-400">En tránsito activo</p>
             </Card>
-            <Card className="space-y-2">
+            <Card bodyClassName="space-y-2">
               <span className="text-xs uppercase font-medium text-slate-400">Viajes Completados</span>
               <p className="text-2xl font-bold text-emerald-400">{metricas.finalizados}</p>
               <p className="text-xs text-slate-400">Listos para liquidación</p>
             </Card>
-            <Card className="space-y-2">
+            <Card bodyClassName="space-y-2">
               <span className="text-xs uppercase font-medium text-slate-400">Flota Operativa</span>
               <p className="text-2xl font-bold text-slate-100">{metricas.unidadesOperativas} / {flota.length}</p>
               <p className="text-xs text-slate-400">Vehículos disponibles</p>
             </Card>
-            <Card className="space-y-2">
+            <Card bodyClassName="space-y-2">
               <span className="text-xs uppercase font-medium text-slate-400">Recibos de Pago RV</span>
               <p className="text-2xl font-bold text-brand-400">{pagos.length}</p>
               <p className="text-xs text-slate-400">Generados en el sistema</p>
@@ -296,7 +296,7 @@ export default function Choferes() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="space-y-4">
+            <Card bodyClassName="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-100">Últimos Viajes Registrados</h2>
                 <span className="text-xs text-slate-400">Órdenes VJ</span>
@@ -321,7 +321,7 @@ export default function Choferes() {
               </div>
             </Card>
 
-            <Card className="space-y-4">
+            <Card bodyClassName="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-100">Estado de la Flota</h2>
                 <span className="text-xs text-slate-400">Unidades asignables</span>
@@ -351,7 +351,7 @@ export default function Choferes() {
 
       {/* PESTAÑA 2: CONDUCTORES */}
       {pestanaActiva === 'conductores' && (
-        <Card className="space-y-4">
+        <Card bodyClassName="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-100">Padrón de Conductores y Expedientes</h2>
             <div className="text-xs text-slate-400">Vinculados a la ficha de personal</div>
@@ -418,7 +418,7 @@ export default function Choferes() {
 
       {/* PESTAÑA 3: RUTAS Y VIAJES */}
       {pestanaActiva === 'viajes' && (
-        <Card className="space-y-4">
+        <Card bodyClassName="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-100">Órdenes de Ruta y Viajes (VJ)</h2>
             <div className="text-xs text-slate-400">Control de kilometraje y salidas</div>
@@ -491,7 +491,7 @@ export default function Choferes() {
 
       {/* PESTAÑA 4: VIÁTICOS */}
       {pestanaActiva === 'viaticos' && (
-        <Card className="space-y-4">
+        <Card bodyClassName="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-100">Viáticos y Gastos en Ruta</h2>
             <div className="text-xs text-slate-400">Anticipos de caja chica y rendición de cuentas</div>
@@ -541,7 +541,7 @@ export default function Choferes() {
 
       {/* PESTAÑA 5: PAGOS / RECIBOS */}
       {pestanaActiva === 'pagos' && (
-        <Card className="space-y-4">
+        <Card bodyClassName="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-100">Recibos de Pago por Viajes (RV)</h2>
             <div className="text-xs text-slate-400">Liquidación de viajes y saldo de viáticos</div>
@@ -595,7 +595,7 @@ export default function Choferes() {
 
       {/* PESTAÑA 6: FLOTA */}
       {pestanaActiva === 'flota' && (
-        <Card className="space-y-4">
+        <Card bodyClassName="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-100">Catálogo de Flota Vehicular</h2>
             <div className="text-xs text-slate-400">Camionetas blindadas, camiones y vans</div>
@@ -637,7 +637,7 @@ export default function Choferes() {
 
       {/* PESTAÑA 7: TARIFAS Y CLASIFICACIONES */}
       {pestanaActiva === 'clasificaciones' && (
-        <Card className="space-y-4">
+        <Card bodyClassName="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-100">Clasificaciones de Viaje y Tarifas Base</h2>
             <div className="text-xs text-slate-400">Tarifas por defecto según destino o naturaleza</div>

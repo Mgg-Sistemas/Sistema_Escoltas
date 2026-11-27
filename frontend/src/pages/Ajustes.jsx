@@ -125,7 +125,7 @@ export default function Ajustes() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* COLUMNA 1: APARIENCIA Y TEMA OSCURO */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className="space-y-6">
+          <Card bodyClassName="space-y-6">
             <div className="border-b border-slate-700/60 pb-4">
               <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
                 <Moon className="h-5 w-5 text-brand-400" />
@@ -192,7 +192,7 @@ export default function Ajustes() {
           </Card>
 
           {/* PARÁMETROS OPERATIVOS */}
-          <Card className="space-y-6">
+          <Card bodyClassName="space-y-6">
             <div className="border-b border-slate-700/60 pb-4">
               <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
                 <SlidersHorizontal className="h-5 w-5 text-brand-400" />
@@ -272,7 +272,7 @@ export default function Ajustes() {
           </Card>
 
           {/* DATOS DE LA EMPRESA */}
-          <Card className="space-y-6">
+          <Card bodyClassName="space-y-6">
             <div className="border-b border-slate-700/60 pb-4">
               <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
                 <Building className="h-5 w-5 text-brand-400" />
@@ -302,7 +302,7 @@ export default function Ajustes() {
 
         {/* COLUMNA 2: PERFIL DEL USUARIO */}
         <div className="space-y-6">
-          <Card className="space-y-4">
+          <Card bodyClassName="space-y-4">
             <div className="border-b border-slate-700/60 pb-4">
               <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
                 <User className="h-5 w-5 text-brand-400" />
@@ -331,7 +331,7 @@ export default function Ajustes() {
             </div>
           </Card>
 
-          <Card className="space-y-3 bg-brand-950/20 border-brand-800/40">
+          <Card className="bg-brand-950/20 border-brand-800/40" bodyClassName="space-y-3">
             <div className="flex items-center gap-2 text-brand-400 font-semibold text-sm">
               <ShieldCheck className="h-4 w-4" />
               <span>Seguridad de Sesión</span>

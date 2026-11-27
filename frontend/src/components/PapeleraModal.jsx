@@ -197,7 +197,7 @@ export default function PapeleraModal({
             <input
               type="text"
               value={textoConfirmacion}
-              onChange={(e) => setTextoConfirmacion(e.target.value)}
+              onChange={(e) => setTextoConfirmacion(e.target.value.toLocaleUpperCase("es"))}
               placeholder="BORRAR"
               className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600 focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500 font-mono font-bold"
             />

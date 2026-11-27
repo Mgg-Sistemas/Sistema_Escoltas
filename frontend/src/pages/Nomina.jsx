@@ -688,7 +688,7 @@ export default function Nomina() {
               <input
                 type="search"
                 value={busquedaPago}
-                onChange={(e) => setBusquedaPago(e.target.value)}
+                onChange={(e) => setBusquedaPago(e.target.value.toLocaleUpperCase("es"))}
                 placeholder="Buscar por personal o referencia bancaria..."
                 className="w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-3 py-2 text-sm text-slate-100"
               />
