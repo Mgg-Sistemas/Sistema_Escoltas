@@ -1,3 +1,4 @@
+import { sonarAviso } from '../lib/preferencias.js';
 import React, { createContext, useCallback, useContext, useEffect, useId, useMemo, useState } from 'react';
 import {
   AlertCircle,
@@ -450,6 +451,7 @@ export function ToastProvider({ children }) {
     (mensaje, tipo = 'success', detalle = '') => {
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       setToasts((actuales) => [...actuales.slice(-3), { id, mensaje, tipo, detalle }]);
+      void sonarAviso(tipo);
       window.setTimeout(() => quitar(id), 5500);
       return id;
     },

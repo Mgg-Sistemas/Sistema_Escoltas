@@ -5,7 +5,10 @@ import App from './App.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { ToastProvider } from './components/ui.jsx';
 import { RealtimeProvider } from './context/RealtimeContext.jsx';
+import { aplicarTema } from './lib/preferencias.js';
 import './index.css';
+
+aplicarTema();
 
 // Inicializar paleta guardada de ESCOLTAS CONTROL 360
 try {

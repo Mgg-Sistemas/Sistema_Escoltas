@@ -335,3 +335,62 @@ tbody tr:hover {
     scroll-behavior: auto !important;
   }
 }
+
+html[data-tema="claro"] {
+  --bg-0: #F2F2F2;
+  --bg-1: #F6F6F7;
+  --bg-2: #ECEEF1;
+  --bg-3: #E2E5E9;
+  --surface: #FFFFFF;
+  --surface-2: #F1F3F5;
+  --surface-3: #E1E5E9;
+  --border: #C9CDD3;
+  --border-strong: #A6ADB7;
+  --text: #25282B;
+  --text-muted: #404040;
+  --text-dim: #536071;
+  --primary: #CC4400;
+  --gold: #854D0E;
+  --grad-surface: linear-gradient(180deg, #FFFFFF, #F1F3F5);
+  color-scheme: light;
+}
+
+html[data-tema="claro"] :is(
+  [class~="bg-[#1c1f24]"], [class~="bg-[#0e1217]"], [class~="bg-[#14171c]"],
+  [class~="bg-[#111418]"], [class~="bg-[#0e1116]"], .bg-slate-950
+) {
+  background-color: var(--bg-0) !important;
+}
+
+html[data-tema="claro"] :is(
+  [class~="bg-[#23272e]"], [class~="bg-[#23272e]/95"], [class~="bg-[#161b22]"],
+  [class~="bg-[#161a22]"], [class~="bg-[#1e222a]"], [class~="bg-[#14181f]"],
+  [class~="bg-[#1c222b]"], .bg-chrome-800, .bg-chrome-900,
+  .bg-slate-900, [class~="bg-slate-900/80"], [class~="bg-slate-900/60"],
+  [class~="bg-slate-900/50"], [class~="bg-slate-900/40"]
+) {
+  background-color: var(--surface) !important;
+  color: var(--text);
+}
+
+html[data-tema="claro"] :is(
+  [class~="bg-[#2b3038]"], .bg-slate-800, [class~="bg-slate-800/80"], [class~="bg-slate-800/60"]
+) {
+  background-color: var(--surface-2) !important;
+}
+
+html[data-tema="claro"] :is(.text-slate-100, .text-slate-200, .text-chrome-100, [class~="text-[#e7ecf3]"]) {
+  color: var(--text) !important;
+}
+
+html[data-tema="claro"] :is(.text-slate-300, .text-chrome-200, [class~="text-[#9aa6b5]"], [class~="text-[#6a7585]"]) {
+  color: var(--text-dim) !important;
+}
+
+html[data-tema="claro"] :is(.text-brand-200, .text-brand-300, .text-brand-400, [class~="text-[#ff8a00]"]) {
+  color: var(--primary) !important;
+}
+
+html[data-tema="claro"] :is([class~="border-[#333944]"], .border-chrome-700) {
+  border-color: var(--border) !important;
+}

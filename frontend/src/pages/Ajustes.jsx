@@ -18,6 +18,7 @@ import {
 import { Badge, Button, Card, HelpTip, Input, Select, useToast } from '../components/ui.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../lib/api.js';
+import { cambiarSonido, cambiarTema, leerPreferencias } from '../lib/preferencias.js';
 
 const PALETAS = [
   { id: 'grafito', label: 'Grafito Oscuro', desc: 'Negro grafito y gris metalizado, descansado para la vista', color: '#161b22' },
@@ -33,6 +34,7 @@ export default function Ajustes() {
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [tasasEnVivo, setTasasEnVivo] = useState(null);
+  const [preferencias, setPreferencias] = useState(leerPreferencias);
   const [paletaSeleccionada, setPaletaSeleccionada] = useState(
     localStorage.getItem('escoltas_tema_paleta') || 'grafito'
   );
@@ -110,7 +112,7 @@ export default function Ajustes() {
 
   return (
     <div className="space-y-6">
-      {!cargando && role === "admin" && ['tema_interfaz', 'notificaciones_sonido', 'tasa_dolar_referencia', 'dias_descanso_semanal', 'empresa_nombre', 'empresa_rif'].some((clave) => !ajustesEditables.has(clave)) && (
+      {!cargando && role === "admin" && ['tasa_dolar_referencia', 'dias_descanso_semanal', 'empresa_nombre', 'empresa_rif'].some((clave) => !ajustesEditables.has(clave)) && (
         <p className="text-sm text-slate-400">Los campos deshabilitados aún requieren configuración en el sistema.</p>
       )}
       <ReporteModulo titulo="Configuración del sistema" archivo="configuracion" columnas={["Ajuste","Categoría","Editable"]}
@@ -178,20 +180,26 @@ export default function Ajustes() {
 
             <div className="border-t border-slate-700/60 pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Select
-                label="Tema por Defecto de Sesión"
-                disabled={!puedeGuardar('tema_interfaz')}
-                value={valores.tema_interfaz ?? 'oscuro'}
-                onChange={(e) => handleChange('tema_interfaz', e.target.value)}
+                label="Tema en este dispositivo"
+                value={preferencias.tema}
+                onChange={(e) => {
+                  cambiarTema(e.target.value);
+                  setPreferencias(leerPreferencias());
+                }}
                 options={[
                   { value: 'oscuro', label: 'Modo Oscuro (Recomendado descansado)' },
                   { value: 'claro', label: 'Modo Claro' },
                 ]}
               />
               <Select
-                label="Notificaciones y Sonidos"
-                disabled={!puedeGuardar('notificaciones_sonido')}
-                value={valores.notificaciones_sonido ?? 'true'}
-                onChange={(e) => handleChange('notificaciones_sonido', e.target.value)}
+                label="Sonido de los avisos"
+                value={String(preferencias.sonido)}
+                onChange={(e) => {
+                  const activado = e.target.value === 'true';
+                  cambiarSonido(activado);
+                  setPreferencias(leerPreferencias());
+                  toast.info(activado ? 'Sonido de avisos activado.' : 'Sonido de avisos desactivado.');
+                }}
                 options={[
                   { value: 'true', label: 'Sonido Habilitado' },
                   { value: 'false', label: 'Silencioso' },
