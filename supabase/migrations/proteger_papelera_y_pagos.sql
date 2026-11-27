@@ -33,6 +33,11 @@ DECLARE
   v_ids_purgados text[] := ARRAY[]::text[];
   v_tiene_deps boolean;
 BEGIN
+  -- Restricción estricta de autorización: Solo Administrador
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'Acceso denegado: Solo administradores pueden vaciar la papelera';
+  END IF;
+
   -- Bloquea las filas candidatas para evitar condiciones de carrera concurrentes
   FOR v_candidato IN 
     SELECT id, nombres, apellidos, cedula 
@@ -103,6 +108,11 @@ DECLARE
   v_total_pagado numeric(12,2) := 0;
   v_pago_id uuid;
 BEGIN
+  -- Restricción estricta de autorización: Solo Administrador o Contador
+  IF NOT (public.is_admin() OR public.is_contador()) THEN
+    RAISE EXCEPTION 'Acceso denegado: Solo administradores o contadores pueden procesar pagos de nómina';
+  END IF;
+
   -- Bloquear el periodo para evitar pagos concurrentes simultáneos
   SELECT * INTO v_periodo
     FROM public.periodos_nomina
@@ -158,3 +168,11 @@ BEGIN
   );
 END;
 $$;
+
+-- Restricciones de ejecución a nivel de base de datos
+REVOKE ALL ON FUNCTION public.vaciar_papelera_escoltas() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.vaciar_papelera_escoltas() TO authenticated;
+
+REVOKE ALL ON FUNCTION public.registrar_pago_nomina_periodo(uuid, text, text, date, uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.registrar_pago_nomina_periodo(uuid, text, text, date, uuid) TO authenticated;
+
