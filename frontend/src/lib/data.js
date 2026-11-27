@@ -153,13 +153,19 @@ export function formatearHora(valor) {
   return `${String(partes[0]).padStart(2, '0')}:${String(partes[1]).padStart(2, '0')}`;
 }
 
-export function formatearMoneda(valor, moneda = 'VES') {
+export function formatearMoneda(valor, moneda = 'USD') {
   const numero = Number(valor);
   if (!Number.isFinite(numero)) return '—';
+  if (moneda === 'USD' || moneda === '$') {
+    return `$ ${numero.toLocaleString(LOCALE, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+  if (moneda === 'VES' || moneda === 'Bs' || moneda === 'Bs.') {
+    return `Bs. ${numero.toLocaleString(LOCALE, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
   try {
     return new Intl.NumberFormat(LOCALE, { style: 'currency', currency: moneda }).format(numero);
   } catch {
-    return new Intl.NumberFormat(LOCALE, { minimumFractionDigits: 2 }).format(numero);
+    return `$ ${new Intl.NumberFormat(LOCALE, { minimumFractionDigits: 2 }).format(numero)}`;
   }
 }
 

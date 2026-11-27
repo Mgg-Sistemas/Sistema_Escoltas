@@ -7,6 +7,7 @@ import {
   Banknote,
   Calculator,
   CheckCircle2,
+  CheckSquare,
   CreditCard,
   Download,
   FileSpreadsheet,
@@ -18,8 +19,11 @@ import {
   Printer,
   ReceiptText,
   Search,
+  Square,
+  UserCheck,
   UsersRound,
   WalletCards,
+  X,
   XCircle,
 } from 'lucide-react';
 import DataTable from '../components/DataTable.jsx';
@@ -157,6 +161,9 @@ export default function Nomina() {
   // Modales Nómina
   const [modalPeriodo, setModalPeriodo] = useState(false);
   const [modalDetalle, setModalDetalle] = useState(false);
+  const [modalMasivo, setModalMasivo] = useState(false);
+  const [busquedaMasiva, setBusquedaMasiva] = useState('');
+  const [seleccionadosMasivos, setSeleccionadosMasivos] = useState(new Set());
   const [editandoDetalle, setEditandoDetalle] = useState(null);
   const [formPeriodo, setFormPeriodo] = useState(FORM_PERIODO);
   const [formDetalle, setFormDetalle] = useState(FORM_DETALLE);
@@ -220,6 +227,23 @@ export default function Nomina() {
     return escoltas.filter((e) => (editandoDetalle ? e.id === editandoDetalle.escolta_id || !yaIncluidas.has(e.id) : !yaIncluidas.has(e.id)));
   }, [detallesDelPeriodo, escoltas, editandoDetalle]);
 
+  const personalDisponibleParaNomina = useMemo(() => {
+    const yaEnNomina = new Set(detallesDelPeriodo.map((d) => d.escolta_id));
+    return escoltas.filter((e) => !yaEnNomina.has(e.id) && e.estado !== 'inactivo');
+  }, [detallesDelPeriodo, escoltas]);
+
+  const personalFiltradoMasivo = useMemo(() => {
+    const q = busquedaMasiva.trim().toLowerCase();
+    if (!q) return personalDisponibleParaNomina;
+    return personalDisponibleParaNomina.filter((e) => {
+      const nom = `${e.nombres || ''} ${e.apellidos || ''}`.toLowerCase();
+      const ced = (e.cedula || '').toLowerCase();
+      const cod = (e.codigo || '').toLowerCase();
+      const car = (e.cargo || '').toLowerCase();
+      return nom.includes(q) || ced.includes(q) || cod.includes(q) || car.includes(q);
+    });
+  }, [personalDisponibleParaNomina, busquedaMasiva]);
+
   const continuarAlta = useRef(false);
 
   // Funciones Nómina
@@ -229,6 +253,76 @@ export default function Nomina() {
     setFormPeriodo(sugerido);
     setErrores({});
     setModalPeriodo(true);
+  };
+
+  const abrirCargaMasiva = (targetPeriodoId = null) => {
+    const pid = targetPeriodoId || periodoId;
+    const per = periodos.find((p) => p.id === pid) || periodoActivo;
+    if (per && per.estado !== 'abierto') {
+      toast.warning('El periodo seleccionado no está abierto.');
+      return;
+    }
+    const yaEnPeriodo = new Set(detalles.filter((d) => d.periodo_id === pid).map((d) => d.escolta_id));
+    const disponibles = escoltas.filter((e) => !yaEnPeriodo.has(e.id) && e.estado !== 'inactivo');
+    setSeleccionadosMasivos(new Set(disponibles.map((e) => e.id)));
+    setBusquedaMasiva('');
+    setModalMasivo(true);
+  };
+
+  const toggleSeleccionUno = (id) => {
+    setSeleccionadosMasivos((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSeleccionTodos = () => {
+    if (seleccionadosMasivos.size === personalDisponibleParaNomina.length) {
+      setSeleccionadosMasivos(new Set());
+    } else {
+      setSeleccionadosMasivos(new Set(personalDisponibleParaNomina.map((e) => e.id)));
+    }
+  };
+
+  const guardarCargaMasiva = async () => {
+    if (seleccionadosMasivos.size === 0) {
+      toast.warning('Selecciona al menos un integrante para agregar a la nómina.');
+      return;
+    }
+    const pid = periodoId || (periodos.find((p) => p.estado === 'abierto')?.id);
+    if (!pid) {
+      toast.warning('No hay un periodo abierto seleccionado.');
+      return;
+    }
+    try {
+      setGuardando(true);
+      const ids = Array.from(seleccionadosMasivos);
+      for (const escoltaId of ids) {
+        const esc = escoltasPorId[escoltaId];
+        const base = Number(esc?.sueldo_base || 0);
+        await crear(TABLAS.detallesNomina, {
+          periodo_id: pid,
+          escolta_id: escoltaId,
+          sueldo_base: base,
+          bonos: 0,
+          descuentos: 0,
+          horas_extras: 0,
+          dias_trabajados: 15,
+          total: base,
+          estado: 'pendiente',
+        });
+      }
+      toast.success(`${ids.length} integrante(s) agregado(s) a la nómina exitosamente`);
+      setModalMasivo(false);
+      setSeleccionadosMasivos(new Set());
+      await cargarDatos();
+    } catch (e) {
+      toast.error('Error al agregar personal masivo', e.message);
+    } finally {
+      setGuardando(false);
+    }
   };
 
   const guardarPeriodo = async () => {
@@ -255,7 +349,13 @@ export default function Nomina() {
       setModalPeriodo(false);
       setPeriodos((actuales) => actuales.some((periodo) => periodo.id === creado.id) ? actuales : [creado, ...actuales]);
       setPeriodoId(creado.id);
-      if (continuarAlta.current) mostrarNuevoDetalle();
+      
+      // Auto-abrir selección masiva con todo el personal activo
+      const disponibles = escoltas.filter((e) => e.estado !== 'inactivo');
+      setSeleccionadosMasivos(new Set(disponibles.map((e) => e.id)));
+      setBusquedaMasiva('');
+      setModalMasivo(true);
+
       continuarAlta.current = false;
       cargarDatos();
     } catch (e) {
@@ -497,11 +597,20 @@ export default function Nomina() {
                   <Button
                     variant="primary"
                     size="md"
+                    leftIcon={UsersRound}
+                    disabled={cargando || guardando || !periodoActivo || periodoActivo.estado !== 'abierto'}
+                    onClick={() => abrirCargaMasiva()}
+                  >
+                    Cargar Personal ({personalDisponibleParaNomina.length})
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="md"
                     leftIcon={Plus}
                     disabled={cargando || guardando}
                     onClick={abrirNuevoDetalle}
                   >
-                    Agregar Integrante
+                    Agregar Individual
                   </Button>
                 </>
               )}
@@ -540,9 +649,14 @@ export default function Nomina() {
               </strong>
             </div>
             {puedeEditar && (
-              <Button size="sm" variant="primary" leftIcon={Plus} onClick={abrirNuevoDetalle} disabled={cargando || guardando}>
-                Agregar
-              </Button>
+              <div className="flex items-center gap-1.5">
+                <Button size="sm" variant="primary" leftIcon={UsersRound} onClick={() => abrirCargaMasiva()} disabled={cargando || guardando || !periodoActivo || periodoActivo.estado !== 'abierto'}>
+                  Cargar
+                </Button>
+                <Button size="sm" variant="outline" leftIcon={Plus} onClick={abrirNuevoDetalle} disabled={cargando || guardando}>
+                  Agregar
+                </Button>
+              </div>
             )}
           </div>
         </div>
@@ -637,6 +751,30 @@ export default function Nomina() {
           <Card
             title={`Detalles de ${periodoActivo?.nombre || 'la Nómina'}`}
             description="Conceptos salariales individuales, bonificaciones, horas extras y deducciones."
+            actions={
+              puedeEditar && periodoActivo?.estado === 'abierto' && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    leftIcon={UsersRound}
+                    onClick={() => abrirCargaMasiva()}
+                    disabled={cargando || guardando}
+                  >
+                    Cargar Personal ({personalDisponibleParaNomina.length})
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    leftIcon={Plus}
+                    onClick={abrirNuevoDetalle}
+                    disabled={cargando || guardando}
+                  >
+                    Agregar Individual
+                  </Button>
+                </div>
+              )
+            }
           >
             <DataTable
               columns={[
@@ -654,11 +792,11 @@ export default function Nomina() {
                     );
                   },
                 },
-                { key: 'sueldo_base', label: 'Base', render: (f) => formatearMoneda(f.sueldo_base) },
-                { key: 'bonos', label: 'Bonos', render: (f) => formatearMoneda(f.bonos), mobile: false },
-                { key: 'horas_extras', label: 'Extras', render: (f) => formatearMoneda(f.horas_extras), mobile: false },
-                { key: 'descuentos', label: 'Deducciones', render: (f) => <span className="text-rose-400">-{formatearMoneda(f.descuentos)}</span>, mobile: false },
-                { key: 'total', label: 'Total Neto', render: (f) => <strong className="text-emerald-400 font-bold">{formatearMoneda(totalNomina(f))}</strong> },
+                { key: 'sueldo_base', label: 'Base ($)', render: (f) => formatearMoneda(f.sueldo_base) },
+                { key: 'bonos', label: 'Bonos ($)', render: (f) => formatearMoneda(f.bonos), mobile: false },
+                { key: 'horas_extras', label: 'Extras ($)', render: (f) => formatearMoneda(f.horas_extras), mobile: false },
+                { key: 'descuentos', label: 'Deducciones ($)', render: (f) => <span className="text-rose-400">-{formatearMoneda(f.descuentos)}</span>, mobile: false },
+                { key: 'total', label: 'Total Neto ($)', render: (f) => <strong className="text-emerald-400 font-bold">{formatearMoneda(totalNomina(f))}</strong> },
                 { key: 'estado', label: 'Estado', render: (f) => <Badge tone={estadoTone(f.estado)}>{estadoLabel(f.estado)}</Badge> },
               ]}
               data={detallesDelPeriodo}
@@ -908,6 +1046,145 @@ export default function Nomina() {
         </div>
       </Modal>
 
+      {/* MODAL CARGA MASIVA DE PERSONAL */}
+      <Modal
+        open={modalMasivo}
+        onClose={() => setModalMasivo(false)}
+        title="Cargar Personal a la Nómina"
+        description="Selecciona los integrantes que formarán parte de este período quincenal. Puedes buscarlos y seleccionarlos todos con un solo clic."
+        size="lg"
+        footer={
+          <div className="flex flex-col gap-2 sm:flex-row-reverse sm:items-center sm:justify-between w-full">
+            <div className="flex flex-col gap-2 sm:flex-row-reverse">
+              <Button
+                variant="primary"
+                onClick={guardarCargaMasiva}
+                loading={guardando}
+                disabled={guardando || seleccionadosMasivos.size === 0}
+                fullWidth
+                className="sm:w-auto"
+              >
+                Agregar {seleccionadosMasivos.size} {seleccionadosMasivos.size === 1 ? 'Integrante' : 'Integrantes'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setModalMasivo(false)}
+                disabled={guardando}
+                fullWidth
+                className="sm:w-auto"
+              >
+                Cancelar
+              </Button>
+            </div>
+            <span className="text-xs text-slate-400 text-center sm:text-left">
+              {seleccionadosMasivos.size} de {personalDisponibleParaNomina.length} disponible(s) seleccionado(s)
+            </span>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          {/* Barra de Búsqueda */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Buscar por nombre, apellido, cédula o código..."
+              value={busquedaMasiva}
+              onChange={(e) => setBusquedaMasiva(e.target.value)}
+              className="w-full rounded-xl border border-slate-700 bg-slate-900/90 pl-9 pr-8 py-2.5 text-sm text-slate-100 placeholder-slate-400 focus:border-[#ff8a00] focus:outline-none"
+            />
+            {busquedaMasiva && (
+              <button
+                type="button"
+                onClick={() => setBusquedaMasiva('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Barra de Selección Maestra */}
+          <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-[#14171d] px-4 py-2.5">
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={personalDisponibleParaNomina.length > 0 && seleccionadosMasivos.size === personalDisponibleParaNomina.length}
+                onChange={toggleSeleccionTodos}
+                className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-[#ff8a00] focus:ring-[#ff8a00] focus:ring-offset-0 cursor-pointer"
+              />
+              <span className="text-xs font-bold text-slate-200">
+                Seleccionar Todo ({personalDisponibleParaNomina.length} disponibles)
+              </span>
+            </label>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono font-semibold text-[#ff8a00]">
+                {seleccionadosMasivos.size} marcados
+              </span>
+            </div>
+          </div>
+
+          {/* Lista Buscable de Personal */}
+          <div className="max-h-80 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+            {personalFiltradoMasivo.length === 0 ? (
+              <div className="text-center py-8 text-slate-400">
+                <UsersRound className="h-8 w-8 mx-auto text-slate-600 mb-2" />
+                <p className="text-sm font-semibold">
+                  {personalDisponibleParaNomina.length === 0
+                    ? 'Todo el personal activo ya está agregado a este periodo.'
+                    : 'No se encontraron integrantes que coincidan con la búsqueda.'}
+                </p>
+              </div>
+            ) : (
+              personalFiltradoMasivo.map((esc) => {
+                const marcado = seleccionadosMasivos.has(esc.id);
+                return (
+                  <label
+                    key={esc.id}
+                    className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer select-none ${
+                      marcado
+                        ? 'border-[#ff8a00]/60 bg-[#ff8a00]/10 shadow-sm'
+                        : 'border-slate-800/80 bg-[#161a22] hover:border-slate-700 hover:bg-[#1a1f29]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <input
+                        type="checkbox"
+                        checked={marcado}
+                        onChange={() => toggleSeleccionUno(esc.id)}
+                        className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-[#ff8a00] focus:ring-[#ff8a00] focus:ring-offset-0 cursor-pointer shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-slate-100 truncate">
+                          {nombreCompleto(esc)}
+                        </p>
+                        <p className="text-xs text-slate-400 font-mono flex items-center gap-2 flex-wrap">
+                          <span>{esc.codigo || 'S/C'}</span>
+                          <span>·</span>
+                          <span>C.I. {esc.cedula || '—'}</span>
+                          {esc.cargo && (
+                            <>
+                              <span>·</span>
+                              <span className="text-slate-300">{esc.cargo}</span>
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0 pl-2">
+                      <span className="text-xs font-mono font-bold text-emerald-400 block">
+                        {formatearMoneda(esc.sueldo_base || 0)}
+                      </span>
+                      <span className="text-[10px] text-slate-500 uppercase">Sueldo Base ($)</span>
+                    </div>
+                  </label>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </Modal>
+
       {/* MODAL AGREGAR / EDITAR DETALLE */}
       <Modal
         open={modalDetalle}
@@ -934,7 +1211,16 @@ export default function Nomina() {
             help={!opcionesEscoltaDetalle.length
               ? escoltas.length ? 'Todo el personal disponible ya está incluido en este periodo.' : 'No hay personal disponible. Revisa el módulo Personal.'
               : undefined}
-            onChange={(e) => setFormDetalle((d) => ({ ...d, escolta_id: e.target.value }))}
+            onChange={(e) => {
+              const selId = e.target.value;
+              const esc = escoltasPorId[selId];
+              setFormDetalle((d) => ({
+                ...d,
+                escolta_id: selId,
+                sueldo_base: esc?.sueldo_base != null ? String(esc.sueldo_base) : d.sueldo_base,
+                dias_trabajados: '15',
+              }));
+            }}
             containerClassName="sm:col-span-2"
           >
             <option value="">Selecciona un integrante...</option>
@@ -943,7 +1229,7 @@ export default function Nomina() {
             ))}
           </Select>
           <Input
-            label="Sueldo Base"
+            label="Sueldo Base ($)"
             type="number"
             min="0"
             step="0.01"
@@ -951,7 +1237,7 @@ export default function Nomina() {
             onChange={(e) => setFormDetalle((d) => ({ ...d, sueldo_base: e.target.value }))}
           />
           <Input
-            label="Bonos y Primas"
+            label="Bonos y Primas ($)"
             type="number"
             min="0"
             step="0.01"
@@ -959,7 +1245,7 @@ export default function Nomina() {
             onChange={(e) => setFormDetalle((d) => ({ ...d, bonos: e.target.value }))}
           />
           <Input
-            label="Horas Extras (Monto)"
+            label="Horas Extras (Monto $)"
             type="number"
             min="0"
             step="0.01"
@@ -967,7 +1253,7 @@ export default function Nomina() {
             onChange={(e) => setFormDetalle((d) => ({ ...d, horas_extras: e.target.value }))}
           />
           <Input
-            label="Deducciones / Anticipos"
+            label="Deducciones / Anticipos ($)"
             type="number"
             min="0"
             step="0.01"
@@ -992,9 +1278,9 @@ export default function Nomina() {
         <div className="mt-5 flex items-center justify-between rounded-xl border border-brand-500/30 bg-brand-950/40 p-4">
           <div>
             <p className="text-sm font-semibold text-brand-100">Total Neto Calculado</p>
-            <p className="text-xs text-brand-300">Base + bonos + extras − deducciones</p>
+            <p className="text-xs text-brand-300">Base + bonos + extras − deducciones ($)</p>
           </div>
-          <p className="text-2xl font-extrabold text-brand-300">{formatearMoneda(totalNomina(formDetalle))}</p>
+          <p className="text-2xl font-extrabold text-brand-300 font-mono">{formatearMoneda(totalNomina(formDetalle))}</p>
         </div>
       </Modal>
 
