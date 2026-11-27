@@ -4,12 +4,12 @@
 
 SET search_path = public, extensions;
 
--- 1. Ampliación de restricciones de roles para admitir 'rrhh'
+-- 1. Ampliación de restricciones de roles para admitir 'rrhh' y preservar compatibilidad
 ALTER TABLE public.roles DROP CONSTRAINT IF EXISTS roles_nombre_check;
-ALTER TABLE public.roles ADD CONSTRAINT roles_nombre_check CHECK (nombre IN ('admin', 'supervisor', 'contador', 'escolta', 'rrhh'));
+ALTER TABLE public.roles ADD CONSTRAINT roles_nombre_check CHECK (nombre IN ('admin', 'supervisor', 'contador', 'escolta', 'rrhh', 'chofer'));
 
 ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
-ALTER TABLE public.profiles ADD CONSTRAINT profiles_role_check CHECK (role IN ('admin', 'supervisor', 'contador', 'escolta', 'rrhh'));
+ALTER TABLE public.profiles ADD CONSTRAINT profiles_role_check CHECK (role IN ('admin', 'supervisor', 'contador', 'escolta', 'rrhh', 'chofer'));
 
 INSERT INTO public.roles (nombre, descripcion, activo, es_sistema)
 VALUES
