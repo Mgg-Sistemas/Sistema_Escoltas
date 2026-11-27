@@ -1,239 +1,129 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  BadgeHelp,
-  BookOpen,
-  ChevronDown,
-  CircleHelp,
-  ClipboardCheck,
-  CreditCard,
-  CalendarCheck2,
-  CalendarRange,
-  ShieldCheck,
-  UsersRound,
-  WalletCards,
-} from 'lucide-react';
-import { Badge, Card, Input } from '../components/ui.jsx';
+import { ChevronDown, CircleHelp, Search } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
-import { useRealtime } from '../context/RealtimeContext.jsx';
-import { ROLES, ROLES_DESCRIPCION, ROLES_LABELS } from '../lib/constants.js';
 
-const FLUJO = [
-  { icono: UsersRound, titulo: '1. Registra al personal', texto: 'Alta de escoltas con cédula, contacto, grado y estado.', ruta: '/escoltas' },
-  { icono: CalendarRange, titulo: '2. Distribuye turnos', texto: 'Asigna escoltas a clientes en un rango de fechas.', ruta: '/distribucion' },
-  { icono: CalendarCheck2, titulo: '3. Controla la asistencia', texto: 'Registro de entrada/salida y cálculo automático de horas.', ruta: '/asistencias' },
-  { icono: ClipboardCheck, titulo: '4. Gestiona permisos', texto: 'Solicitud, aprobación o rechazo con nota de revisión.', ruta: '/permisos' },
-  { icono: WalletCards, titulo: '5. Cierra la nómina', texto: 'Sueldo, bonos, descuentos y totales por escolta.', ruta: '/nomina' },
-  { icono: CreditCard, titulo: '6. Registra pagos', texto: 'Montos, referencias y confirmación de cada desembolso.', ruta: '/pagos' },
+const GUIA = [
+  {
+    titulo: 'Ingresar o recuperar mi contraseña',
+    pasos: [
+      'Entra con el usuario asignado y tu contraseña. Si te piden cambiarla, escribe la nueva y confírmala.',
+      'Si olvidaste la clave, usa «¿Olvidaste tu contraseña?» en el ingreso. Si el enlace no llega, contacta al administrador.',
+    ],
+  },
+  {
+    titulo: 'Usar el sistema desde el teléfono',
+    pasos: [
+      'Abre el acceso del módulo que necesitas. Usa «Más» para ver las demás opciones disponibles.',
+      'En cada módulo, usa la acción rápida o abre el historial, el directorio o el desglose cuando lo necesites.',
+    ],
+  },
+  {
+    titulo: 'Consultar o registrar personal',
+    modulo: 'escoltas', ruta: '/escoltas', destino: 'Personal',
+    pasos: [
+      'Busca por nombre, cédula o código y abre la ficha para consultar los datos o ver el carnet.',
+      'Si puedes registrar personal, abre el formulario de alta, completa los campos obligatorios y guarda.',
+    ],
+  },
+  {
+    titulo: 'Consultar o asignar un turno',
+    modulo: 'distribucion', ruta: '/distribucion', destino: 'Turnos y distribución',
+    pasos: [
+      'Abre la matriz semanal o la lista y busca la asignación por persona o fecha.',
+      'Si puedes asignar turnos, toca «Nueva asignación», elige personal, cliente, turno y fechas, y guarda.',
+    ],
+  },
+  {
+    titulo: 'Marcar entrada o salida',
+    modulo: 'asistencias', ruta: '/asistencias', destino: 'Asistencias',
+    pasos: [
+      'Elige la fecha y busca la asignación. Pulsa «Entrada» cuando inicie la guardia.',
+      'Pulsa «Salida» al terminar. Revisa que el sistema muestre ambas horas y el total.',
+    ],
+  },
+  {
+    titulo: 'Solicitar o revisar un permiso',
+    modulo: 'permisos', ruta: '/permisos', destino: 'Descansos y permisos',
+    pasos: [
+      'Abre «Nueva solicitud», elige el tipo, indica las fechas y envía. Consulta el estado en el historial.',
+      'Si te corresponde revisar, abre la solicitud pendiente, comprueba las fechas y registra tu decisión.',
+    ],
+  },
+  {
+    titulo: 'Consultar nómina, pagos y recibos',
+    modulo: 'nomina', ruta: '/nomina', destino: 'Nómina, pagos y recibos',
+    pasos: [
+      'Selecciona el periodo y abre el desglose o «Recibos y comprobantes».',
+      'Si gestionas la nómina, revisa los totales antes de cerrar el periodo. Al registrar un pago, verifica el monto y la referencia.',
+    ],
+  },
+  {
+    titulo: 'Administrar usuarios y permisos',
+    modulo: 'usuarios', ruta: '/usuarios', destino: 'Usuarios y seguridad',
+    pasos: [
+      'En «Usuarios», busca la cuenta para revisar su rol y estado.',
+      'En «Roles y permisos», selecciona el rol, marca los accesos necesarios y guarda los cambios.',
+    ],
+  },
 ];
 
-const GLOSARIO = [
-  { termino: 'Escolta', definicion: 'Persona contratada para brindar protección. Su ficha concentra identificación, contacto y estado.' },
-  { termino: 'Asignación', definicion: 'Relación entre un escolta, un cliente y un turno durante un rango de fechas.' },
-  { termino: 'Turno', definicion: 'Franja de cobertura (mañana, tarde, noche u otra configuración).' },
-  { termino: 'Permiso', definicion: 'Ausencia solicitada y aprobada previamente. Puede requerir comprobante.' },
-  { termino: 'Asistencia', definicion: 'Registro diario de entrada y salida. De ella se obtienen las horas trabajadas.' },
-  { termino: 'Periodo de nómina', definicion: 'Rango de fechas que se liquidará en conjunto (por ejemplo, un mes).' },
-  { termino: 'Detalle de nómina', definicion: 'Cálculo individual por escolta: sueldo base, bonos, extras y descuentos.' },
-  { termino: 'Comprobante', definicion: 'Referencia o documento que respalda un permiso o un pago.' },
-];
-
-const FAQ = [
-  {
-    pregunta: '¿Qué hace "Mantener la sesión activa"?',
-    respuesta: 'Si la dejas marcada, el sistema recuerda tu ingreso en este dispositivo y no te pedirá la clave cada vez. Si la desactivas, la sesión se cierra al cerrar el navegador. Esta opción no cambia tus permisos: siguen siendo los de tu rol.',
-  },
-  {
-    pregunta: '¿Necesito un correo para entrar?',
-    respuesta: 'No. Ingresas con el usuario que te asignó el administrador y tu contraseña. El correo existe sólo de forma interna para enviar los enlaces de recuperación.',
-  },
-  {
-    pregunta: 'No puedo ver Nómina ni Pagos, ¿es un error?',
-    respuesta: 'No. Esos módulos son exclusivos de administradores y contadores. Si crees que te falta acceso, pide al administrador que revise tu rol en Usuarios.',
-  },
-  {
-    pregunta: 'Olvidé mi contraseña, ¿qué hago?',
-    respuesta: 'En la pantalla de ingreso toca «¿Olvidaste tu contraseña?», escribe tu usuario y abre el enlace que llegue a tu correo interno. Allí crea la nueva clave y confírmala dos veces. Si no llega, pide al administrador que te envíe un restablecimiento desde Usuarios.',
-  },
-  {
-    pregunta: 'Me pidieron cambiar la clave al entrar, ¿por qué?',
-    respuesta: 'Tu cuenta usa una clave temporal (123456 para el administrador inicial o es-123 para usuarios nuevos). Por seguridad el sistema te lleva a Cambiar clave y no permite usar el menú hasta que escribas la nueva dos veces y coincidan.',
-  },
-  {
-    pregunta: 'No puedo ver Roles y permisos ni Ajustes',
-    respuesta: 'Esos módulos son exclusivos del administrador. Si necesitas cambiar la matriz de acceso o la clave inicial de los usuarios, pídele al administrador que los abra desde el menú.',
-  },
-  {
-    pregunta: '¿Cómo se calculan las horas?',
-    respuesta: 'Se resta la hora de entrada de la de salida en cada registro de asistencia. Si editas alguna hora, el total se recalcula automáticamente al guardar.',
-  },
-  {
-    pregunta: '¿Cuándo debo cerrar un periodo?',
-    respuesta: 'Cuando ya verificaste todas las fichas, asistencias y totales. El cierre deja el periodo listo para la etapa de pagos y evita cambios accidentales.',
-  },
-  {
-    pregunta: 'Un registro no aparece en la lista, ¿qué reviso?',
-    respuesta: 'Revisa los filtros de búsqueda y estado, y confirma que elegiste la fecha correcta en Asistencias. Si sigue sin aparecer, actualiza la página.',
-  },
-];
+function normalizar(texto) {
+  return texto.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
+}
 
 export default function Ayuda() {
-  const { role } = useAuth();
-  const { conectado } = useRealtime();
+  const { puede } = useAuth();
   const [busqueda, setBusqueda] = useState('');
-  const [faqAbierta, setFaqAbierta] = useState(0);
-
-  const texto = busqueda.trim().toLowerCase();
-  const glosarioFiltrado = GLOSARIO.filter((item) =>
-    !texto || `${item.termino} ${item.definicion}`.toLowerCase().includes(texto),
-  );
-  const faqFiltrada = FAQ.filter((item) =>
-    !texto || `${item.pregunta} ${item.respuesta}`.toLowerCase().includes(texto),
+  const termino = normalizar(busqueda);
+  const tareas = GUIA.filter(({ titulo, pasos, modulo }) =>
+    (!modulo || puede(modulo)) && normalizar([titulo, ...pasos].join(' ')).includes(termino),
   );
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-3xl space-y-5">
       <header>
-        <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Centro de ayuda</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-400 sm:text-base">
-          Guía práctica para usar el sistema sin confusiones. Busca un término, revisa el paso a paso
-          de tu rol y consulta las preguntas frecuentes.
-        </p>
+        <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Manual de usuario</h1>
+        <p className="mt-1 text-sm text-slate-300">Busca una tarea o tócala para ver los pasos.</p>
       </header>
 
-      <Card title="Buscar en la ayuda" subtitle="Escribe una palabra como «permiso», «pago» o «asistencia»">
-        <Input
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-3.5 h-5 w-5 text-brand-400" aria-hidden="true" />
+        <input
           type="search"
           value={busqueda}
           onChange={(evento) => setBusqueda(evento.target.value)}
-          placeholder="¿Qué necesitas saber?"
-          aria-label="Buscar en la ayuda"
+          placeholder="Buscar turno, permiso, recibo…"
+          aria-label="Buscar en el manual"
+          className="min-h-12 w-full rounded-xl border border-slate-700 bg-slate-900 pl-11 pr-4 text-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-400"
         />
-      </Card>
+      </div>
 
-      <Card title="Tu rol y sus responsabilidades" subtitle="El menú ya está adaptado a tu perfil">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {ROLES.map((rol) => {
-            const Icono = rol === 'escolta' ? ShieldCheck : rol === 'contador' ? WalletCards : rol === 'supervisor' ? CalendarRange : UsersRound;
-            const esActual = rol === role;
-            return (
-              <div
-                key={rol}
-                className={`rounded-xl border p-4 ${esActual ? 'border-brand-500 bg-brand-950/30 ring-2 ring-brand-500/30' : 'border-slate-800 bg-[#161b22]'}`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <Icono className="h-5 w-5 text-brand-400" aria-hidden="true" />
-                  {esActual && <Badge tone="azul">Tu rol</Badge>}
-                </div>
-                <p className="mt-3 text-sm font-bold text-slate-100">{ROLES_LABELS[rol]}</p>
-                <p className="mt-1 text-xs leading-relaxed text-slate-400">{ROLES_DESCRIPCION[rol]}</p>
-              </div>
-            );
-          })}
-        </div>
-      </Card>
-
-      <Card title="Flujo recomendado" subtitle="Sigue este orden para mantener la información consistente">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {FLUJO.map((paso) => {
-            const Icono = paso.icono;
-            return (
-              <Link
-                key={paso.titulo}
-                to={paso.ruta}
-                className="flex min-h-28 gap-3 rounded-xl border border-slate-800 bg-[#161b22] p-4 transition-colors hover:border-brand-500/40 hover:bg-slate-800/40"
-              >
-                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-brand-500/30 bg-brand-950/60 text-brand-400">
-                  <Icono className="h-5 w-5" aria-hidden="true" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-bold text-slate-100">{paso.titulo}</span>
-                  <span className="mt-1 block text-xs leading-relaxed text-slate-400">{paso.texto}</span>
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-      </Card>
-
-      <Card title="Datos en tiempo real" subtitle="No necesitas recargar la página para ver cambios">
-        <div className="flex flex-col gap-3 rounded-xl border border-slate-800 bg-[#161b22] p-4 sm:flex-row sm:items-center">
-          <span
-            className={`inline-flex h-3 w-3 shrink-0 rounded-full ${conectado ? 'bg-emerald-500' : 'bg-amber-500'}`}
-            aria-hidden="true"
-          />
-          <div className="min-w-0">
-            <p className="text-sm font-bold text-slate-100">
-              {conectado ? 'Sincronización activa' : 'Reconectando…'}
-            </p>
-            <p className="mt-1 text-xs leading-relaxed text-slate-400">
-              Cuando otro usuario aprueba un permiso, registra una asistencia o confirma un pago,
-              las listas se actualizan solas. El puntito verde de la esquina superior indica que
-              estás conectado. Si ves ámbar, espera unos segundos: la conexión se restablece sola.
-              Solo recibes cambios que tu rol tiene permiso para ver.
-            </p>
-          </div>
-        </div>
-      </Card>
-
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <Card title="Glosario" subtitle="Términos que aparecen en el sistema">
-          {glosarioFiltrado.length ? (
-            <dl className="space-y-3">
-              {glosarioFiltrado.map((item) => (
-                <div key={item.termino} className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
-                  <dt className="text-sm font-bold text-slate-100">{item.termino}</dt>
-                  <dd className="mt-1 text-sm leading-relaxed text-slate-400">{item.definicion}</dd>
-                </div>
-              ))}
-            </dl>
-          ) : (
-            <p className="text-sm text-slate-500">No hay términos que coincidan con la búsqueda.</p>
-          )}
-        </Card>
-
-        <Card title="Preguntas frecuentes" subtitle="Respuestas rápidas a dudas comunes">
-          {faqFiltrada.length ? (
-            <div className="divide-y divide-slate-800">
-              {faqFiltrada.map((item, indice) => {
-                const abierta = faqAbierta === indice;
-                return (
-                  <div key={item.pregunta}>
-                    <button
-                      type="button"
-                      onClick={() => setFaqAbierta(abierta ? -1 : indice)}
-                      aria-expanded={abierta}
-                      className="flex w-full min-h-12 items-center justify-between gap-3 py-3 text-left text-sm font-semibold text-slate-200"
-                    >
-                      {item.pregunta}
-                      <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${abierta ? 'rotate-180' : ''}`} aria-hidden="true" />
-                    </button>
-                    {abierta && <p className="pb-4 text-sm leading-relaxed text-slate-400">{item.respuesta}</p>}
-                  </div>
-                );
-              })}
+      <div className="space-y-2">
+        {tareas.map(({ titulo, pasos, ruta, destino }) => (
+          <details key={titulo} className="group rounded-xl border border-slate-700 bg-slate-900/60">
+            <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-400 [&::-webkit-details-marker]:hidden">
+              {titulo}
+              <ChevronDown className="h-4 w-4 shrink-0 text-brand-400 group-open:rotate-180" aria-hidden="true" />
+            </summary>
+            <div className="space-y-3 px-4 pb-4">
+              <ol className="list-decimal space-y-2 pl-5 text-sm leading-relaxed text-slate-300">
+                {pasos.map((paso) => <li key={paso}>{paso}</li>)}
+              </ol>
+              {ruta && (
+                <Link to={ruta} className="inline-flex min-h-11 items-center rounded-lg border border-brand-500/40 px-3 text-sm font-semibold text-brand-300 hover:bg-brand-950/50">
+                  Abrir {destino}
+                </Link>
+              )}
             </div>
-          ) : (
-            <p className="text-sm text-slate-500">No hay preguntas que coincidan con la búsqueda.</p>
-          )}
-        </Card>
+          </details>
+        ))}
+        {!tareas.length && <p role="status" className="text-sm text-slate-300">No encontramos esa tarea. Prueba con otra palabra.</p>}
       </div>
 
-      <div className="flex flex-col items-start gap-3 rounded-2xl border border-brand-500/30 bg-brand-950/40 p-5 text-brand-200 sm:flex-row sm:items-center">
-        <BadgeHelp className="h-8 w-8 shrink-0" aria-hidden="true" />
-        <div className="flex-1">
-          <p className="font-bold text-brand-100">¿Necesitas más apoyo?</p>
-          <p className="mt-1 text-sm leading-relaxed text-brand-200/90">
-            Comunica el problema al administrador indicando el módulo, la fecha y el mensaje de error
-            que apareció en la notificación. Eso acelera la revisión.
-          </p>
-        </div>
-        <BookOpen className="hidden h-6 w-6 sm:block" aria-hidden="true" />
-      </div>
-
-      <p className="flex items-center gap-2 text-xs text-slate-400">
-        <CircleHelp className="h-4 w-4" aria-hidden="true" />
-        Los botones grandes y las ayudas están pensados para usarse desde el celular con una sola mano.
+      <p className="flex items-start gap-2 border-t border-slate-700 pt-4 text-sm text-slate-300">
+        <CircleHelp className="mt-0.5 h-4 w-4 shrink-0 text-brand-400" aria-hidden="true" />
+        Si falta una opción o aparece un error, informa al administrador qué módulo estabas usando, la fecha y el mensaje mostrado.
       </p>
     </div>
   );
