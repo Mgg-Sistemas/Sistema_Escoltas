@@ -73,18 +73,17 @@ app.get('/healthz', (req, res) => res.status(200).send('OK'));
 app.use('/api/auth', authPublicRouter);
 app.use(['/api/tasas', '/tasas'], tasasRoutes);
 
-// Validación pública de carnet (datos mínimos y seguros sin requerir login)
+// Validación pública de carnet (datos mínimos, seguros y sin sesión)
 app.get('/api/public/verificar-carnet/:id', async (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   try {
     const { id } = req.params;
-    let query = config.supabase
-      ? config.supabase.from('escoltas').select('id, codigo, nombres, apellidos, cedula, estado, notas, foto_url')
-      : null;
-
-    // Usar cliente de supabase de backend
     const { supabase: sbAdmin } = await import('./lib/supabase.js');
-    let q = sbAdmin.from('escoltas').select('id, codigo, nombres, apellidos, cedula, estado, notas, foto_url');
+
+    let q = sbAdmin
+      .from('escoltas')
+      .select('id, codigo, nombres, apellidos, estado, fecha_ingreso, notas');
+
     if (id.includes('-') && id.length > 20) {
       q = q.eq('id', id);
     } else {
@@ -96,23 +95,22 @@ app.get('/api/public/verificar-carnet/:id', async (req, res) => {
       return res.status(404).json({ error: 'Credencial no encontrada o no válida' });
     }
 
-    // Devolver únicamente datos mínimos públicos oficiales
-    const notasTexto = String(data.notas || '');
-    const cargoTag = notasTexto.match(/\[CARGO:([^\]]+)\]/)?.[1];
-    const areaTag = notasTexto.match(/\[AREA:([^\]]+)\]/)?.[1];
-    const turnoTag = notasTexto.match(/\[TURNO:([^\]]+)\]/)?.[1];
+    // Cálculo dinámico de vigencia real (1 año desde fecha_ingreso o último periodo)
+    const fechaBase = data.fecha_ingreso ? new Date(data.fecha_ingreso) : new Date(data.created_at || Date.now());
+    const fechaVence = new Date(fechaBase);
+    fechaVence.setFullYear(fechaVence.getFullYear() + 2); // Acreditación bienal reglamentaria
+    const vigenciaReal = `${String(fechaVence.getDate()).padStart(2, '0')} / ${String(fechaVence.getMonth() + 1).padStart(2, '0')} / ${fechaVence.getFullYear()}`;
 
+    const esVigente = data.estado === 'activo' && new Date() <= fechaVence;
+
+    // Solo devolver datos mínimos institucionales (sin cédula completa, sin foto, sin teléfono, sin dirección)
     return res.json({
-      valido: true,
+      valido: esVigente,
       codigo: data.codigo,
-      titular: `${data.nombres} ${data.apellidos}`.trim(),
-      cedula: data.cedula,
-      cargo: cargoTag || 'Personal Operativo',
-      area: areaTag || 'Seguridad y Custodia',
-      turno: turnoTag || 'Diurno',
-      estado: data.estado === 'activo' ? 'ACTIVO / VERIFICADO' : 'SUSPENDIDO / INACTIVO',
-      foto_url: data.foto_url || null,
-      vigencia: '31 / 12 / 2027',
+      titular: `${data.nombres.split(' ')[0]} ${data.apellidos.split(' ')[0]}`.trim(), // Iniciales / primer nombre y apellido
+      cargo: 'Personal de Seguridad y Vigilancia',
+      estado: esVigente ? 'ACREDITADO / ACTIVO' : 'NO VIGENTE / INACTIVO',
+      vigencia: vigenciaReal,
       fecha_consulta: new Date().toISOString(),
     });
   } catch (err) {

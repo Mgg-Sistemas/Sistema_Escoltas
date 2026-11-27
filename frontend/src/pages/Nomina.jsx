@@ -103,6 +103,7 @@ export default function Nomina() {
 
   // Modal Recibo
   const [reciboSeleccionado, setReciboSeleccionado] = useState(null);
+  const [mostrarDesgloseMobile, setMostrarDesgloseMobile] = useState(false);
 
   const cargarDatos = useCallback(async () => {
     setCargando(true);
@@ -473,7 +474,55 @@ export default function Nomina() {
         </div>
       </header>
 
-      {/* Pestañas de Navegación del Módulo Financiero */}
+      {/* Vista resumida de acción rápida para teléfonos */}
+      <div className="block md:hidden space-y-3">
+        <div className="rounded-2xl border border-slate-800 bg-[#161a22] p-4 shadow-md space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+            <div className="flex items-center gap-2">
+              <WalletCards className="h-4 w-4 text-[#ff8a00]" />
+              <span className="text-xs font-black uppercase text-slate-200">Nómina Activa</span>
+            </div>
+            {periodoActivo && (
+              <Badge tone={periodoActivo.estado === 'cerrado' ? 'gris' : periodoActivo.estado === 'pagado' ? 'verde' : 'azul'}>
+                {periodoActivo.estado.toUpperCase()}
+              </Badge>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">
+                {periodoActivo?.nombre || 'Periodo en curso'}
+              </span>
+              <strong className="text-lg font-black text-white">
+                {formatearMoneda(totalGeneralNomina)}
+              </strong>
+            </div>
+            {puedeEditar && (
+              <Button size="sm" variant="primary" leftIcon={Plus} onClick={abrirNuevoDetalle} disabled={!periodoActivo || periodoActivo.estado === 'cerrado'}>
+                Agregar
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Botón para desplegar desglose completo bajo demanda en teléfonos */}
+        <button
+          type="button"
+          onClick={() => setMostrarDesgloseMobile((prev) => !prev)}
+          className="w-full flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-[#14171c] hover:bg-slate-800/80 text-xs font-bold text-slate-200 shadow-sm transition-all"
+        >
+          <span className="flex items-center gap-2">
+            <FileSpreadsheet className="h-4 w-4 text-[#ff8a00]" />
+            {mostrarDesgloseMobile ? 'Ocultar desglose de nómina' : `Ver desglose y recibos (${detallesDelPeriodo.length} integrantes)`}
+          </span>
+          <span className="text-slate-400 font-mono text-xs">{mostrarDesgloseMobile ? '▲ Ocultar' : '▼ Expandir'}</span>
+        </button>
+      </div>
+
+      {/* Contenedor completo: visible en desktop (md:block) o bajo demanda en móvil */}
+      <div className={mostrarDesgloseMobile ? 'space-y-6 block' : 'space-y-6 hidden md:block'}>
+        {/* Pestañas de Navegación del Módulo Financiero */}
       <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl border border-slate-800 bg-[#0e1217]">
         {PESTANAS_MODULO.map((p) => {
           const Icono = p.icon;
@@ -757,6 +806,7 @@ export default function Nomina() {
           </Card>
         </div>
       )}
+      </div>
 
       {/* MODAL CREAR PERIODO */}
       <Modal

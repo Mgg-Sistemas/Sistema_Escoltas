@@ -284,6 +284,29 @@ router.post(
           pago_referencia: detalle.pago_referencia ?? null,
         });
 
+        // Verificación de idempotencia: evitar registros duplicados ante fallos parciales o reintentos
+        const { data: pagoExistente } = await supabase
+          .from('pagos')
+          .select('id')
+          .eq('periodo_id', req.params.id)
+          .eq('escolta_id', detalle.escolta_id)
+          .maybeSingle();
+
+        if (pagoExistente) {
+          // Si ya existe el pago en la tabla, asegurar estado de detalle consistente y omitir inserción duplicada
+          const { error: errorDetalle } = await supabase
+            .from('nomina_detalles')
+            .update({
+              estado: 'pagado',
+              pagado_at: pagadoEn,
+              pago_referencia: opciones.referencia ?? null,
+            })
+            .eq('id', detalle.id);
+
+          if (errorDetalle) throw mapSupabaseError(errorDetalle, 'No fue posible marcar el detalle como pagado.');
+          continue;
+        }
+
         const { data: pago, error: errorPago } = await supabase
           .from('pagos')
           .insert({

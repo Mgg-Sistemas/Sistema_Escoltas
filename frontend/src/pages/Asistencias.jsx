@@ -67,6 +67,7 @@ export default function Asistencias() {
   const [formulario, setFormulario] = useState(FORM_VACIO);
   const [errores, setErrores] = useState({});
   const [guardando, setGuardando] = useState(false);
+  const [mostrarHistorialMobile, setMostrarHistorialMobile] = useState(false);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -236,101 +237,122 @@ export default function Asistencias() {
   ];
 
   const totalHoras = registros.reduce((suma, registro) => suma + (Number(registro.horas) || calcularHoras(registro.check_in, registro.check_out)), 0);
+  const totalHorasHoy = registros
+    .filter((registro) => registro.fecha === hoyISO())
+    .reduce((suma, registro) => suma + (Number(registro.horas) || calcularHoras(registro.check_in, registro.check_out)), 0);
 
   return (
     <div className="space-y-6">
-      {/* Vista resumida de acción rápida para teléfonos */}
-      <div className="block md:hidden rounded-2xl border border-slate-800 bg-[#161a22] p-4 shadow-md space-y-3">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-          <div className="flex items-center gap-2">
-            <CalendarCheck2 className="h-4 w-4 text-[#ff8a00]" />
-            <span className="text-xs font-black uppercase text-slate-200">Guardia de Hoy</span>
+      {/* Vista resumida de acción rápida para teléfonos (Acción Principal Primero) */}
+      <div className="block md:hidden space-y-3">
+        <div className="rounded-2xl border border-slate-800 bg-[#161a22] p-4 shadow-md space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+            <div className="flex items-center gap-2">
+              <CalendarCheck2 className="h-4 w-4 text-[#ff8a00]" />
+              <span className="text-xs font-black uppercase text-slate-200">Guardia de Hoy</span>
+            </div>
+            <span className="text-xs font-mono font-bold text-slate-400">{formatearFecha(hoyISO())}</span>
           </div>
-          <span className="text-xs font-mono font-bold text-slate-400">{formatearFecha(hoyISO())}</span>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">Horas Acumuladas Hoy</span>
+              <strong className="text-lg font-black text-white">{formatearHoras(totalHorasHoy)}</strong>
+            </div>
+            <Button size="sm" variant="primary" leftIcon={LogIn} onClick={abrirNuevo}>
+              Registrar Check-in
+            </Button>
+          </div>
         </div>
 
-        <div className="flex items-center justify-between">
+        {/* Botón para desplegar historial completo bajo demanda en teléfonos */}
+        <button
+          type="button"
+          onClick={() => setMostrarHistorialMobile((prev) => !prev)}
+          className="w-full flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-[#14171c] hover:bg-slate-800/80 text-xs font-bold text-slate-200 shadow-sm transition-all"
+        >
+          <span className="flex items-center gap-2">
+            <Clock4 className="h-4 w-4 text-[#ff8a00]" />
+            {mostrarHistorialMobile ? 'Ocultar historial de asistencias' : `Ver historial completo (${filtrados.length})`}
+          </span>
+          <span className="text-slate-400 font-mono text-xs">{mostrarHistorialMobile ? '▲ Ocultar' : '▼ Expandir'}</span>
+        </button>
+      </div>
+
+      {/* Contenedor completo: siempre visible en desktop (md:block), bajo demanda en teléfono */}
+      <div className={mostrarHistorialMobile ? 'space-y-6 block' : 'space-y-6 hidden md:block'}>
+        <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <span className="text-[10px] text-slate-400 font-bold uppercase block">Horas Acumuladas Hoy</span>
-            <strong className="text-lg font-black text-white">{formatearHoras(totalHoras)}</strong>
+            <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Asistencias</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">
+              Registra la entrada y salida diaria. El sistema calcula las horas automáticamente y las
+              deja listas para el cálculo de nómina.
+            </p>
           </div>
-          <Button size="sm" variant="primary" leftIcon={LogIn} onClick={abrirNuevo}>
-            Registrar Check-in
+          <Button size="lg" leftIcon={Plus} onClick={abrirNuevo} className="self-start">
+            Registrar asistencia
           </Button>
+        </header>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Card title="Fecha consultada" subtitle="Cambia el día para ver otros registros">
+            <Input type="date" value={fecha} onChange={(evento) => setFecha(evento.target.value)} aria-label="Fecha de consulta" />
+          </Card>
+          <Card title="Registros del día" subtitle="Incluye entradas y salidas">
+            <p className="text-3xl font-extrabold text-slate-100">{registros.length}</p>
+          </Card>
+          <Card title="Horas acumuladas" subtitle="Suma del día seleccionado">
+            <p className="text-3xl font-extrabold text-brand-400">{formatearHoras(totalHoras)}</p>
+          </Card>
         </div>
-      </div>
 
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Asistencias</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">
-            Registra la entrada y salida diaria. El sistema calcula las horas automáticamente y las
-            deja listas para el cálculo de nómina.
-          </p>
-        </div>
-        <Button size="lg" leftIcon={Plus} onClick={abrirNuevo} className="self-start">
-          Registrar asistencia
-        </Button>
-      </header>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card title="Fecha consultada" subtitle="Cambia el día para ver otros registros">
-          <Input type="date" value={fecha} onChange={(evento) => setFecha(evento.target.value)} aria-label="Fecha de consulta" />
-        </Card>
-        <Card title="Registros del día" subtitle="Incluye entradas y salidas">
-          <p className="text-3xl font-extrabold text-slate-100">{registros.length}</p>
-        </Card>
-        <Card title="Horas acumuladas" subtitle="Suma del día seleccionado">
-          <p className="text-3xl font-extrabold text-brand-400">{formatearHoras(totalHoras)}</p>
-        </Card>
-      </div>
-
-      <Card
-        title="Detalle de asistencia"
-        subtitle={`${filtrados.length} registros el ${formatearFecha(fecha, { weekday: 'long', day: 'numeric', month: 'long' })}`}
-        actions={<HelpTip title="Horas automáticas">Se calculan restando la hora de entrada de la de salida. Si haces un cambio manual, se recalculan al guardar.</HelpTip>}
-      >
-        <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-slate-400" aria-hidden="true" />
-            <input
-              type="search"
-              value={busqueda}
-              onChange={(evento) => setBusqueda(evento.target.value)}
-              placeholder="Buscar escolta…"
-              aria-label="Buscar asistencia por escolta"
-              className="min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
-            />
+        <Card
+          title="Detalle de asistencia"
+          subtitle={`${filtrados.length} registros el ${formatearFecha(fecha, { weekday: 'long', day: 'numeric', month: 'long' })}`}
+          actions={<HelpTip title="Horas automáticas">Se calculan restando la hora de entrada de la de salida. Si haces un cambio manual, se recalculan al guardar.</HelpTip>}
+        >
+          <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-slate-400" aria-hidden="true" />
+              <input
+                type="search"
+                value={busqueda}
+                onChange={(evento) => setBusqueda(evento.target.value)}
+                placeholder="Buscar escolta…"
+                aria-label="Buscar asistencia por escolta"
+                className="min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+              />
+            </div>
+            <Button variant="outline" onClick={() => setFecha(hoyISO())} leftIcon={CalendarCheck2} fullWidth className="sm:w-auto">
+              Ir a hoy
+            </Button>
           </div>
-          <Button variant="outline" onClick={() => setFecha(hoyISO())} leftIcon={CalendarCheck2} fullWidth className="sm:w-auto">
-            Ir a hoy
-          </Button>
-        </div>
 
-        <DataTable
-          columns={columnas}
-          data={filtrados}
-          loading={cargando}
-          emptyTitle="No hay asistencias en esta fecha"
-          emptyDescription="Elige otra fecha o registra la entrada del escolta que inició su jornada."
-          emptyActionLabel="Registrar asistencia"
-          onEmptyAction={abrirNuevo}
-          emptyIcon={Clock4}
-          actions={(fila) => (
-            <>
-              {!fila.check_in ? (
-                <Button variant="success" size="sm" leftIcon={LogIn} onClick={() => registrarEntrada(fila)} loading={guardando}>Entrada</Button>
-              ) : null}
-              {fila.check_in && !fila.check_out ? (
-                <Button variant="primary" size="sm" leftIcon={LogOut} onClick={() => registrarSalida(fila)} loading={guardando}>Salida</Button>
-              ) : null}
-              {(puedeEditar || role === 'escolta') && (
-                <Button variant="ghost" size="sm" leftIcon={Pencil} onClick={() => abrirEdicion(fila)}>Editar</Button>
-              )}
-            </>
-          )}
-        />
-      </Card>
+          <DataTable
+            columns={columnas}
+            data={filtrados}
+            loading={cargando}
+            emptyTitle="No hay asistencias en esta fecha"
+            emptyDescription="Elige otra fecha o registra la entrada del escolta que inició su jornada."
+            emptyActionLabel="Registrar asistencia"
+            onEmptyAction={abrirNuevo}
+            emptyIcon={Clock4}
+            actions={(fila) => (
+              <>
+                {!fila.check_in ? (
+                  <Button variant="success" size="sm" leftIcon={LogIn} onClick={() => registrarEntrada(fila)} loading={guardando}>Entrada</Button>
+                ) : null}
+                {fila.check_in && !fila.check_out ? (
+                  <Button variant="primary" size="sm" leftIcon={LogOut} onClick={() => registrarSalida(fila)} loading={guardando}>Salida</Button>
+                ) : null}
+                {(puedeEditar || role === 'escolta') && (
+                  <Button variant="ghost" size="sm" leftIcon={Pencil} onClick={() => abrirEdicion(fila)}>Editar</Button>
+                )}
+              </>
+            )}
+          />
+        </Card>
+      </div>
 
       <Modal
         open={modal}

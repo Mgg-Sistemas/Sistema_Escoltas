@@ -44,6 +44,7 @@ import {
   useToast,
 } from '../components/ui.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import { apiFetch } from '../lib/api.js';
 import { actualizar, crear, eliminar, formatearFecha, listar, nombreCompleto, TABLAS } from '../lib/data.js';
 import { estadoLabel, estadoTone, OPCIONES_ESTADO_ESCOLTA } from '../lib/constants.js';
 
@@ -96,6 +97,7 @@ export default function Escoltas() {
   const [guardando, setGuardando] = useState(false);
   const [errores, setErrores] = useState({});
   const [confirmarEliminar, setConfirmarEliminar] = useState(null);
+  const [mostrarDirectorioMobile, setMostrarDirectorioMobile] = useState(false);
 
   // Cargar datos exclusivamente desde Supabase
   const cargar = useCallback(async () => {
@@ -330,7 +332,7 @@ export default function Escoltas() {
     }
   };
 
-  // Vaciar papelera permanentemente verificando relaciones foráneas
+  // Vaciar papelera permanentemente mediante endpoint atómico que protege el historial
   const vaciarPapeleraDefinitivo = async () => {
     if (!puedeEditar) {
       toast.error('No autorizado', 'Solo administradores pueden vaciar la papelera.');
@@ -339,43 +341,8 @@ export default function Escoltas() {
 
     try {
       setGuardando(true);
-      let purgados = 0;
-      let protegidos = 0;
-
-      for (const item of papelera) {
-        // Verificar dependencias en Supabase antes de eliminar permanentemente.
-        // Si cualquier consulta falla, se aborta la eliminación por seguridad (Fail-Safe).
-        let tieneHistorial = false;
-        try {
-          const [asig, nom, asis, perm, pag] = await Promise.all([
-            listar(TABLAS.asignaciones, { filtros: { escolta_id: item.id }, limite: 1 }),
-            listar(TABLAS.detallesNomina, { filtros: { escolta_id: item.id }, limite: 1 }),
-            listar(TABLAS.asistencias, { filtros: { escolta_id: item.id }, limite: 1 }),
-            listar(TABLAS.permisos, { filtros: { escolta_id: item.id }, limite: 1 }),
-            listar(TABLAS.pagos, { filtros: { escolta_id: item.id }, limite: 1 }),
-          ]);
-
-          if (asig.length > 0 || nom.length > 0 || asis.length > 0 || perm.length > 0 || pag.length > 0) {
-            tieneHistorial = true;
-          }
-        } catch (errConsulta) {
-          // Si falla la consulta a cualquiera de las tablas dependientes, se protege el registro
-          console.error(`Error consultando dependencias de ${item.codigo}:`, errConsulta);
-          tieneHistorial = true;
-        }
-
-        if (tieneHistorial) {
-          protegidos++;
-          continue;
-        }
-
-        try {
-          await eliminar(TABLAS.escoltas, item.id);
-          purgados++;
-        } catch (errEliminar) {
-          toast.error(`Error al eliminar ${item.codigo}`, errEliminar.message);
-        }
-      }
+      const res = await apiFetch('/api/escoltas/vaciar-papelera', { method: 'POST' });
+      const { purgados = 0, protegidos = 0 } = res?.data || res || {};
 
       setModalPapelera(false);
       await cargar();
@@ -383,10 +350,12 @@ export default function Escoltas() {
       if (protegidos > 0) {
         toast.warning(
           `${purgados} purgado(s), ${protegidos} protegido(s)`,
-          'Los registros con asignaciones o recibos de nómina históricos se mantienen para preservar la integridad.',
+          'Los registros con asignaciones o recibos de nómina históricos se mantienen automáticamente para preservar la integridad.',
         );
       } else if (purgados > 0) {
-        toast.success('Papelera vaciada con éxito');
+        toast.success('Papelera vaciada con éxito', `${purgados} registro(s) eliminados definitivamente.`);
+      } else {
+        toast.info('No se eliminaron registros', 'La papelera está vacía o todos los registros tienen dependencias protegidas.');
       }
     } catch (error) {
       toast.error('Error al procesar el vaciado de papelera', error.message);
@@ -490,7 +459,53 @@ export default function Escoltas() {
         </div>
       </header>
 
-      {/* Pestañas de Selección de Categoría (Escoltas / Seguridad / Choferes) */}
+      {/* Vista resumida de acción rápida para teléfonos */}
+      <div className="block md:hidden space-y-3">
+        <div className="rounded-2xl border border-slate-800 bg-[#161a22] p-4 shadow-md space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-[#ff8a00]" />
+              <span className="text-xs font-black uppercase text-slate-200">Personal Operativo</span>
+            </div>
+            <span className="text-xs font-mono font-bold text-slate-400">
+              {conteoPorCategoria.todos || escoltas.length} activos
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex gap-2 text-xs">
+              <span className="px-2 py-1 rounded bg-slate-900 border border-slate-800 text-slate-300">
+                VIP: <strong className="text-white">{conteoPorCategoria.escolta || 0}</strong>
+              </span>
+              <span className="px-2 py-1 rounded bg-slate-900 border border-slate-800 text-slate-300">
+                Chofer: <strong className="text-white">{conteoPorCategoria.chofer || 0}</strong>
+              </span>
+            </div>
+            {puedeEditar && (
+              <Button size="sm" variant="primary" leftIcon={UserPlus} onClick={abrirNuevo}>
+                Nuevo
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Botón para desplegar directorio completo bajo demanda en teléfonos */}
+        <button
+          type="button"
+          onClick={() => setMostrarDirectorioMobile((prev) => !prev)}
+          className="w-full flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-[#14171c] hover:bg-slate-800/80 text-xs font-bold text-slate-200 shadow-sm transition-all"
+        >
+          <span className="flex items-center gap-2">
+            <UsersRound className="h-4 w-4 text-[#ff8a00]" />
+            {mostrarDirectorioMobile ? 'Ocultar directorio de personal' : `Ver lista completa (${filtrados.length})`}
+          </span>
+          <span className="text-slate-400 font-mono text-xs">{mostrarDirectorioMobile ? '▲ Ocultar' : '▼ Expandir'}</span>
+        </button>
+      </div>
+
+      {/* Contenedor completo: visible en desktop (md:block) o bajo demanda en móvil */}
+      <div className={mostrarDirectorioMobile ? 'space-y-6 block' : 'space-y-6 hidden md:block'}>
+        {/* Pestañas de Selección de Categoría (Escoltas / Seguridad / Choferes) */}
       <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl border border-slate-800 bg-[#0e1217]">
         {CATEGORIAS_PERSONAL.map((cat) => {
           const Icono = cat.icon;
@@ -596,6 +611,7 @@ export default function Escoltas() {
           <Pagination page={pagina} totalPages={totalPaginas} totalItems={filtrados.length} onChange={setPagina} />
         </div>
       </Card>
+      </div>
 
       {/* Modal Ficha Técnica y Carnet Oficial */}
       <Modal

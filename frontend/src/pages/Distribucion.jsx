@@ -52,6 +52,7 @@ export default function Distribucion() {
   const [formulario, setFormulario] = useState(FORM_VACIO);
   const [errores, setErrores] = useState({});
   const [guardando, setGuardando] = useState(false);
+  const [mostrarMatrizMobile, setMostrarMatrizMobile] = useState(false);
 
   // Matriz interactiva de turnos y descansos en el módulo de distribución
   const [turnosMatriz, setTurnosMatriz] = useState(() => {
@@ -228,18 +229,58 @@ export default function Distribucion() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Distribución</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">
-            Asigna escoltas a clientes, define el turno y el periodo de cobertura. La vista semanal
-            te ayuda a detectar solapes o fechas sin cubrir.
-          </p>
+      {/* Vista resumida de acción rápida para teléfonos */}
+      <div className="block md:hidden space-y-3">
+        <div className="rounded-2xl border border-slate-800 bg-[#161a22] p-4 shadow-md space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-[#ff8a00]" />
+              <span className="text-xs font-black uppercase text-slate-200">Turnos y Distribución</span>
+            </div>
+            <span className="text-xs font-bold text-slate-400">
+              {asignaciones.filter((a) => a.estado === 'activo').length} activas
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">Personal en Guardia</span>
+              <strong className="text-sm font-black text-white">{agrupadas.length} asignados</strong>
+            </div>
+            <Button size="sm" variant="primary" leftIcon={Plus} onClick={abrirNuevo}>
+              Nueva Asignación
+            </Button>
+          </div>
         </div>
-        <Button size="lg" leftIcon={Plus} onClick={abrirNuevo} className="self-start">
-          Nueva asignación
-        </Button>
-      </header>
+
+        {/* Botón para desplegar matriz y filtros bajo demanda en teléfonos */}
+        <button
+          type="button"
+          onClick={() => setMostrarMatrizMobile((prev) => !prev)}
+          className="w-full flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-[#14171c] hover:bg-slate-800/80 text-xs font-bold text-slate-200 shadow-sm transition-all"
+        >
+          <span className="flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-[#ff8a00]" />
+            {mostrarMatrizMobile ? 'Ocultar matriz de distribución' : `Ver matriz semanal y filtros (${filtradas.length})`}
+          </span>
+          <span className="text-slate-400 font-mono text-xs">{mostrarMatrizMobile ? '▲ Ocultar' : '▼ Expandir'}</span>
+        </button>
+      </div>
+
+      {/* Contenedor completo: visible en desktop (md:block) o bajo demanda en móvil */}
+      <div className={mostrarMatrizMobile ? 'space-y-6 block' : 'space-y-6 hidden md:block'}>
+        <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Distribución</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">
+              Asigna escoltas a clientes, define el turno y el periodo de cobertura. La vista semanal
+              te ayuda a detectar solapes o fechas sin cubrir.
+            </p>
+          </div>
+          <Button size="lg" leftIcon={Plus} onClick={abrirNuevo} className="self-start">
+            Nueva asignación
+          </Button>
+        </header>
 
       <Card
         title="Filtros y vista"
@@ -399,6 +440,7 @@ export default function Distribucion() {
           </div>
         )}
       </Card>
+      </div>
 
       <Modal
         open={modal}

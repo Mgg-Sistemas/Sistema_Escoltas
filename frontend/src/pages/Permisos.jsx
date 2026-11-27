@@ -55,6 +55,7 @@ export default function Permisos() {
   const [formulario, setFormulario] = useState(FORM_VACIO);
   const [errores, setErrores] = useState({});
   const [guardando, setGuardando] = useState(false);
+  const [mostrarHistorialMobile, setMostrarHistorialMobile] = useState(false);
   const [revision, setRevision] = useState(null);
   const [notasRevision, setNotasRevision] = useState('');
 
@@ -219,133 +220,151 @@ export default function Permisos() {
   return (
     <div className="space-y-6">
       {/* Vista resumida de acción rápida para teléfonos */}
-      <div className="block md:hidden rounded-2xl border border-slate-800 bg-[#161a22] p-4 shadow-md space-y-3">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-          <div className="flex items-center gap-2">
-            <CalendarClock className="h-4 w-4 text-[#ff8a00]" />
-            <span className="text-xs font-black uppercase text-slate-200">Resumen de Permisos</span>
+      <div className="block md:hidden space-y-3">
+        <div className="rounded-2xl border border-slate-800 bg-[#161a22] p-4 shadow-md space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+            <div className="flex items-center gap-2">
+              <CalendarClock className="h-4 w-4 text-[#ff8a00]" />
+              <span className="text-xs font-black uppercase text-slate-200">Resumen de Permisos</span>
+            </div>
+            <span className="text-xs font-bold text-slate-400">{pendientes} pendientes</span>
           </div>
-          <span className="text-xs font-bold text-slate-400">{pendientes} pendientes</span>
+
+          <div className="flex items-center justify-between">
+            <div className="min-w-0 pr-2">
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">Última Petición</span>
+              <strong className="text-xs font-black text-white truncate block">
+                {filtrados[0] ? `${nombreTipo(mapas.tipos[filtrados[0].tipo_id])} (${estadoLabel(filtrados[0].estado)})` : 'Sin solicitudes'}
+              </strong>
+            </div>
+            {puedeSolicitar && (
+              <Button size="sm" variant="primary" leftIcon={Plus} onClick={abrirSolicitud}>
+                Nueva Solicitud
+              </Button>
+            )}
+          </div>
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="min-w-0 pr-2">
-            <span className="text-[10px] text-slate-400 font-bold uppercase block">Última Petición</span>
-            <strong className="text-xs font-black text-white truncate block">
-              {filtrados[0] ? `${nombreTipo(mapas.tipos[filtrados[0].tipo_id])} (${estadoLabel(filtrados[0].estado)})` : 'Sin solicitudes'}
-            </strong>
-          </div>
-          {puedeSolicitar && (
-            <Button size="sm" variant="primary" leftIcon={Plus} onClick={abrirSolicitud}>
-              Nueva Solicitud
-            </Button>
-          )}
-        </div>
+        {/* Botón para desplegar historial bajo demanda */}
+        <button
+          type="button"
+          onClick={() => setMostrarHistorialMobile((prev) => !prev)}
+          className="w-full flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-[#14171c] hover:bg-slate-800/80 text-xs font-bold text-slate-200 shadow-sm transition-all"
+        >
+          <span className="flex items-center gap-2">
+            <CalendarClock className="h-4 w-4 text-[#ff8a00]" />
+            {mostrarHistorialMobile ? 'Ocultar historial de permisos' : `Ver historial de solicitudes (${filtrados.length})`}
+          </span>
+          <span className="text-slate-400 font-mono text-xs">{mostrarHistorialMobile ? '▲ Ocultar' : '▼ Expandir'}</span>
+        </button>
       </div>
 
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Permisos</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">
-            {puedeRevisar
-              ? 'Revisa las solicitudes, aprueba o rechaza con una nota clara y deja constancia del comprobante.'
-              : 'Solicita tus permisos, revisa el estado de tus peticiones y consulta las decisiones del supervisor.'}
-          </p>
-        </div>
-        {puedeSolicitar && (
-          <Button size="lg" leftIcon={Plus} onClick={abrirSolicitud} className="self-start">
-            Solicitar permiso
-          </Button>
-        )}
-      </header>
-
-      {pendientes > 0 && puedeRevisar && (
-        <div className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-950/40 p-4 text-amber-200">
-          <CalendarClock className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+      {/* Contenedor completo: visible en desktop (md:block) o bajo demanda en móvil */}
+      <div className={mostrarHistorialMobile ? 'space-y-6 block' : 'space-y-6 hidden md:block'}>
+        <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-bold text-amber-100">{pendientes} {pendientes === 1 ? 'solicitud pendiente' : 'solicitudes pendientes'}</p>
-            <p className="mt-1 text-xs leading-relaxed text-amber-200/90">Respóndelas a la brevedad para que el escolta pueda planificar su jornada.</p>
+            <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Permisos</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">
+              {puedeRevisar
+                ? 'Revisa las solicitudes, aprueba o rechaza con una nota clara y deja constancia del comprobante.'
+                : 'Solicita tus permisos, revisa el estado de tus peticiones y consulta las decisiones del supervisor.'}
+            </p>
           </div>
-        </div>
-      )}
-
-      <Card
-        title="Solicitudes registradas"
-        subtitle={`${filtrados.length} ${filtrados.length === 1 ? 'resultado' : 'resultados'}`}
-        actions={<HelpTip title="Comprobantes">Si el permiso requiere soporte (por ejemplo, un certificado médico), adjunta un enlace al comprobante al crear la solicitud.</HelpTip>}
-      >
-        <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-slate-400" aria-hidden="true" />
-            <input
-              type="search"
-              value={busqueda}
-              onChange={(evento) => setBusqueda(evento.target.value)}
-              placeholder="Buscar por escolta, tipo o motivo…"
-              aria-label="Buscar permisos"
-              className="min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
-            />
-          </div>
-          <div className="relative">
-            <Filter className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-slate-400" aria-hidden="true" />
-            <select
-              value={filtroEstado}
-              onChange={(evento) => setFiltroEstado(evento.target.value)}
-              aria-label="Filtrar permisos por estado"
-              className="min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-3 text-sm text-slate-100 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
-            >
-              <option value="todos">Todos los estados</option>
-              {OPCIONES_ESTADO_PERMISO.map((opcion) => (
-                <option key={opcion.value} value={opcion.value}>{opcion.label}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <DataTable
-          columns={columnas}
-          data={filtrados}
-          loading={cargando}
-          emptyTitle="No hay solicitudes por aquí"
-          emptyDescription={busqueda || filtroEstado !== 'todos'
-            ? 'Cambia los filtros para ver otras solicitudes.'
-            : 'Cuando se solicite un permiso aparecerá aquí con su estado y comprobante.'}
-          emptyActionLabel={puedeSolicitar && !busqueda && filtroEstado === 'todos' ? 'Solicitar el primero' : undefined}
-          onEmptyAction={puedeSolicitar ? abrirSolicitud : undefined}
-          emptyIcon={FileCheck2}
-          actions={(fila) => (
-            <>
-              {fila.comprobante_url && (
-                <a
-                  href={fila.comprobante_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-700 bg-slate-900 px-3 text-xs font-semibold text-slate-300 hover:bg-slate-800"
-                >
-                  <Paperclip className="h-3.5 w-3.5" aria-hidden="true" /> Ver comprobante
-                </a>
-              )}
-              {puedeRevisar && fila.estado === 'pendiente' && (
-                <>
-                  <Button variant="success" size="sm" leftIcon={CheckCircle2} onClick={() => abrirRevision(fila, 'aprobado')}>Aprobar</Button>
-                  <Button variant="danger" size="sm" leftIcon={XCircle} onClick={() => abrirRevision(fila, 'rechazado')}>Rechazar</Button>
-                </>
-              )}
-            </>
+          {puedeSolicitar && (
+            <Button size="lg" leftIcon={Plus} onClick={abrirSolicitud} className="self-start">
+              Solicitar permiso
+            </Button>
           )}
-        />
+        </header>
 
-        {!cargando && filtrados.some((permiso) => permiso.notas_revision) && (
-          <div className="mt-5 space-y-2">
-            <h3 className="text-sm font-bold text-slate-200">Notas de revisión recientes</h3>
-            {filtrados.filter((permiso) => permiso.notas_revision).slice(0, 3).map((permiso) => (
-              <div key={permiso.id} className="rounded-xl border border-slate-800 bg-[#0e1217] p-3 text-sm text-slate-300">
-                <strong className="text-slate-100">{nombreCompleto(mapas.escoltas[permiso.escolta_id])}:</strong> {permiso.notas_revision}
-              </div>
-            ))}
+        {pendientes > 0 && puedeRevisar && (
+          <div className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-950/40 p-4 text-amber-200">
+            <CalendarClock className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+            <div>
+              <p className="text-sm font-bold text-amber-100">{pendientes} {pendientes === 1 ? 'solicitud pendiente' : 'solicitudes pendientes'}</p>
+              <p className="mt-1 text-xs leading-relaxed text-amber-200/90">Respóndelas a la brevedad para que el escolta pueda planificar su jornada.</p>
+            </div>
           </div>
         )}
-      </Card>
+
+        <Card
+          title="Solicitudes registradas"
+          subtitle={`${filtrados.length} ${filtrados.length === 1 ? 'resultado' : 'resultados'}`}
+          actions={<HelpTip title="Comprobantes">Si el permiso requiere soporte (por ejemplo, un certificado médico), adjunta un enlace al comprobante al crear la solicitud.</HelpTip>}
+        >
+          <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-slate-400" aria-hidden="true" />
+              <input
+                type="search"
+                value={busqueda}
+                onChange={(evento) => setBusqueda(evento.target.value)}
+                placeholder="Buscar por escolta, tipo o motivo…"
+                aria-label="Buscar permisos"
+                className="min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+              />
+            </div>
+            <div className="relative">
+              <Filter className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-slate-400" aria-hidden="true" />
+              <select
+                value={filtroEstado}
+                onChange={(evento) => setFiltroEstado(evento.target.value)}
+                aria-label="Filtrar permisos por estado"
+                className="min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-3 text-sm text-slate-100 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+              >
+                <option value="todos">Todos los estados</option>
+                {OPCIONES_ESTADO_PERMISO.map((opcion) => (
+                  <option key={opcion.value} value={opcion.value}>{opcion.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <DataTable
+            columns={columnas}
+            data={filtrados}
+            loading={cargando}
+            emptyTitle="No hay solicitudes por aquí"
+            emptyDescription={busqueda || filtroEstado !== 'todos'
+              ? 'Cambia los filtros para ver otras solicitudes.'
+              : 'Cuando se solicite un permiso aparecerá aquí con su estado y comprobante.'}
+            emptyActionLabel={puedeSolicitar && !busqueda && filtroEstado === 'todos' ? 'Solicitar el primero' : undefined}
+            onEmptyAction={puedeSolicitar ? abrirSolicitud : undefined}
+            emptyIcon={FileCheck2}
+            actions={(fila) => (
+              <>
+                {fila.comprobante_url && (
+                  <a
+                    href={fila.comprobante_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-700 bg-slate-900 px-3 text-xs font-semibold text-slate-300 hover:bg-slate-800"
+                  >
+                    <Paperclip className="h-3.5 w-3.5" aria-hidden="true" /> Ver comprobante
+                  </a>
+                )}
+                {puedeRevisar && fila.estado === 'pendiente' && (
+                  <>
+                    <Button variant="success" size="sm" leftIcon={CheckCircle2} onClick={() => abrirRevision(fila, 'aprobado')}>Aprobar</Button>
+                    <Button variant="danger" size="sm" leftIcon={XCircle} onClick={() => abrirRevision(fila, 'rechazado')}>Rechazar</Button>
+                  </>
+                )}
+              </>
+            )}
+          />
+
+          {!cargando && filtrados.some((permiso) => permiso.notas_revision) && (
+            <div className="mt-5 space-y-2">
+              <h3 className="text-sm font-bold text-slate-200">Notas de revisión recientes</h3>
+              {filtrados.filter((permiso) => permiso.notas_revision).slice(0, 3).map((permiso) => (
+                <div key={permiso.id} className="rounded-xl border border-slate-800 bg-[#0e1217] p-3 text-sm text-slate-300">
+                  <strong className="text-slate-100">{nombreCompleto(mapas.escoltas[permiso.escolta_id])}:</strong> {permiso.notas_revision}
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
 
       <Modal
         open={modalSolicitud}
