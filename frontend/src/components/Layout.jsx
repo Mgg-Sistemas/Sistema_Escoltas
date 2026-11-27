@@ -49,8 +49,7 @@ const SECCIONES_NAVEGACION = [
   {
     titulo: 'Sistema y Seguridad',
     items: [
-      { to: '/usuarios', label: 'Usuarios y Cuentas', icon: UserCog, descripcion: 'Directorio y accesos', modulo: 'usuarios' },
-      { to: '/roles-permisos', label: 'Roles y Permisos', icon: KeyRound, descripcion: 'Matriz de control', modulo: 'roles-permisos' },
+      { to: '/usuarios', label: 'Usuarios y seguridad', icon: UserCog, descripcion: 'Cuentas, roles y autorizaciones', modulo: 'usuarios' },
       { to: '/ajustes', label: 'Configuración', icon: Settings2, descripcion: 'Ajustes y temas visuales', modulo: 'ajustes' },
       { to: '/auditoria', label: 'Auditoría', icon: History, descripcion: 'Bitácora y trazabilidad', modulo: 'auditoria' },
       { to: '/ayuda', label: 'Ayuda', icon: CircleHelp, descripcion: 'Manuales y soporte', modulo: 'ayuda' },
@@ -67,7 +66,7 @@ const ETIQUETAS_RUTA = {
   choferes: 'Choferes y Flota',
   nomina: 'Nómina',
   pagos: 'Pagos',
-  usuarios: 'Usuarios',
+  usuarios: 'Usuarios y seguridad',
   'roles-permisos': 'Roles y permisos',
   ajustes: 'Ajustes',
   auditoria: 'Auditoría',

@@ -106,7 +106,7 @@ export default function App() {
             <Route path="pagos" element={<Navigate to="/nomina" replace />} />
             <Route path="rrhh" element={<Navigate to="/escoltas" replace />} />
             <Route path="usuarios" element={<Usuarios />} />
-            <Route path="roles-permisos" element={<RolesPermisos />} />
+            <Route path="roles-permisos" element={<Navigate to="/usuarios?tab=roles" replace />} />
             <Route path="ajustes" element={<Ajustes />} />
             <Route path="auditoria" element={<Auditoria />} />
             <Route path="ayuda" element={<Ayuda />} />

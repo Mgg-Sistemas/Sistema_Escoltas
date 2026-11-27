@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   CheckCheck,
   KeyRound,
@@ -44,7 +45,25 @@ const FORMULARIO_VACIO = {
 export default function Usuarios() {
   const { user: usuarioActual } = useAuth();
   const toast = useToast();
-  const [vista, setVista] = useState('usuarios'); // 'usuarios', 'roles', 'autorizados'
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabActual = searchParams.get('tab');
+
+  const [vista, setVista] = useState(() => {
+    if (tabActual === 'roles') return 'roles';
+    if (tabActual === 'autorizados') return 'autorizados';
+    return 'usuarios';
+  });
+
+  useEffect(() => {
+    if (tabActual === 'roles' || tabActual === 'autorizados' || tabActual === 'usuarios') {
+      setVista(tabActual);
+    }
+  }, [tabActual]);
+
+  const cambiarVista = (nuevaVista) => {
+    setVista(nuevaVista);
+    setSearchParams({ tab: nuevaVista });
+  };
   const [perfiles, setPerfiles] = useState([]);
   const [escoltas, setEscoltas] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -279,36 +298,46 @@ export default function Usuarios() {
     },
     {
       encabezado: 'Estado de Cuenta',
-      clave: 'activo',
-      render: (fila) => (
-        <div className="flex flex-col gap-1 items-start">
-          <Badge tone={fila.activo ? 'verde' : 'rojo'}>
-            {fila.activo ? 'Activo' : 'Bloqueado'}
-          </Badge>
-          {fila.must_change_password && (
-            <span className="text-[10px] font-medium text-amber-400 flex items-center gap-0.5">
-              <KeyRound className="h-2.5 w-2.5" /> Clave temporal
-            </span>
-          )}
-        </div>
-      ),
+      clave: 'active',
+      render: (fila) => {
+        const estaActivo = fila.active !== false;
+        const bloqueadoTemporal = Boolean(fila.bloqueado_hasta && new Date(fila.bloqueado_hasta) > new Date());
+
+        return (
+          <div className="flex flex-col gap-1 items-start">
+            <Badge tone={bloqueadoTemporal ? 'naranja' : estaActivo ? 'verde' : 'rojo'}>
+              {bloqueadoTemporal ? 'Bloqueo temporal' : estaActivo ? 'Activo' : 'Bloqueado'}
+            </Badge>
+            {fila.must_change_password && (
+              <span className="text-[10px] font-medium text-amber-400 flex items-center gap-0.5">
+                <KeyRound className="h-2.5 w-2.5" /> Clave temporal
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     {
       encabezado: 'Acciones',
       clave: 'acciones',
-      render: (fila) => (
-        <div className="flex items-center gap-2">
-          {!fila.activo ? (
-            <Button size="sm" variant="outline" leftIcon={Unlock} onClick={() => handleDesbloquear(fila)}>
-              Desbloquear
-            </Button>
-          ) : (
-            <Button size="sm" variant="ghost" leftIcon={RotateCcw} onClick={() => handleRestablecerClave(fila)}>
-              Nueva Clave
-            </Button>
-          )}
-        </div>
-      ),
+      render: (fila) => {
+        const estaActivo = fila.active !== false;
+        const bloqueadoTemporal = Boolean(fila.bloqueado_hasta && new Date(fila.bloqueado_hasta) > new Date());
+
+        return (
+          <div className="flex items-center gap-2">
+            {!estaActivo || bloqueadoTemporal ? (
+              <Button size="sm" variant="outline" leftIcon={Unlock} onClick={() => handleDesbloquear(fila)}>
+                Desbloquear
+              </Button>
+            ) : (
+              <Button size="sm" variant="ghost" leftIcon={RotateCcw} onClick={() => handleRestablecerClave(fila)}>
+                Nueva Clave
+              </Button>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
@@ -336,44 +365,44 @@ export default function Usuarios() {
       </div>
 
       {/* Selector de subvista estilo GT */}
-      <div className="flex gap-2 border-b border-slate-700/60 pb-3">
+      <div className="flex flex-wrap gap-2 border-b border-slate-700/60 pb-3">
         <button
           type="button"
-          onClick={() => setVista('usuarios')}
-          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all ${
+          onClick={() => cambiarVista('usuarios')}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
             vista === 'usuarios'
-              ? 'bg-brand-600 text-white shadow-md'
+              ? 'bg-[#ff8a00] text-black shadow-md'
               : 'bg-slate-800/60 text-slate-300 hover:bg-slate-700/60'
           }`}
         >
           <UsersRound className="h-4 w-4" />
-          <span>Padrón de Usuarios</span>
+          <span>Usuarios</span>
         </button>
 
         <button
           type="button"
-          onClick={() => setVista('roles')}
-          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all ${
+          onClick={() => cambiarVista('roles')}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
             vista === 'roles'
-              ? 'bg-brand-600 text-white shadow-md'
+              ? 'bg-[#ff8a00] text-black shadow-md'
               : 'bg-slate-800/60 text-slate-300 hover:bg-slate-700/60'
           }`}
         >
           <KeyRound className="h-4 w-4" />
-          <span>Matriz de Roles y Permisos</span>
+          <span>Roles y permisos</span>
         </button>
 
         <button
           type="button"
-          onClick={() => setVista('autorizados')}
-          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all ${
+          onClick={() => cambiarVista('autorizados')}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
             vista === 'autorizados'
-              ? 'bg-brand-600 text-white shadow-md'
+              ? 'bg-[#ff8a00] text-black shadow-md'
               : 'bg-slate-800/60 text-slate-300 hover:bg-slate-700/60'
           }`}
         >
           <ShieldCheck className="h-4 w-4" />
-          <span>Usuarios Autorizados</span>
+          <span>Usuarios autorizados</span>
         </button>
       </div>
 
