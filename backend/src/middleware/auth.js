@@ -103,7 +103,25 @@ export function requirePermission(modulo, nivel = 'lectura') {
     if (error) throw mapSupabaseError(error, 'No fue posible consultar los permisos del rol.');
     const permisos = data?.permisos ?? {};
     const delModulo = permisos[modulo] ?? {};
-    const permitido = delModulo.full === true || delModulo[nivel] === true;
+    let permitido = delModulo.full === true || delModulo[nivel] === true;
+
+    // Conciliación de respaldo: si no se encontró en roles_permisos, verificar en rol_permisos por UUID
+    if (!permitido) {
+      try {
+        const codigoBuscado = nivel === 'lectura' ? `${modulo}.ver` : `${modulo}.${nivel}`;
+        const { data: granular } = await supabase
+          .from('rol_permisos')
+          .select('concedido, roles!inner(nombre), permisos_sistema!inner(codigo, modulo)')
+          .eq('roles.nombre', req.user.role)
+          .eq('concedido', true);
+
+        permitido = (granular || []).some((g) => {
+          const cod = g.permisos_sistema?.codigo;
+          const mod = g.permisos_sistema?.modulo;
+          return mod === modulo && (cod === codigoBuscado || cod === `${modulo}.crear` || cod === `${modulo}.editar`);
+        });
+      } catch {}
+    }
 
     if (!permitido) {
       throw new ApiError(

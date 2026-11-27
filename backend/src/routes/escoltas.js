@@ -43,10 +43,31 @@ router.post(
   '/vaciar-papelera',
   requireRole('admin'),
   asyncHandler(async (req, res) => {
-    // 1. Obtener registros marcados en papelera
+    // 1. Intentar primero mediante la función atómica en PostgreSQL si está disponible
+    try {
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('vaciar_papelera_escoltas');
+      if (!rpcErr && rpcRes && typeof rpcRes.purgados === 'number') {
+        if (rpcRes.purgados > 0) {
+          await audit({
+            tabla: 'escoltas',
+            operacion: 'DELETE_PAPELERA_BATCH',
+            registro_id: req.user.id,
+            cambios: rpcRes,
+            usuario_id: req.user.id,
+          });
+        }
+        return ok(res, {
+          mensaje: `Papelera procesada: ${rpcRes.purgados} purgado(s), ${rpcRes.protegidos} protegido(s) por historial laboral/financiero.`,
+          purgados: rpcRes.purgados,
+          protegidos: rpcRes.protegidos,
+        });
+      }
+    } catch {}
+
+    // 2. Fallback de protección estricta en el servidor
     const { data: candidatos, error: errCandidatos } = await supabase
       .from('escoltas')
-      .select('id, codigo, nombres, apellidos, notas')
+      .select('id, codigo, cedula, nombres, apellidos, notas')
       .ilike('notas', '%[PAPELERA:true]%');
 
     if (errCandidatos) throw mapSupabaseError(errCandidatos, 'Error consultando papelera.');
@@ -56,22 +77,23 @@ router.post(
     const idsPurgados = [];
 
     for (const item of candidatos || []) {
-      // 2. Verificar todas las dependencias foráneas de forma estricta
-      const [asig, nom, asis, perm, pag] = await Promise.all([
+      // Verificar todas las dependencias foráneas de forma estricta (operativas y financieras)
+      const checks = [
         supabase.from('asignaciones').select('id').eq('escolta_id', item.id).limit(1),
         supabase.from('nomina_detalles').select('id').eq('escolta_id', item.id).limit(1),
         supabase.from('asistencias').select('id').eq('escolta_id', item.id).limit(1),
         supabase.from('permisos').select('id').eq('escolta_id', item.id).limit(1),
         supabase.from('pagos').select('id').eq('escolta_id', item.id).limit(1),
-      ]);
+      ];
 
-      const tieneDependencias =
-        (asig.data && asig.data.length > 0) ||
-        (nom.data && nom.data.length > 0) ||
-        (asis.data && asis.data.length > 0) ||
-        (perm.data && perm.data.length > 0) ||
-        (pag.data && pag.data.length > 0) ||
-        asig.error || nom.error || asis.error || perm.error || pag.error; // Fail-safe si hay error
+      // Si existen módulos de RRHH o Choferes, verificar referencias
+      try {
+        checks.push(supabase.from('personal').select('id').eq('cedula', item.cedula).limit(1));
+        checks.push(supabase.from('choferes_conductores').select('id').eq('personal_id', item.id).limit(1));
+      } catch {}
+
+      const resultados = await Promise.all(checks);
+      const tieneDependencias = resultados.some(r => (r.data && r.data.length > 0) || r.error);
 
       if (tieneDependencias) {
         protegidos++;

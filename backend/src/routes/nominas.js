@@ -272,6 +272,40 @@ router.post(
     // fecha_pago es date en "pagos"; pagado_at es timestamptz en "nomina_detalles".
     const fechaPago = opciones.fecha_pago ?? new Date().toISOString().slice(0, 10);
     const pagadoEn = new Date().toISOString();
+    // 1. Intentar ejecución atómica en PostgreSQL si la RPC está disponible
+    try {
+      const { data: rpcPago, error: rpcErr } = await supabase.rpc('registrar_pago_nomina_periodo', {
+        p_periodo_id: req.params.id,
+        p_metodo: opciones.metodo ?? 'transferencia',
+        p_referencia: opciones.referencia ?? null,
+        p_fecha_pago: fechaPago,
+        p_user_id: req.user.id,
+      });
+
+      if (!rpcErr && rpcPago && typeof rpcPago.pagos_registrados === 'number') {
+        await audit({
+          tabla: 'periodos_nomina',
+          operacion: 'PAGO_NOMINA_BATCH',
+          registro_id: req.params.id,
+          cambios: rpcPago,
+          usuario_id: req.user.id,
+        });
+
+        const { data: periodoActualizado } = await supabase
+          .from('periodos_nomina')
+          .select('*')
+          .eq('id', req.params.id)
+          .single();
+
+        return ok(res, {
+          periodo: periodoActualizado,
+          pagos_creados: rpcPago.pagos_registrados,
+          total_pagado: Number(Number(rpcPago.total_pagado ?? 0).toFixed(2)),
+          metodo_atomico: true,
+        });
+      }
+    } catch {}
+
     const pagosCreados = [];
     const estadosAnteriores = new Map();
     let periodoActualizado = null;
