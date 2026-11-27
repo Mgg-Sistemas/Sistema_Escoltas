@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, ChevronDown, KeyRound, Search, Smartphone, UsersRound } from 'lucide-react';
+import { ArrowLeft, ChevronDown, KeyRound, Plus, Search, Smartphone, UsersRound } from 'lucide-react';
 import { Badge, Button, Card, Input } from './ui.jsx';
 
 const NIVELES = [
@@ -33,7 +33,7 @@ function alcance(modulos, permisos, administrador) {
 }
 
 export default function MatrizRoles({
-  roles, seleccionado, onSeleccionar, perfiles, matrices, telefono, grupos, modulos, vistas,
+  roles, seleccionado, onSeleccionar, onNuevo, perfiles, matrices, telefono, grupos, modulos, vistas,
   cargando, guardando, permiteLectura, onPermiso, onTelefono, onGuardar,
 }) {
   const [busqueda, setBusqueda] = useState('');
@@ -55,6 +55,7 @@ export default function MatrizRoles({
       <Card bodyClassName="space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-semibold">Roles del sistema</h2>
+          <Button type="button" variant="outline" leftIcon={Plus} onClick={onNuevo}>Nuevo rol</Button>
         </div>
         <div className="relative max-w-md">
           <Search className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-brand-400" aria-hidden="true" />
