@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { Download } from 'lucide-react';
-import { Button, useToast } from './ui.jsx';
+import { FileText } from 'lucide-react';
+import { Button, Modal, useToast } from './ui.jsx';
 
 export default function ReporteModulo({ titulo, archivo, columnas, filas, indicadores = [], pdfPersonalizado, deshabilitado = false }) {
   const toast = useToast();
+  const [abierto, setAbierto] = useState(false);
   const [procesando, setProcesando] = useState(false);
+  const permiteExportar = !deshabilitado && filas.length > 0;
+  const vistaPrevia = abierto ? filas.slice(0, 8) : [];
   const fecha = new Intl.DateTimeFormat('es-VE', { dateStyle: 'short', timeZone: 'America/Caracas' }).format(new Date());
   const tarjetas = [['Registros', filas.length], ...indicadores, ['Emitido', fecha]];
   const mensaje = ['ESCOLTAS | ' + titulo, ...tarjetas.map(([etiqueta, valor]) => etiqueta + ': ' + valor)].join('\n');
@@ -33,22 +36,69 @@ export default function ReporteModulo({ titulo, archivo, columnas, filas, indica
   };
 
   return (
-    <details className="rounded-xl border border-chrome-700 bg-chrome-800 px-4">
-      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-sm font-semibold text-chrome-100">
-        <Download className="h-4 w-4 text-brand-400" aria-hidden="true" /> Exportar reporte
-      </summary>
-      <div className="flex flex-wrap items-center gap-2 pb-3">
-        {[['pdf', 'PDF'], ['xlsx', 'Excel'], ['csv', 'CSV']].map(([formato, etiqueta]) => (
-          <Button key={formato} type="button" size="sm" variant="outline" disabled={deshabilitado || procesando || !filas.length} onClick={() => exportar(formato)}>
-            {etiqueta}
-          </Button>
-        ))}
-        {!deshabilitado && filas.length > 0 && (
-          <a className="inline-flex min-h-10 items-center rounded-lg border border-emerald-500/40 px-3 text-sm font-semibold text-emerald-300" href={'https://wa.me/?text=' + encodeURIComponent(mensaje)} target="_blank" rel="noopener noreferrer">
-            Preparar WhatsApp
-          </a>
+    <>
+      <Button type="button" size="sm" variant="outline" leftIcon={FileText} aria-haspopup="dialog" onClick={() => setAbierto(true)}>
+        Reporte
+      </Button>
+
+      <Modal
+        open={abierto}
+        onClose={() => setAbierto(false)}
+        title={titulo}
+        description="Vista previa del reporte del módulo"
+        size="lg"
+        footer={(
+          <div className="flex flex-wrap items-center gap-2">
+            <Button type="button" size="sm" variant="primary" disabled={!permiteExportar || procesando} onClick={() => exportar('pdf')}>
+              Descargar PDF
+            </Button>
+            {[['xlsx', 'Excel'], ['csv', 'CSV']].map(([formato, etiqueta]) => (
+              <Button key={formato} type="button" size="sm" variant="outline" disabled={!permiteExportar || procesando} onClick={() => exportar(formato)}>
+                {etiqueta}
+              </Button>
+            ))}
+            {permiteExportar && (
+              <a className="inline-flex min-h-10 items-center rounded-lg border border-emerald-500/40 px-3 text-sm font-semibold text-emerald-300" href={'https://wa.me/?text=' + encodeURIComponent(mensaje)} target="_blank" rel="noopener noreferrer">
+                Preparar WhatsApp
+              </a>
+            )}
+          </div>
         )}
-      </div>
-    </details>
+      >
+        {deshabilitado ? (
+          <p role="status" className="text-sm text-chrome-200">Cargando los datos del reporte…</p>
+        ) : !filas.length ? (
+          <p role="status" className="text-sm text-chrome-200">No hay registros para este reporte.</p>
+        ) : (
+          <div className="space-y-4">
+            <dl className="flex flex-wrap gap-2">
+              {tarjetas.map(([etiqueta, valor]) => (
+                <div key={etiqueta} className="min-w-24 rounded-lg border border-brand-500/20 bg-brand-950/40 px-3 py-2">
+                  <dt className="text-xs text-chrome-200">{etiqueta}</dt>
+                  <dd className="font-semibold text-brand-300">{valor}</dd>
+                </div>
+              ))}
+            </dl>
+            <div className="overflow-x-auto rounded-lg border border-chrome-700" tabIndex={0} role="region" aria-label="Tabla de vista previa">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-chrome-800 text-chrome-100">
+                  <tr>{columnas.map((columna) => <th key={columna} scope="col" className="px-3 py-2">{columna}</th>)}</tr>
+                </thead>
+                <tbody className="divide-y divide-chrome-700">
+                  {vistaPrevia.map((fila, indice) => (
+                    <tr key={indice}>
+                      {fila.map((valor, columna) => <td key={columna} className="break-words px-3 py-2">{valor ?? '—'}</td>)}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {filas.length > vistaPrevia.length && (
+              <p className="text-xs text-chrome-200">Se muestran {vistaPrevia.length} de {filas.length} registros. Las descargas incluyen todos los registros del reporte.</p>
+            )}
+          </div>
+        )}
+      </Modal>
+    </>
   );
 }
