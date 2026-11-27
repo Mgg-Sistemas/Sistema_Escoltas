@@ -1,3 +1,4 @@
+import MatrizRoles from "../components/MatrizRoles.jsx";
 import ReporteModulo from "../components/ReporteModulo.jsx";
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { VISTAS_TELEFONO } from '../lib/vistasTelefono.js';
@@ -91,14 +92,23 @@ export default function Usuarios() {
   const [roles, setRoles] = useState([]);
   const [matrices, setMatrices] = useState({});
   const [configTelefono, setConfigTelefono] = useState({});
-  const [rolActivo, setRolActivo] = useState('admin');
+  const [rolActivo, setRolActivo] = useState('');
   const [rolesPersonalizados, setRolesPersonalizados] = useState([]);
   const [asignacionPersonalizada, setAsignacionPersonalizada] = useState({ habilitado: false, roles: [] });
-  const [grupoPermisos, setGrupoPermisos] = useState(0);
   const [edicionRol, setEdicionRol] = useState(null);
   const opcionesRoles = [
     ...ROLES_ASIGNABLES.map((rol) => ({ value: rol, label: ROLES_LABELS[rol] || rol })),
     ...asignacionPersonalizada.roles.map(({ key, label }) => ({ value: key, label })),
+  ];
+  const catalogoRoles = [
+    ...opcionesRoles.map((rol) => ({
+      ...rol,
+      personalizado: !ROLES_ASIGNABLES.includes(rol.value),
+      descripcion: rolesPersonalizados.find(({ key }) => key === rol.value)?.descripcion
+        ?? roles.find(({ nombre }) => nombre === rol.value)?.descripcion,
+    })),
+    ...rolesPersonalizados.filter(({ key }) => !opcionesRoles.some(({ value }) => value === key))
+      .map(({ key, label, descripcion }) => ({ value: key, label, descripcion, pendiente: true, personalizado: true })),
   ];
   const rolPersonalizado = !ROLES_ASIGNABLES.includes(rolActivo);
   const permiteLectura = (modulo) => !rolPersonalizado || LECTURA_PERSONALIZADA.includes(modulo);
@@ -283,8 +293,8 @@ export default function Usuarios() {
       setRolesPersonalizados((prev) => [...prev, creado]);
       if (asignacionPersonalizada.habilitado) {
         setAsignacionPersonalizada((prev) => ({ ...prev, roles: [...prev.roles, creado] }));
-        setRolActivo(creado.key);
       }
+      setRolActivo(creado.key);
       setModalRol(false);
       setNuevoRol(FORM_ROL);
       toast.success('Rol registrado en el catálogo.');
@@ -548,130 +558,14 @@ export default function Usuarios() {
       </Modal>
 
       {vista === 'roles' && (
-        <Card bodyClassName="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-700/60 pb-4">
-            <div>
-              <h2 className="text-lg font-semibold text-slate-100">Matriz de Acceso por Módulo</h2>
-              <p className="text-xs text-slate-400">Lectura, escritura o control total sincronizado con RLS</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Select
-                value={rolActivo}
-                onChange={(e) => setRolActivo(e.target.value)}
-                aria-label="Rol que se está configurando"
-                options={opcionesRoles}
-              />
-              <Button variant="outline" leftIcon={Plus} onClick={() => setModalRol(true)}>Nuevo rol</Button>
-              <Button variant="primary" onClick={handleGuardarPermisos} disabled={guardandoPermisos}>
-                {guardandoPermisos ? 'Guardando...' : 'Guardar Cambios'}
-              </Button>
-            </div>
-          </div>
-
-          {!asignacionPersonalizada.habilitado && rolesPersonalizados.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="text-sm font-semibold">Roles personalizados registrados</h3>
-              <p className="text-sm text-slate-400">La asignación a cuentas requiere habilitar estos roles en la base de datos.</p>
-              <div className="flex flex-wrap gap-2">
-                {rolesPersonalizados.map((rol) => <Badge key={rol.key}>{rol.label}</Badge>)}
-              </div>
-            </div>
-          )}
-          <fieldset className="space-y-3 rounded-xl border border-slate-700 p-4">
-            <legend className="px-2 font-semibold">Pantallas de teléfono</legend>
-            <p className="text-sm text-slate-400">Cada pantalla asignada requiere acceso de lectura en su módulo.</p>
-            <div className="flex flex-wrap gap-x-5 gap-y-3">
-              {VISTAS_TELEFONO.filter(({ modulo }) => permiteLectura(modulo)).map(({ modulo, etiqueta }) => (
-                <label key={modulo} className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={telefonoRol.vistas_telefono.includes(modulo)}
-                    disabled={rolPersonalizado && !matrices[rolActivo]?.[modulo]?.lectura}
-                    onChange={(event) => actualizarTelefonoRol({
-                      vistas_telefono: event.target.checked
-                        ? [...telefonoRol.vistas_telefono, modulo]
-                        : telefonoRol.vistas_telefono.filter((vista) => vista !== modulo),
-                    })} />
-                  {etiqueta}
-                </label>
-              ))}
-            </div>
-            {rolPersonalizado && <p className="text-sm text-slate-400">Los roles personalizados pueden consultar Personal, Turnos, Asistencia y Permisos según el acceso concedido.</p>}
-            {rolActivo !== 'admin' && (
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={telefonoRol.solo_telefono}
-                  onChange={(event) => actualizarTelefonoRol({ solo_telefono: event.target.checked })} />
-                Solo teléfono
-              </label>
-            )}
-          </fieldset>
-
-          <div className="flex flex-wrap gap-2" aria-label="Grupos de permisos">
-            {GRUPOS_PERMISOS.map((grupo, indice) => {
-              const modulos = MODULOS_SISTEMA.filter(grupo.incluye);
-              const habilitados = modulos.filter(({ key }) => matrices[rolActivo]?.[key]?.lectura || matrices[rolActivo]?.[key]?.full);
-              return (
-                <Button key={grupo.etiqueta} variant={grupoPermisos === indice ? 'primary' : 'outline'} size="sm"
-                  aria-pressed={grupoPermisos === indice} onClick={() => setGrupoPermisos(indice)}>
-                  {grupo.etiqueta} · {rolActivo === 'admin' ? modulos.length : habilitados.length}/{modulos.length}
-                </Button>
-              );
-            })}
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-300">
-              <thead className="bg-slate-800/80 text-xs uppercase text-slate-400 border-b border-slate-700">
-                <tr>
-                  <th className="py-3 px-4">Módulo del Sistema</th>
-                  <th className="py-3 px-4 text-center">Lectura</th>
-                  <th className="py-3 px-4 text-center">Escritura</th>
-                  <th className="py-3 px-4 text-center">Control Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800">
-                {MODULOS_SISTEMA.filter(GRUPOS_PERMISOS[grupoPermisos].incluye).map((modulo) => {
-                  const perm = (matrices[rolActivo] ?? {})[modulo.key] ?? {};
-                  return (
-                    <tr key={modulo.key} className="hover:bg-slate-800/40">
-                      <td className="py-3 px-4">
-                        <div className="font-semibold text-slate-100">{modulo.label}</div>
-                        <div className="text-xs text-slate-400">{modulo.descripcion}</div>
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <input
-                          type="checkbox"
-                          className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-brand-600 focus:ring-brand-500"
-                          checked={perm.lectura || perm.full}
-                          disabled={rolActivo === 'admin' || !permiteLectura(modulo.key)}
-                          aria-label={modulo.label + ' · lectura'}
-                          onChange={() => handleTogglePermiso(modulo.key, 'lectura')}
-                        />
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <input
-                          type="checkbox"
-                          className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-brand-600 focus:ring-brand-500"
-                          checked={perm.escritura || perm.full}
-                          disabled={rolActivo === 'admin' || rolPersonalizado}
-                          aria-label={modulo.label + ' · escritura'}
-                          onChange={() => handleTogglePermiso(modulo.key, 'escritura')}
-                        />
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <input
-                          type="checkbox"
-                          className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-brand-600 focus:ring-brand-500"
-                          checked={perm.full || rolActivo === 'admin'}
-                          disabled={rolActivo === 'admin' || rolPersonalizado}
-                          aria-label={modulo.label + ' · full'}
-                          onChange={() => handleTogglePermiso(modulo.key, 'full')}
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+        <MatrizRoles
+          roles={catalogoRoles} seleccionado={rolActivo} onSeleccionar={setRolActivo}
+          onNuevo={() => setModalRol(true)} perfiles={perfiles} matrices={matrices}
+          telefono={telefonoRol} grupos={GRUPOS_PERMISOS} modulos={MODULOS_SISTEMA}
+          vistas={VISTAS_TELEFONO} cargando={cargando} guardando={guardandoPermisos}
+          permiteLectura={permiteLectura} onPermiso={handleTogglePermiso}
+          onTelefono={actualizarTelefonoRol} onGuardar={handleGuardarPermisos}
+        />
       )}
 
       {/* VISTA 3: USUARIOS AUTORIZADOS */}
