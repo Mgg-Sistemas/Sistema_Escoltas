@@ -43,6 +43,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import {
   actualizar,
   crear,
+  crearVarios,
   formatearFecha,
   formatearMoneda,
   formatearNumero,
@@ -291,30 +292,24 @@ export default function Nomina() {
       toast.warning('Selecciona al menos un integrante para agregar a la nómina.');
       return;
     }
-    const pid = periodoId || (periodos.find((p) => p.estado === 'abierto')?.id);
-    if (!pid) {
+    if (periodoActivo?.estado !== 'abierto') {
       toast.warning('No hay un periodo abierto seleccionado.');
       return;
     }
     try {
       setGuardando(true);
-      const ids = Array.from(seleccionadosMasivos);
-      for (const escoltaId of ids) {
-        const esc = escoltasPorId[escoltaId];
-        const base = Number(esc?.sueldo_base || 0);
-        await crear(TABLAS.detallesNomina, {
-          periodo_id: pid,
-          escolta_id: escoltaId,
-          sueldo_base: base,
-          bonos: 0,
-          descuentos: 0,
-          horas_extras: 0,
-          dias_trabajados: 15,
-          total: base,
-          estado: 'pendiente',
-        });
-      }
-      toast.success(`${ids.length} integrante(s) agregado(s) a la nómina exitosamente`);
+      const registros = Array.from(seleccionadosMasivos, (escoltaId) => ({
+        periodo_id: periodoActivo.id,
+        escolta_id: escoltaId,
+        sueldo_base: Number(escoltasPorId[escoltaId]?.sueldo_base || 0),
+        bonos: 0,
+        descuentos: 0,
+        horas_extras: 0,
+        dias_trabajados: 15,
+        estado: 'pendiente',
+      }));
+      await crearVarios(TABLAS.detallesNomina, registros);
+      toast.success(`${registros.length} integrante(s) agregado(s) a la nómina`);
       setModalMasivo(false);
       setSeleccionadosMasivos(new Set());
       await cargarDatos();
@@ -436,7 +431,6 @@ export default function Nomina() {
         descuentos: Number(formDetalle.descuentos) || 0,
         horas_extras: Number(formDetalle.horas_extras) || 0,
         dias_trabajados: Number(formDetalle.dias_trabajados) || 0,
-        total: totalNomina(formDetalle),
         estado: formDetalle.estado,
       };
 

@@ -95,6 +95,11 @@ export async function crear(tabla, valores) {
   return data;
 }
 
+export async function crearVarios(tabla, registros) {
+  const { error } = await supabase.from(tabla).insert(registros);
+  if (error) throw new Error(mensajeError(error));
+}
+
 export async function actualizar(tabla, id, cambios) {
   const { data, error } = await supabase.from(tabla).update(cambios).eq('id', id).select().single();
   if (error) throw new Error(mensajeError(error));
