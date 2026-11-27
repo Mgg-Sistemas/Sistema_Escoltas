@@ -36,8 +36,8 @@ import { api } from '../lib/api.js';
 import { MODULOS_SISTEMA, ROLES_LABELS } from '../lib/constants.js';
 import { listar, nombreCompleto, TABLAS } from '../lib/data.js';
 
-const ROLES_ASIGNABLES = ['admin'];
 const ROL_ADMINISTRACION = 'administracion';
+const ROLES_VISIBLES = ['admin', 'escolta', ROL_ADMINISTRACION];
 const MODULOS_OPERACION = ['dashboard', 'escoltas', 'distribucion', 'permisos', 'asistencias'];
 const MODULOS_GESTION = ['nomina', 'pagos', 'rrhh'];
 const GRUPOS_PERMISOS = [
@@ -94,35 +94,22 @@ export default function Usuarios() {
   const [rolesPersonalizados, setRolesPersonalizados] = useState([]);
   const [asignacionPersonalizada, setAsignacionPersonalizada] = useState({ habilitado: false, roles: [] });
   const [edicionRol, setEdicionRol] = useState(null);
-  const opcionesRoles = [
-    { value: 'admin', label: 'Administrador' },
-  ];
-  const catalogoRoles = useMemo(() => {
-    const mapa = new Map();
-    // Roles del sistema cargados de la base de datos o fallback a constantes
-    const base = roles.length > 0 ? roles : Object.keys(ROLES_LABELS).map((k) => ({ nombre: k, es_sistema: true }));
-    for (const r of base) {
-      const clave = r.nombre || r.key;
-      mapa.set(clave, {
-        value: clave,
-        label: ROLES_LABELS[clave] || r.label || clave,
-        descripcion: r.descripcion || '',
-        personalizado: r.es_sistema === false,
-      });
-    }
-    // Roles personalizados
-    for (const cr of rolesPersonalizados) {
-      if (!mapa.has(cr.key)) {
-        mapa.set(cr.key, {
-          value: cr.key,
-          label: cr.label || cr.key,
-          descripcion: cr.descripcion || '',
-          personalizado: true,
-        });
-      }
-    }
-    return Array.from(mapa.values());
-  }, [roles, rolesPersonalizados]);
+  const catalogoRoles = ROLES_VISIBLES.flatMap((clave) => {
+    const registro = roles.find(({ nombre }) => nombre === clave);
+    const personalizado = clave === ROL_ADMINISTRACION;
+    const ficha = rolesPersonalizados.find(({ key }) => key === clave);
+    const asignable = asignacionPersonalizada.roles.some(({ key }) => key === clave);
+    if (personalizado && !ficha && !asignable) return [];
+    return [{
+      value: clave,
+      label: personalizado ? 'Administración' : ROLES_LABELS[clave],
+      descripcion: ficha?.descripcion ?? registro?.descripcion ?? '',
+      personalizado,
+      pendiente: personalizado && !asignable,
+    }];
+  });
+  const opcionesRoles = catalogoRoles.filter(({ pendiente }) => !pendiente)
+    .map(({ value, label }) => ({ value, label }));
 
   const rolPersonalizado = Boolean(catalogoRoles.find(({ value }) => value === rolActivo)?.personalizado);
   const permiteLectura = () => true;
