@@ -3,10 +3,13 @@ import { supabase } from '../lib/supabase.js';
 import { audit } from '../lib/audit.js';
 import { ApiError, mapSupabaseError, noEncontrado } from '../lib/errors.js';
 import { asyncHandler, ok, creado, sinContenido } from '../lib/http.js';
+import { esquemaFichaPersonalCrear, esquemaFichaPersonalActualizar } from '../schemas.js';
+import { validate } from '../middleware/validate.js';
 import { requireRole } from '../middleware/auth.js';
 import { modulosStore } from '../lib/modulosStore.js';
 
 const router = Router();
+router.use(requireRole('admin', 'supervisor', 'contador', 'rrhh'));
 
 // =====================================================================
 // PERSONAL (FICHAS RRHH - ESCOLTAS Y SEGURIDAD)
@@ -96,6 +99,7 @@ router.get(
 router.post(
   '/personal',
   requireRole('admin', 'supervisor', 'contador'),
+  validate(esquemaFichaPersonalCrear),
   asyncHandler(async (req, res) => {
     const payload = { ...req.body };
     delete payload.id;
@@ -132,6 +136,7 @@ router.post(
 router.put(
   '/personal/:id',
   requireRole('admin', 'supervisor', 'contador'),
+  validate(esquemaFichaPersonalActualizar),
   asyncHandler(async (req, res) => {
     const payload = { ...req.body };
     delete payload.id;
@@ -171,7 +176,7 @@ router.post(
   requireRole('admin', 'contador'),
   asyncHandler(async (req, res) => {
     const { nuevo_sueldo, motivo, moneda = 'USD', fecha_efectiva } = req.body;
-    if (!nuevo_sueldo || Number(nuevo_sueldo) <= 0) {
+    if (!Number.isFinite(Number(nuevo_sueldo)) || Number(nuevo_sueldo) <= 0 || Number(nuevo_sueldo) > 1_000_000_000) {
       throw new ApiError(400, 'El nuevo sueldo debe ser mayor a 0.');
     }
     if (!motivo) {
@@ -324,11 +329,14 @@ router.post(
   requireRole('admin', 'contador'),
   asyncHandler(async (req, res) => {
     const { personal_id, tipo = 'anticipo', monto_total, cuotas = 1, motivo } = req.body;
-    if (!personal_id || !monto_total || Number(monto_total) <= 0) {
+    if (!personal_id || !Number.isFinite(Number(monto_total)) || Number(monto_total) <= 0 || Number(monto_total) > 1_000_000_000) {
       throw new ApiError(400, 'Personal y monto válido son obligatorios.');
     }
 
-    const nCuotas = Math.max(1, parseInt(cuotas, 10));
+    const nCuotas = Number(cuotas);
+    if (!Number.isInteger(nCuotas) || nCuotas < 1 || nCuotas > 120) {
+      throw new ApiError(400, 'El número de cuotas debe estar entre 1 y 120.');
+    }
     const montoCuota = Number((Number(monto_total) / nCuotas).toFixed(2));
 
     const nuevoAnticipo = {

@@ -246,9 +246,11 @@ export default function Escoltas() {
 
   const guardar = async () => {
     const nuevosErrores = {};
-    if (!formulario.nombres.trim()) nuevosErrores.nombres = 'Escribe los nombres.';
-    if (!formulario.apellidos.trim()) nuevosErrores.apellidos = 'Escribe los apellidos.';
-    if (!formulario.cedula.trim()) nuevosErrores.cedula = 'La cédula es obligatoria.';
+    const nombreValido = /^[\p{L}\p{M} ]*\p{L}[\p{L}\p{M} ]*$/u;
+    if (!nombreValido.test(formulario.nombres) || formulario.nombres.length > 120) nuevosErrores.nombres = 'Escribe hasta 120 letras y espacios.';
+    if (!nombreValido.test(formulario.apellidos) || formulario.apellidos.length > 120) nuevosErrores.apellidos = 'Escribe hasta 120 letras y espacios.';
+    if (!/^[0-9]{1,9}$/.test(formulario.cedula.trim())) nuevosErrores.cedula = 'Escribe hasta nueve dígitos.';
+
     if (!formulario.codigo.trim()) nuevosErrores.codigo = 'Asigna un código (ej. ESC-0147).';
 
     if (Object.keys(nuevosErrores).length) {

@@ -54,13 +54,35 @@ export const metodosPago = z.enum(['transferencia', 'efectivo', 'cheque']);
 
 /* ---------- escoltas ---------- */
 
+const nombrePersona = texto(120).regex(/^[\p{L}\p{M} ]*\p{L}[\p{L}\p{M} ]*$/u, 'Escribe solo letras y espacios.');
+const cedulaPersona = texto(9).regex(/^[0-9]{1,9}$/, 'Escribe hasta nueve dígitos.');
+const telefonoPersona = textoOpcional(20).refine((valor) => !valor || /^\+?[0-9() -]+$/.test(valor), 'Escribe un teléfono válido.');
+
+export const esquemaFichaPersonalCrear = z.object({
+  nombre: nombrePersona,
+  apellido: nombrePersona,
+  cedula: cedulaPersona,
+  ficha_nro: textoOpcional(50),
+  empresa: texto(20).optional(),
+  cargo: textoOpcional(120),
+  departamento: textoOpcional(120),
+  sueldo_base: z.union([z.number(), texto(14)]).transform(Number).pipe(monto).optional(),
+  moneda_sueldo: texto(10).optional(),
+  telefono: telefonoPersona,
+  correo: textoOpcional(255).refine((valor) => !valor || z.email().safeParse(valor).success, 'Escribe un correo válido.'),
+  rif: textoOpcional(20),
+  direccion: textoOpcional(255),
+  activo: z.boolean().optional(),
+});
+export const esquemaFichaPersonalActualizar = actualizacion(esquemaFichaPersonalCrear);
+
 export const esquemaEscoltaCrear = z.object({
   user_id: uuid.nullish(),
   codigo: texto(50),
-  nombres: texto(120),
-  apellidos: texto(120),
-  cedula: texto(40),
-  telefono: textoOpcional(40),
+  nombres: nombrePersona,
+  apellidos: nombrePersona,
+  cedula: cedulaPersona,
+  telefono: telefonoPersona,
   direccion: textoOpcional(255),
   fecha_ingreso: fecha.nullish(),
   grado_id: uuid.nullish(),
@@ -316,18 +338,18 @@ export const esquemaUsuarioCrear = z.object({
   usuario: texto(120),
   // Opcional: si no se envía, se genera un correo interno desde el usuario.
   correo: z.string().trim().email('Escribe un correo electrónico válido.').max(255).optional(),
-  nombre: texto(150),
-  apellido: textoOpcional(150),
-  telefono: textoOpcional(50),
+  nombre: nombrePersona,
+  apellido: z.union([nombrePersona, z.literal('')]).nullish(),
+  telefono: telefonoPersona,
   role: rolesSistema.default('escolta'),
-  escolta_id: uuid.optional(),
+  escolta_id: uuid.nullish(),
 });
 
 export const esquemaUsuarioActualizar = z.object({
   usuario: texto(120).optional(),
-  nombre: texto(150).optional(),
-  apellido: textoOpcional(150),
-  telefono: textoOpcional(50),
+  nombre: nombrePersona.optional(),
+  apellido: z.union([nombrePersona, z.literal('')]).nullish(),
+  telefono: telefonoPersona,
   role: rolesSistema.optional(),
   active: z.boolean().optional(),
   escolta_id: uuid.nullish(),

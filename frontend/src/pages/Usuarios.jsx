@@ -6,6 +6,7 @@ import {
   CheckCheck,
   KeyRound,
   LockKeyhole,
+  Plus,
   RotateCcw,
   Search,
   Shield,
@@ -32,8 +33,11 @@ import {
 import { useAuth } from '../context/AuthContext.jsx';
 import { useRealtimeRecarga } from '../hooks/useRealtime.js';
 import { api } from '../lib/api.js';
-import { MODULOS_SISTEMA, ROLES, ROLES_DESCRIPCION, ROLES_LABELS } from '../lib/constants.js';
+import { MODULOS_SISTEMA, ROLES_DESCRIPCION, ROLES_LABELS } from '../lib/constants.js';
 import { listar, nombreCompleto, TABLAS } from '../lib/data.js';
+
+const ROLES_ASIGNABLES = ['admin', 'supervisor', 'contador', 'escolta'];
+const FORM_ROL = { key: '', label: '', descripcion: '' };
 
 const FORMULARIO_VACIO = {
   usuario: '',
@@ -80,6 +84,10 @@ export default function Usuarios() {
   const [matrices, setMatrices] = useState({});
   const [configTelefono, setConfigTelefono] = useState({});
   const [rolActivo, setRolActivo] = useState('admin');
+  const [rolesPersonalizados, setRolesPersonalizados] = useState([]);
+  const [modalRol, setModalRol] = useState(false);
+  const [nuevoRol, setNuevoRol] = useState(FORM_ROL);
+  const [creandoRol, setCreandoRol] = useState(false);
   const telefonoRol = configTelefono[rolActivo] ?? { vistas_telefono: [], solo_telefono: false };
 
   const actualizarTelefonoRol = (cambios) => {
@@ -104,16 +112,18 @@ export default function Usuarios() {
   const cargar = useCallback(async () => {
     setCargando(true);
     try {
-      const [listaPerfiles, listaEscoltas, datosRoles, listaAut] = await Promise.all([
+      const [listaPerfiles, listaEscoltas, datosRoles, listaAut, catalogoPersonalizado] = await Promise.all([
         api.listarUsuarios(),
         listar(TABLAS.escoltas, { select: 'id,nombres,apellidos,cedula,codigo', ordenarPor: 'nombres', ascendente: true }).catch(() => []),
         api.obtenerRoles().catch(() => ({ roles: [], matriz: [] })),
         api.listarAutorizados().catch(() => []),
+        api.listarRolesPersonalizados().catch(() => []),
       ]);
 
       setPerfiles(listaPerfiles || []);
       setEscoltas(listaEscoltas || []);
       setAutorizados(listaAut || []);
+      setRolesPersonalizados((catalogoPersonalizado ?? []).filter((rol) => !rol.sistema));
 
       if (datosRoles?.matriz) {
         const porRol = Object.fromEntries(
@@ -243,6 +253,22 @@ export default function Usuarios() {
         },
       };
     });
+  };
+
+  const crearRol = async (evento) => {
+    evento.preventDefault();
+    setCreandoRol(true);
+    try {
+      const creado = await api.guardarRolPersonalizado(nuevoRol);
+      setRolesPersonalizados((prev) => [...prev, creado]);
+      setModalRol(false);
+      setNuevoRol(FORM_ROL);
+      toast.success('Rol registrado en el catálogo.');
+    } catch (error) {
+      toast.error(error.message || 'No fue posible crear el rol.');
+    } finally {
+      setCreandoRol(false);
+    }
   };
 
   const handleGuardarPermisos = async () => {
@@ -446,6 +472,20 @@ export default function Usuarios() {
       )}
 
       {/* VISTA 2: ROLES Y PERMISOS */}
+      <Modal open={modalRol} onClose={() => setModalRol(false)} title="Nuevo rol personalizado">
+        <form onSubmit={crearRol} className="space-y-4">
+          <Input label="Clave del rol" value={nuevoRol.key} conservarFormato maxLength={40} required
+            pattern="[a-z][a-z0-9_]{1,39}" onChange={(e) => setNuevoRol((prev) => ({
+              ...prev, key: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''),
+            }))} placeholder="jefe_operaciones" />
+          <Input label="Nombre del rol" value={nuevoRol.label} maxLength={120} required
+            onChange={(e) => setNuevoRol((prev) => ({ ...prev, label: e.target.value }))} />
+          <Input label="Descripción" value={nuevoRol.descripcion} maxLength={500}
+            onChange={(e) => setNuevoRol((prev) => ({ ...prev, descripcion: e.target.value }))} />
+          <Button type="submit" disabled={creandoRol}>{creandoRol ? 'Guardando…' : 'Crear rol'}</Button>
+        </form>
+      </Modal>
+
       {vista === 'roles' && (
         <Card bodyClassName="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-700/60 pb-4">
@@ -457,14 +497,24 @@ export default function Usuarios() {
               <Select
                 value={rolActivo}
                 onChange={(e) => setRolActivo(e.target.value)}
-                options={ROLES.map((r) => ({ value: r, label: ROLES_LABELS[r] || r }))}
+                options={ROLES_ASIGNABLES.map((r) => ({ value: r, label: ROLES_LABELS[r] || r }))}
               />
+              <Button variant="outline" leftIcon={Plus} onClick={() => setModalRol(true)}>Nuevo rol</Button>
               <Button variant="primary" onClick={handleGuardarPermisos} disabled={guardandoPermisos}>
                 {guardandoPermisos ? 'Guardando...' : 'Guardar Cambios'}
               </Button>
             </div>
           </div>
 
+          {rolesPersonalizados.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold">Roles personalizados registrados</h3>
+              <p className="text-sm text-slate-400">La asignación a cuentas requiere habilitar estos roles en la base de datos.</p>
+              <div className="flex flex-wrap gap-2">
+                {rolesPersonalizados.map((rol) => <Badge key={rol.key}>{rol.label}</Badge>)}
+              </div>
+            </div>
+          )}
           <fieldset className="space-y-3 rounded-xl border border-slate-700 p-4">
             <legend className="px-2 font-semibold">Pantallas de teléfono</legend>
             <p className="text-sm text-slate-400">Cada pantalla asignada requiere acceso de lectura en su módulo.</p>
@@ -628,7 +678,7 @@ export default function Usuarios() {
             label="Rol del Sistema"
             value={formulario.role}
             onChange={(e) => setFormulario({ ...formulario, role: e.target.value })}
-            options={ROLES.map((r) => ({ value: r, label: `${ROLES_LABELS[r] || r} — ${ROLES_DESCRIPCION[r] || ''}` }))}
+            options={ROLES_ASIGNABLES.map((r) => ({ value: r, label: `${ROLES_LABELS[r] || r} — ${ROLES_DESCRIPCION[r] || ''}` }))}
           />
 
           {formulario.role === 'escolta' && (

@@ -121,53 +121,32 @@ router.get(
   }),
 );
 
-/** Crear o actualizar rol personalizado */
+/** Registra un nuevo rol en el catálogo. */
 router.post(
   '/custom',
   asyncHandler(async (req, res) => {
-    const { key, label, descripcion, color } = req.body;
-    if (!key || !label) throw new ApiError(400, 'Clave y etiqueta son obligatorias.');
+    const { key, label, descripcion } = req.body ?? {};
+    const clave = typeof key === 'string' ? key.trim().toLowerCase() : '';
+    const etiqueta = typeof label === 'string' ? label.trim() : '';
+    const detalle = typeof descripcion === 'string' ? descripcion.trim() : '';
 
-    const claveLimpa = key.trim().toLowerCase().replace(/\s+/g, '_');
-    const rolObj = {
-      key: claveLimpa,
-      label: label.trim(),
-      descripcion: descripcion?.trim() || null,
-      color: color || '#cc4400',
-      sistema: false,
-      created_by: req.user.id,
-    };
+    if (!/^[a-z][a-z0-9_]{1,39}$/.test(clave) || !etiqueta || etiqueta.length > 120 || detalle.length > 500) {
+      throw new ApiError(400, 'Indica una clave de 2 a 40 caracteres y un nombre de hasta 120 caracteres.');
+    }
+    if (['admin', 'supervisor', 'contador', 'escolta', 'rrhh', 'chofer'].includes(clave)) {
+      throw new ApiError(409, 'Esa clave está reservada para un rol del sistema.');
+    }
 
     const { data, error } = await supabase
       .from('custom_roles')
-      .upsert(rolObj)
-      .select('*')
+      .insert({ key: clave, label: etiqueta, descripcion: detalle || null })
+      .select('key,label,descripcion')
       .single();
-
-    if (error) {
-      if (modulosStore.esErrorTablaInexistente(error)) {
-        const item = modulosStore.insertar('custom_roles', rolObj);
-        return ok(res, item);
-      }
-      throw mapSupabaseError(error, 'No fue posible guardar el rol personalizado.');
-    }
-
-    // Asegura registro en roles_permisos
-    await supabase
-      .from('roles_permisos')
-      .upsert({
-        role: claveLimpa,
-        permisos: {},
-        vistas_telefono: [],
-        solo_telefono: false,
-      })
-      .catch(() => {});
-
+    if (error) throw mapSupabaseError(error, 'No fue posible crear el rol.');
     return ok(res, data);
   }),
 );
 
-/** Eliminar rol personalizado no de sistema */
 router.delete(
   '/custom/:key',
   asyncHandler(async (req, res) => {
