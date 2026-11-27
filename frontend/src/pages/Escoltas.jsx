@@ -468,7 +468,7 @@ export default function Escoltas() {
               <span className="text-xs font-black uppercase text-slate-200">Personal Operativo</span>
             </div>
             <span className="text-xs font-mono font-bold text-slate-400">
-              {conteoPorCategoria.todos || escoltas.length} activos
+                {personal.filter((persona) => persona.estado === 'activo').length} activos
             </span>
           </div>
 
