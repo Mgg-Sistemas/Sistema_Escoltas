@@ -561,13 +561,13 @@ export default function Rrhh({ soloPersonal = false }) {
         <form onSubmit={handleGuardarPersonal} className="space-y-4 text-slate-200">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
-              label="Nombre"
+              label="Nombre" formato="nombre"
               required
               value={formPersonal.nombre}
               onChange={(e) => setFormPersonal({ ...formPersonal, nombre: e.target.value })}
             />
             <Input
-              label="Apellido"
+              label="Apellido" formato="nombre"
               required
               value={formPersonal.apellido}
               onChange={(e) => setFormPersonal({ ...formPersonal, apellido: e.target.value })}
@@ -576,14 +576,14 @@ export default function Rrhh({ soloPersonal = false }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
-              label="Cédula"
+              label="Cédula" formato="cedula"
               required
-              placeholder="V-12345678"
+              placeholder="12345678"
               value={formPersonal.cedula}
               onChange={(e) => setFormPersonal({ ...formPersonal, cedula: e.target.value })}
             />
             <Input
-              label="Nº Ficha (Código)"
+              label="Nº Ficha (Código)" maxLength={50}
               placeholder="001 o GT-01"
               value={formPersonal.ficha_nro}
               onChange={(e) => setFormPersonal({ ...formPersonal, ficha_nro: e.target.value })}
@@ -602,7 +602,7 @@ export default function Rrhh({ soloPersonal = false }) {
               ]}
             />
             <Input
-              label="Cargo"
+              label="Cargo" maxLength={120}
               value={formPersonal.cargo}
               onChange={(e) => setFormPersonal({ ...formPersonal, cargo: e.target.value })}
             />
@@ -615,10 +615,10 @@ export default function Rrhh({ soloPersonal = false }) {
               step="0.01"
               required
               value={formPersonal.sueldo_base}
-              onChange={(e) => setFormPersonal({ ...formPersonal, sueldo_base: Number(e.target.value) })}
+              onChange={(e) => setFormPersonal({ ...formPersonal, sueldo_base: e.target.value })}
             />
             <Input
-              label="Teléfono"
+              label="Teléfono" type="tel"
               placeholder="+58 412..."
               value={formPersonal.telefono}
               onChange={(e) => setFormPersonal({ ...formPersonal, telefono: e.target.value })}
@@ -663,7 +663,7 @@ export default function Rrhh({ soloPersonal = false }) {
             onChange={(e) => setFormSueldo({ ...formSueldo, nuevo_sueldo: e.target.value })}
           />
           <Input
-            label="Motivo del Ajuste"
+            label="Motivo del Ajuste" maxLength={500}
             required
             placeholder="Aumento por desempeño, reestructuración, etc."
             value={formSueldo.motivo}
@@ -720,14 +720,14 @@ export default function Rrhh({ soloPersonal = false }) {
             />
           </div>
           <Input
-            label="Número de Cuotas"
+            label="Número de Cuotas" max={120} step="1"
             type="number"
             min="1"
             value={formAnticipo.cuotas}
             onChange={(e) => setFormAnticipo({ ...formAnticipo, cuotas: e.target.value })}
           />
           <Input
-            label="Motivo / Observación"
+            label="Motivo / Observación" maxLength={500}
             value={formAnticipo.motivo}
             onChange={(e) => setFormAnticipo({ ...formAnticipo, motivo: e.target.value })}
           />

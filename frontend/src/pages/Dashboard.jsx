@@ -397,15 +397,6 @@ export default function Dashboard() {
           >
             Actualizar
           </Button>
-
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => navigate('/distribucion')}
-            leftIcon={CalendarRange}
-          >
-            Asignar Turno
-          </Button>
         </div>
       </div>
 
@@ -519,16 +510,6 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-
-            <Button
-              variant="primary"
-              fullWidth
-              leftIcon={CalendarRange}
-              className="mt-3"
-              onClick={() => navigate('/distribucion')}
-            >
-              Asignar Turno / Distribución
-            </Button>
           </div>
         </Card>
 

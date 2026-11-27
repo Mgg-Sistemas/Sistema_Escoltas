@@ -150,31 +150,48 @@ export function Field({ label, htmlFor, help, error, required = false, children,
   );
 }
 
-function convertirMayusculas(evento) {
+function normalizarEntrada(evento, transformar, maxLength) {
   if (evento.nativeEvent?.isComposing) return;
   const campo = evento.currentTarget;
   const { value, selectionStart, selectionEnd, selectionDirection } = campo;
-  const texto = value.toLocaleUpperCase('es');
+  const normalizar = (valor) => transformar(valor).slice(0, maxLength);
+  const texto = normalizar(value);
   if (texto === value) return;
   campo.value = texto;
   if (selectionStart !== null && selectionEnd !== null) {
     campo.setSelectionRange(
-      value.slice(0, selectionStart).toLocaleUpperCase('es').length,
-      value.slice(0, selectionEnd).toLocaleUpperCase('es').length,
+      normalizar(value.slice(0, selectionStart)).length,
+      normalizar(value.slice(0, selectionEnd)).length,
       selectionDirection,
     );
   }
 }
 
-export function Input({ label, help, error, required, className = '', containerClassName = '', id, type = 'text', autoComplete, conservarFormato = false, onChange, ...props }) {
+export function Input({ label, help, error, required, className = '', containerClassName = '', id, type = 'text', autoComplete, conservarFormato = false, formato, maxLength, max, min, inputMode, pattern, onChange, ...props }) {
   const usarMayusculas = !conservarFormato && ['text', 'search'].includes(type)
     && !autoComplete?.split(' ').some((token) => ['current-password', 'new-password', 'email'].includes(token));
+  const limite = maxLength ?? (formato === 'nombre' ? 120 : formato === 'cedula' ? 9
+    : type === 'tel' ? 20 : type === 'email' ? 255 : type === 'url' ? 500
+    : usarMayusculas || type === 'search' ? 255 : undefined);
+  const transformar = (valor) => {
+    if (formato === 'cedula') return valor.replace(/[^0-9]/g, '');
+    if (type === 'tel') return valor.replace(/[^0-9+() -]/g, '').replace(/(?!^)\+/g, '');
+    const texto = formato === 'nombre' ? valor.replace(/[^\p{L}\p{M} ]/gu, '') : valor;
+    return usarMayusculas ? texto.toLocaleUpperCase('es') : texto;
+  };
   const generado = useId();
   const inputId = id || generado;
   return (
     <Field label={label} htmlFor={inputId} help={help} error={error} required={required} className={containerClassName}>
       <input id={inputId} type={type} autoComplete={autoComplete}
-        onChange={usarMayusculas ? (evento) => { convertirMayusculas(evento); onChange?.(evento); } : onChange}
+        maxLength={limite} min={min ?? (type === 'number' ? 0 : undefined)}
+        max={max ?? (type === 'number' ? 1_000_000_000 : undefined)}
+        inputMode={inputMode ?? (formato === 'cedula' ? 'numeric' : undefined)}
+        pattern={pattern ?? (formato === 'nombre' ? '[\\p{L}\\p{M} ]*\\p{L}[\\p{L}\\p{M} ]*' : formato === 'cedula' ? '[0-9]{1,9}' : undefined)}
+        onChange={(evento) => {
+          if (formato || type === 'tel' || usarMayusculas) normalizarEntrada(evento, transformar, limite);
+          onChange?.(evento);
+        }}
         className={`${campoBase} ${error ? 'border-rose-500' : ''} ${className}`} aria-invalid={Boolean(error)} {...props} />
     </Field>
   );
@@ -197,13 +214,13 @@ export function Select({ label, help, error, required, options = [], children, c
   );
 }
 
-export function Textarea({ label, help, error, required, rows = 3, className = '', containerClassName = '', id, onChange, ...props }) {
+export function Textarea({ label, help, error, required, rows = 3, className = '', containerClassName = '', id, maxLength = 1000, onChange, ...props }) {
   const generado = useId();
   const textareaId = id || generado;
   return (
     <Field label={label} htmlFor={textareaId} help={help} error={error} required={required} className={containerClassName}>
-      <textarea id={textareaId} rows={rows}
-        onChange={(evento) => { convertirMayusculas(evento); onChange?.(evento); }}
+      <textarea id={textareaId} rows={rows} maxLength={maxLength}
+        onChange={(evento) => { normalizarEntrada(evento, (valor) => valor.toLocaleUpperCase('es'), maxLength); onChange?.(evento); }}
         className={`${campoBase} resize-y ${error ? 'border-rose-500' : ''} ${className}`} aria-invalid={Boolean(error)} {...props} />
     </Field>
   );

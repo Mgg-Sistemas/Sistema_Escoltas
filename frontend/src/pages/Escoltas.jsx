@@ -766,27 +766,27 @@ export default function Escoltas() {
           </div>
 
           <Input
-            label="Nombres" required value={formulario.nombres} error={errores.nombres}
+            label="Nombres" formato="nombre" required value={formulario.nombres} error={errores.nombres}
             onChange={(e) => cambiarCampo('nombres', e.target.value)} placeholder="Ej. Carlos Alberto"
           />
           <Input
-            label="Apellidos" required value={formulario.apellidos} error={errores.apellidos}
+            label="Apellidos" formato="nombre" required value={formulario.apellidos} error={errores.apellidos}
             onChange={(e) => cambiarCampo('apellidos', e.target.value)} placeholder="Ej. Méndez García"
           />
           <Input
-            label="Código Interno" required value={formulario.codigo} error={errores.codigo}
+            label="Código Interno" maxLength={50} required value={formulario.codigo} error={errores.codigo}
             onChange={(e) => cambiarCampo('codigo', e.target.value)} placeholder="Ej. ESC-0147"
           />
           <Input
-            label="Cédula de Identidad" required value={formulario.cedula} error={errores.cedula}
+            label="Cédula de Identidad" formato="cedula" required value={formulario.cedula} error={errores.cedula}
             onChange={(e) => cambiarCampo('cedula', e.target.value)} placeholder="Ej. V-20.458.763"
           />
           <Input
-            label="Cargo / Función Específica" value={formulario.cargo}
+            label="Cargo / Función Específica" maxLength={120} value={formulario.cargo}
             onChange={(e) => cambiarCampo('cargo', e.target.value)} placeholder="Ej. Escolta VIP / Presidencia"
           />
           <Input
-            label="Área / Sede Asignada" value={formulario.area}
+            label="Área / Sede Asignada" maxLength={120} value={formulario.area}
             onChange={(e) => cambiarCampo('area', e.target.value)} placeholder="Ej. Presidencia / Sede Principal"
           />
           <Input
@@ -794,7 +794,7 @@ export default function Escoltas() {
             onChange={(e) => cambiarCampo('telefono', e.target.value)} placeholder="Ej. 0414-1234567"
           />
           <Input
-            label="Turno Habitual" value={formulario.turno}
+            label="Turno Habitual" maxLength={80} value={formulario.turno}
             onChange={(e) => cambiarCampo('turno', e.target.value)} placeholder="Ej. Diurno (08:00 - 20:00)"
           />
           <Input
@@ -816,7 +816,7 @@ export default function Escoltas() {
             onChange={(e) => cambiarCampo('direccion', e.target.value)} placeholder="Ciudad, Urbanización o Sector"
           />
           <Textarea
-            label="Notas Internas y Acreditaciones" value={formulario.notas} containerClassName="sm:col-span-2"
+            label="Notas Internas y Acreditaciones" maxLength={600} value={formulario.notas} containerClassName="sm:col-span-2"
             onChange={(e) => cambiarCampo('notas', e.target.value)}
             placeholder="Cursos tácticos, manejo defensivo, porte de arma, etc."
           />

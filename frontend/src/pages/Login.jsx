@@ -152,7 +152,7 @@ export default function Login() {
 
             <form onSubmit={enviar} className="mt-6 space-y-5">
               <Input
-                label="Usuario"
+                label="Usuario" maxLength={120}
                 type="text"
                 autoComplete="username"
                 inputMode="text"

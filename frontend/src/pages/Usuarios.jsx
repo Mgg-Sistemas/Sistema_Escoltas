@@ -596,13 +596,13 @@ export default function Usuarios() {
         <form onSubmit={handleCrearUsuario} className="space-y-4 text-slate-200">
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Nombre"
+              label="Nombre" formato="nombre"
               required
               value={formulario.nombre}
               onChange={(e) => setFormulario({ ...formulario, nombre: e.target.value })}
             />
             <Input
-              label="Apellido"
+              label="Apellido" formato="nombre"
               required
               value={formulario.apellido}
               onChange={(e) => setFormulario({ ...formulario, apellido: e.target.value })}
@@ -611,14 +611,14 @@ export default function Usuarios() {
 
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Nombre de Usuario (Login)"
+              label="Nombre de Usuario (Login)" maxLength={120}
               required
               placeholder="ej. jleiva"
               value={formulario.usuario}
               onChange={(e) => setFormulario({ ...formulario, usuario: e.target.value.toLocaleUpperCase('es').replace(/[^A-Z0-9._-]/g, '') })}
             />
             <Input
-              label="Teléfono"
+              label="Teléfono" type="tel"
               value={formulario.telefono}
               onChange={(e) => setFormulario({ ...formulario, telefono: e.target.value })}
             />

@@ -844,7 +844,7 @@ export default function Nomina() {
       >
         <div className="space-y-4">
           <Input
-            label="Nombre del Periodo"
+            label="Nombre del Periodo" maxLength={150}
             placeholder="Ej. Quincena 01-15 Diciembre 2026"
             required
             value={formPeriodo.nombre}

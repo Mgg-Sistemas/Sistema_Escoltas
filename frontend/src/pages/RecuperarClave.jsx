@@ -69,7 +69,7 @@ export default function RecuperarClave() {
                 </div>
               )}
               <Input
-                label="Usuario"
+                label="Usuario" maxLength={120}
                 type="text"
                 autoComplete="username"
                 placeholder="ADMINISTRADOR"

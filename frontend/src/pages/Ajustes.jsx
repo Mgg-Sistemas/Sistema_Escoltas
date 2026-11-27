@@ -269,7 +269,7 @@ export default function Ajustes() {
                 placeholder="Golden Touch 1127 C.A. / Seguridad y Escoltas"
               />
               <Input
-                label="RIF Fiscal"
+                label="RIF Fiscal" maxLength={20}
                 disabled={!puedeGuardar('empresa_rif')}
                 value={valores.empresa_rif ?? ''}
                 onChange={(e) => handleChange('empresa_rif', e.target.value)}
