@@ -1,7 +1,7 @@
 import VistaPreviaPdf from "../components/VistaPreviaPdf.jsx";
 import ReporteModulo from "../components/ReporteModulo.jsx";
 import { useOutletContext } from 'react-router-dom';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRealtimeRecarga } from '../hooks/useRealtime.js';
 import {
   Banknote,
@@ -154,8 +154,11 @@ export default function Nomina() {
     return escoltas.filter((e) => (editandoDetalle ? e.id === editandoDetalle.escolta_id || !yaIncluidas.has(e.id) : !yaIncluidas.has(e.id)));
   }, [detallesDelPeriodo, escoltas, editandoDetalle]);
 
+  const continuarAlta = useRef(false);
+
   // Funciones Nómina
-  const abrirPeriodo = () => {
+  const abrirPeriodo = (desdeAlta = false) => {
+    continuarAlta.current = desdeAlta === true;
     setFormPeriodo(FORM_PERIODO);
     setErrores({});
     setModalPeriodo(true);
@@ -183,7 +186,10 @@ export default function Nomina() {
       });
       toast.success('Periodo creado exitosamente');
       setModalPeriodo(false);
+      setPeriodos((actuales) => actuales.some((periodo) => periodo.id === creado.id) ? actuales : [creado, ...actuales]);
       setPeriodoId(creado.id);
+      if (continuarAlta.current) mostrarNuevoDetalle();
+      continuarAlta.current = false;
       cargarDatos();
     } catch (e) {
       toast.error('No se pudo crear el periodo', e.message);
@@ -211,6 +217,18 @@ export default function Nomina() {
   };
 
   const abrirNuevoDetalle = () => {
+    const abierto = periodoActivo?.estado === 'abierto'
+      ? periodoActivo
+      : periodos.find((periodo) => periodo.estado === 'abierto');
+    if (!abierto) {
+      abrirPeriodo(true);
+      return;
+    }
+    setPeriodoId(abierto.id);
+    mostrarNuevoDetalle();
+  };
+
+  const mostrarNuevoDetalle = () => {
     setEditandoDetalle(null);
     setFormDetalle(FORM_DETALLE);
     setErrores({});
@@ -233,6 +251,10 @@ export default function Nomina() {
   };
 
   const guardarDetalle = async () => {
+    if (!editandoDetalle && periodoActivo?.estado !== 'abierto') {
+      toast.warning('Selecciona un periodo abierto para agregar personal.');
+      return;
+    }
     if (!formDetalle.escolta_id) {
       setErrores({ escolta_id: 'Selecciona un integrante.' });
       return;
@@ -409,7 +431,7 @@ export default function Nomina() {
                     variant="primary"
                     size="md"
                     leftIcon={Plus}
-                    disabled={!periodoActivo || periodoActivo.estado === 'cerrado'}
+                    disabled={cargando || guardando}
                     onClick={abrirNuevoDetalle}
                   >
                     Agregar Integrante
@@ -451,7 +473,7 @@ export default function Nomina() {
               </strong>
             </div>
             {puedeEditar && (
-              <Button size="sm" variant="primary" leftIcon={Plus} onClick={abrirNuevoDetalle} disabled={!periodoActivo || periodoActivo.estado === 'cerrado'}>
+              <Button size="sm" variant="primary" leftIcon={Plus} onClick={abrirNuevoDetalle} disabled={cargando || guardando}>
                 Agregar
               </Button>
             )}
@@ -830,6 +852,9 @@ export default function Nomina() {
             required
             value={formDetalle.escolta_id}
             error={errores.escolta_id}
+            help={!opcionesEscoltaDetalle.length
+              ? escoltas.length ? 'Todo el personal disponible ya está incluido en este periodo.' : 'No hay personal disponible. Revisa el módulo Personal.'
+              : undefined}
             onChange={(e) => setFormDetalle((d) => ({ ...d, escolta_id: e.target.value }))}
             containerClassName="sm:col-span-2"
           >
