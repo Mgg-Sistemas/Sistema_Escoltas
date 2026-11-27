@@ -7,7 +7,6 @@ import {
   CheckCheck,
   KeyRound,
   LockKeyhole,
-  Plus,
   RotateCcw,
   Search,
   Shield,
@@ -37,7 +36,8 @@ import { api } from '../lib/api.js';
 import { MODULOS_SISTEMA, ROLES_LABELS } from '../lib/constants.js';
 import { listar, nombreCompleto, TABLAS } from '../lib/data.js';
 
-const ROLES_ASIGNABLES = ['admin', 'supervisor', 'contador', 'escolta'];
+const ROLES_ASIGNABLES = ['admin', 'escolta'];
+const ROL_ADMINISTRACION = 'administracion';
 const MODULOS_OPERACION = ['dashboard', 'escoltas', 'distribucion', 'permisos', 'asistencias'];
 const MODULOS_GESTION = ['nomina', 'pagos', 'rrhh'];
 const LECTURA_PERSONALIZADA = ['escoltas', 'distribucion', 'asistencias', 'permisos'];
@@ -46,7 +46,6 @@ const GRUPOS_PERMISOS = [
   { etiqueta: 'Gestión', incluye: ({ key }) => MODULOS_GESTION.includes(key) },
   { etiqueta: 'Sistema', incluye: ({ key }) => !MODULOS_OPERACION.includes(key) && !MODULOS_GESTION.includes(key) },
 ];
-const FORM_ROL = { key: '', label: '', descripcion: '' };
 
 const FORMULARIO_VACIO = {
   usuario: '',
@@ -98,7 +97,8 @@ export default function Usuarios() {
   const [edicionRol, setEdicionRol] = useState(null);
   const opcionesRoles = [
     ...ROLES_ASIGNABLES.map((rol) => ({ value: rol, label: ROLES_LABELS[rol] || rol })),
-    ...asignacionPersonalizada.roles.map(({ key, label }) => ({ value: key, label })),
+    ...asignacionPersonalizada.roles.filter(({ key }) => key === ROL_ADMINISTRACION)
+      .map(({ key }) => ({ value: key, label: 'Administración' })),
   ];
   const catalogoRoles = [
     ...opcionesRoles.map((rol) => ({
@@ -107,15 +107,12 @@ export default function Usuarios() {
       descripcion: rolesPersonalizados.find(({ key }) => key === rol.value)?.descripcion
         ?? roles.find(({ nombre }) => nombre === rol.value)?.descripcion,
     })),
-    ...rolesPersonalizados.filter(({ key }) => !opcionesRoles.some(({ value }) => value === key))
-      .map(({ key, label, descripcion }) => ({ value: key, label, descripcion, pendiente: true, personalizado: true })),
+    ...rolesPersonalizados.filter(({ key }) => key === ROL_ADMINISTRACION && !opcionesRoles.some(({ value }) => value === key))
+      .map(({ key, descripcion }) => ({ value: key, label: 'Administración', descripcion, pendiente: true, personalizado: true })),
   ];
   const rolPersonalizado = !ROLES_ASIGNABLES.includes(rolActivo);
   const permiteLectura = (modulo) => !rolPersonalizado || LECTURA_PERSONALIZADA.includes(modulo);
-  const nombreRol = (clave) => opcionesRoles.find(({ value }) => value === clave)?.label || clave;
-  const [modalRol, setModalRol] = useState(false);
-  const [nuevoRol, setNuevoRol] = useState(FORM_ROL);
-  const [creandoRol, setCreandoRol] = useState(false);
+  const nombreRol = (clave) => catalogoRoles.find(({ value }) => value === clave)?.label || ROLES_LABELS[clave] || clave;
   const telefonoRol = configTelefono[rolActivo] ?? { vistas_telefono: [], solo_telefono: false };
 
   const actualizarTelefonoRol = (cambios) => {
@@ -285,26 +282,6 @@ export default function Usuarios() {
     });
   };
 
-  const crearRol = async (evento) => {
-    evento.preventDefault();
-    setCreandoRol(true);
-    try {
-      const creado = await api.guardarRolPersonalizado(nuevoRol);
-      setRolesPersonalizados((prev) => [...prev, creado]);
-      if (asignacionPersonalizada.habilitado) {
-        setAsignacionPersonalizada((prev) => ({ ...prev, roles: [...prev.roles, creado] }));
-      }
-      setRolActivo(creado.key);
-      setModalRol(false);
-      setNuevoRol(FORM_ROL);
-      toast.success('Rol registrado en el catálogo.');
-    } catch (error) {
-      toast.error(error.message || 'No fue posible crear el rol.');
-    } finally {
-      setCreandoRol(false);
-    }
-  };
-
   const cambiarRolUsuario = async (evento) => {
     evento.preventDefault();
     setGuardando(true);
@@ -417,7 +394,7 @@ export default function Usuarios() {
         return (
           <div className="flex flex-wrap items-center gap-2">
             {fila.id !== usuarioActual?.id && (
-              <Button size="sm" variant="outline" onClick={() => setEdicionRol({ id: fila.id, role: fila.role, escoltaId: '' })}>
+              <Button size="sm" variant="outline" onClick={() => setEdicionRol({ id: fila.id, role: opcionesRoles.some(({ value }) => value === fila.role) ? fila.role : '', escoltaId: '' })}>
                 Cambiar rol
               </Button>
             )}
@@ -531,36 +508,22 @@ export default function Usuarios() {
       <Modal open={Boolean(edicionRol)} onClose={() => setEdicionRol(null)} title="Cambiar rol del usuario">
         {edicionRol && (
           <form className="space-y-4" onSubmit={cambiarRolUsuario}>
-            <Select label="Rol del usuario" value={edicionRol.role} options={opcionesRoles}
+            <Select label="Rol del usuario" value={edicionRol.role} options={[{ value: "", label: "Selecciona un rol" }, ...opcionesRoles]}
               onChange={(e) => setEdicionRol((prev) => ({ ...prev, role: e.target.value }))} />
             {edicionRol.role === 'escolta' && (
               <Select label="Vincular ficha de escolta" value={edicionRol.escoltaId}
                 options={[{ value: '', label: 'Conservar vínculo actual' }, ...escoltas.map((fila) => ({ value: fila.id, label: nombreCompleto(fila) }))]}
                 onChange={(e) => setEdicionRol((prev) => ({ ...prev, escoltaId: e.target.value }))} />
             )}
-            <Button type="submit" disabled={guardando}>Guardar rol</Button>
+            <Button type="submit" disabled={guardando || !edicionRol.role}>Guardar rol</Button>
           </form>
         )}
-      </Modal>
-
-      <Modal open={modalRol} onClose={() => setModalRol(false)} title="Nuevo rol personalizado">
-        <form onSubmit={crearRol} className="space-y-4">
-          <Input label="Clave del rol" value={nuevoRol.key} conservarFormato maxLength={40} required
-            pattern="[a-z][a-z0-9_]{1,39}" onChange={(e) => setNuevoRol((prev) => ({
-              ...prev, key: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''),
-            }))} placeholder="jefe_operaciones" />
-          <Input label="Nombre del rol" value={nuevoRol.label} maxLength={120} required
-            onChange={(e) => setNuevoRol((prev) => ({ ...prev, label: e.target.value }))} />
-          <Input label="Descripción" value={nuevoRol.descripcion} maxLength={500}
-            onChange={(e) => setNuevoRol((prev) => ({ ...prev, descripcion: e.target.value }))} />
-          <Button type="submit" disabled={creandoRol}>{creandoRol ? 'Guardando…' : 'Crear rol'}</Button>
-        </form>
       </Modal>
 
       {vista === 'roles' && (
         <MatrizRoles
           roles={catalogoRoles} seleccionado={rolActivo} onSeleccionar={setRolActivo}
-          onNuevo={() => setModalRol(true)} perfiles={perfiles} matrices={matrices}
+          perfiles={perfiles} matrices={matrices}
           telefono={telefonoRol} grupos={GRUPOS_PERMISOS} modulos={MODULOS_SISTEMA}
           vistas={VISTAS_TELEFONO} cargando={cargando} guardando={guardandoPermisos}
           permiteLectura={permiteLectura} onPermiso={handleTogglePermiso}
