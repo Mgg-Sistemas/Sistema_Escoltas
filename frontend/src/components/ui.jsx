@@ -340,33 +340,8 @@ export function ConfirmDialog({
   );
 }
 
-export function HelpTip({ title, children }) {
-  const [abierto, setAbierto] = useState(false);
-  return (
-    <span className="relative inline-flex align-middle" onMouseLeave={() => setAbierto(false)}>
-      <button
-        type="button"
-        aria-label={`Ayuda: ${title}`}
-        aria-expanded={abierto}
-        onMouseEnter={() => setAbierto(true)}
-        onFocus={() => setAbierto(true)}
-        onBlur={() => setAbierto(false)}
-        onClick={() => setAbierto((valor) => !valor)}
-        className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-800 hover:text-brand-400"
-      >
-        <HelpCircle className="h-4 w-4" aria-hidden="true" />
-      </button>
-      {abierto && (
-        <span
-          role="tooltip"
-          className="absolute left-1/2 top-full z-40 w-64 -translate-x-1/2 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-left text-xs leading-relaxed text-slate-100 shadow-panel"
-        >
-          <strong className="mb-1 block text-sm text-brand-400">{title}</strong>
-          {children}
-        </span>
-      )}
-    </span>
-  );
+export function HelpTip() {
+  return null;
 }
 
 export function EmptyState({ title, description, actionLabel, onAction, icon: Icon = Inbox, secondary }) {

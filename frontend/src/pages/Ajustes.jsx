@@ -120,9 +120,6 @@ export default function Ajustes() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-100">Ajustes y Configuración</h1>
-          <p className="mt-1 text-sm text-slate-400">
-            Control de apariencia, tema visual y datos de la empresa estilo Golden Touch.
-          </p>
         </div>
 
         <Button variant="primary" leftIcon={Save} onClick={handleGuardar} disabled={cargando || guardando || !cambios.length}>

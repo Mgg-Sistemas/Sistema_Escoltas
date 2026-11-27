@@ -101,9 +101,6 @@ export default function Auditoria() {
               </p>
             </div>
           </div>
-          <p className="mt-2 text-sm text-slate-400 max-w-2xl">
-            Registro cronológico inmutable de operaciones, modificaciones y accesos en las tablas del sistema.
-          </p>
         </div>
 
         <Button size="md" variant="outline" leftIcon={RefreshCw} onClick={cargar} loading={cargando}>

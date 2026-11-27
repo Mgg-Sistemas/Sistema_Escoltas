@@ -185,9 +185,6 @@ export default function RolesPermisos() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-100">Matriz de Roles y Permisos</h1>
-          <p className="mt-1 text-sm text-slate-400">
-            Estructura heredada de Golden Touch (GT): lectura, escritura o control total por módulo, vistas móviles y roles personalizados.
-          </p>
         </div>
 
         <div className="flex items-center gap-2">

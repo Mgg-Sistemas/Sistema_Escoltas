@@ -269,11 +269,6 @@ export default function Permisos() {
         <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Permisos</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">
-              {puedeRevisar
-                ? 'Revisa las solicitudes, aprueba o rechaza con una nota clara y deja constancia del comprobante.'
-                : 'Solicita tus permisos, revisa el estado de tus peticiones y consulta las decisiones del supervisor.'}
-            </p>
           </div>
           {puedeSolicitar && (
             <Button size="lg" leftIcon={Plus} onClick={abrirSolicitud} className="self-start">

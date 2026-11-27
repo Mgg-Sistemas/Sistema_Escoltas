@@ -161,7 +161,6 @@ export default function MatrizRoles({
           ) : (
             <fieldset className="space-y-4 rounded-xl border border-slate-700 p-4">
               <legend className="px-2 font-semibold">Pantallas de teléfono</legend>
-              <p className="text-sm">Cada pantalla requiere permiso de lectura en su módulo.</p>
               <div className="flex flex-wrap gap-x-6 gap-y-3">
                 {vistas.map(({ modulo, etiqueta }) => {
                   const niveles = normalizarNiveles(permisos[modulo]);

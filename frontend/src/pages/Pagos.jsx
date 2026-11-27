@@ -192,10 +192,6 @@ export default function Pagos() {
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Pagos</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">
-            Registra cada desembolso, guarda la referencia del comprobante y confirma o anula el pago
-            cuando corresponda.
-          </p>
         </div>
         <Button size="lg" leftIcon={Plus} onClick={abrirNuevo} className="self-start">Registrar pago</Button>
       </header>

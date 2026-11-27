@@ -277,10 +277,6 @@ export default function Distribucion() {
         <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Distribución</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">
-              Asigna escoltas a clientes, define el turno y el periodo de cobertura. La vista semanal
-              te ayuda a detectar solapes o fechas sin cubrir.
-            </p>
           </div>
           <Button size="lg" leftIcon={Plus} onClick={abrirNuevo} className="self-start">
             Nueva asignación

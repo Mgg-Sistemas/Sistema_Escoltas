@@ -289,10 +289,6 @@ export default function Asistencias() {
         <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Asistencias</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">
-              Registra la entrada y salida diaria. El sistema calcula las horas automáticamente y las
-              deja listas para el cálculo de nómina.
-            </p>
           </div>
           <Button size="lg" leftIcon={Plus} onClick={abrirNuevo} className="self-start">
             Registrar asistencia

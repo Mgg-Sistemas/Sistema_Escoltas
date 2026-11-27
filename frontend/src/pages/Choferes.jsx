@@ -214,9 +214,6 @@ export default function Choferes() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-100">Choferes y Flota Vehicular</h1>
-          <p className="mt-1 text-sm text-slate-400">
-            Control de expedientes de conductores, órdenes de ruta VJ, viáticos, recibos de viaje RV y flota estilo GT.
-          </p>
         </div>
 
         {pestanaActiva === 'conductores' && (

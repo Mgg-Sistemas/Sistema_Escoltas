@@ -436,9 +436,6 @@ export default function Escoltas() {
               </p>
             </div>
           </div>
-          <p className="mt-2 text-sm text-slate-400 max-w-2xl">
-            Expediente digital, emisión de carnet institucional con QR escaneable y código de barras y ficha oficial en PDF.
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-center">

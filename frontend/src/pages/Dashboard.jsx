@@ -381,9 +381,6 @@ export default function Dashboard() {
               SEGURIDAD Y VIGILANCIA
             </span>
           </div>
-          <p className="mt-1 text-sm text-slate-400">
-            Control de Personal, Servicios de Vigilancia, Turnos, Nómina y Descansos en tiempo real.
-          </p>
         </div>
 
         <div className="flex items-center gap-2.5">

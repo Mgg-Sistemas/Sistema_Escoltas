@@ -457,9 +457,6 @@ export default function Nomina() {
               </p>
             </div>
           </div>
-          <p className="mt-2 text-sm text-slate-400 max-w-2xl">
-            Gestión completa de periodos de nómina, cálculo de asignaciones y deducciones, confirmación de transferencias y emisión de recibos oficiales.
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-center">

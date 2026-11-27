@@ -471,9 +471,6 @@ export default function Usuarios() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-100">Usuarios y Seguridad</h1>
-          <p className="mt-1 text-sm text-slate-400">
-            Control de cuentas de acceso, roles granulares y matriz de permisos por módulo estilo Golden Touch.
-          </p>
         </div>
 
         {vista === 'usuarios' && (
