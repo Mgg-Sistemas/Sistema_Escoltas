@@ -1,3 +1,4 @@
+import { useOutletContext } from 'react-router-dom';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRealtimeRecarga } from '../hooks/useRealtime.js';
 import {
@@ -75,6 +76,7 @@ const FORM_VACIO = {
 };
 
 export default function Escoltas() {
+  const telefono = useOutletContext()?.telefono === true;
   const { role, user } = useAuth();
   const toast = useToast();
   const puedeEditar = ['admin', 'supervisor'].includes(role);
@@ -341,7 +343,7 @@ export default function Escoltas() {
 
     try {
       setGuardando(true);
-      const res = await apiFetch('/api/escoltas/vaciar-papelera', { method: 'POST' });
+      const res = await apiFetch('/escoltas/vaciar-papelera', { method: 'POST' });
       const { purgados = 0, protegidos = 0 } = res?.data || res || {};
 
       setModalPapelera(false);
@@ -460,7 +462,7 @@ export default function Escoltas() {
       </header>
 
       {/* Vista resumida de acción rápida para teléfonos */}
-      <div className="block md:hidden space-y-3">
+      <div className={telefono ? 'space-y-3' : 'space-y-3 md:hidden'}>
         <div className="rounded-2xl border border-slate-800 bg-[#161a22] p-4 shadow-md space-y-3">
           <div className="flex items-center justify-between border-b border-slate-800 pb-2">
             <div className="flex items-center gap-2">
@@ -468,7 +470,7 @@ export default function Escoltas() {
               <span className="text-xs font-black uppercase text-slate-200">Personal Operativo</span>
             </div>
             <span className="text-xs font-mono font-bold text-slate-400">
-                {personal.filter((persona) => persona.estado === 'activo').length} activos
+              {personal.filter((persona) => persona.estado === 'activo').length} activos
             </span>
           </div>
 
@@ -504,7 +506,7 @@ export default function Escoltas() {
       </div>
 
       {/* Contenedor completo: visible en desktop (md:block) o bajo demanda en móvil */}
-      <div className={mostrarDirectorioMobile ? 'space-y-6 block' : 'space-y-6 hidden md:block'}>
+      <div className={mostrarDirectorioMobile ? 'space-y-6 block' : (telefono ? 'hidden' : 'hidden md:block') + ' space-y-6'}>
         {/* Pestañas de Selección de Categoría (Escoltas / Seguridad / Choferes) */}
       <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl border border-slate-800 bg-[#0e1217]">
         {CATEGORIAS_PERSONAL.map((cat) => {

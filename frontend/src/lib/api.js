@@ -58,9 +58,11 @@ export async function apiFetch(ruta, { method = 'GET', body, senal } = {}) {
   const intentos = reintentable ? 3 : 1;
   let respuesta;
 
+  const rutaNormalizada = ruta.startsWith('/api/') ? ruta.slice(4) : ruta.startsWith('/api') ? ruta.slice(4) : ruta;
+
   for (let intento = 0; intento < intentos; intento += 1) {
     try {
-      respuesta = await fetch(`${API_URL}/api${ruta}`, {
+      respuesta = await fetch(`${API_URL}/api${rutaNormalizada.startsWith('/') ? rutaNormalizada : `/${rutaNormalizada}`}`, {
         method,
         headers,
         body: body !== undefined ? JSON.stringify(body) : undefined,

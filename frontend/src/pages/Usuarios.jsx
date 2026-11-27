@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { VISTAS_TELEFONO } from '../lib/vistasTelefono.js';
 import { useSearchParams } from 'react-router-dom';
 import {
   CheckCheck,
@@ -76,7 +77,13 @@ export default function Usuarios() {
   // Roles y Permisos (Estilo GT)
   const [roles, setRoles] = useState([]);
   const [matrices, setMatrices] = useState({});
+  const [configTelefono, setConfigTelefono] = useState({});
   const [rolActivo, setRolActivo] = useState('admin');
+  const telefonoRol = configTelefono[rolActivo] ?? { vistas_telefono: [], solo_telefono: false };
+
+  const actualizarTelefonoRol = (cambios) => {
+    setConfigTelefono((prev) => ({ ...prev, [rolActivo]: { ...telefonoRol, ...cambios } }));
+  };
   const [guardandoPermisos, setGuardandoPermisos] = useState(false);
 
   // Usuarios Autorizados
@@ -112,6 +119,10 @@ export default function Usuarios() {
           datosRoles.matriz.map((fila) => [fila.role, fila.permisos ?? {}]),
         );
         setMatrices(porRol);
+        setConfigTelefono(Object.fromEntries(datosRoles.matriz.map((fila) => [
+          fila.role,
+          { vistas_telefono: fila.vistas_telefono ?? [], solo_telefono: fila.solo_telefono === true },
+        ])));
       }
       if (datosRoles?.roles) {
         setRoles(datosRoles.roles);
@@ -239,6 +250,7 @@ export default function Usuarios() {
       await api.guardarPermisosRol({
         role: rolActivo,
         permisos: matrices[rolActivo] ?? {},
+        ...telefonoRol,
       });
       toast.success(`Matriz de permisos de "${ROLES_LABELS[rolActivo] || rolActivo}" guardada.`);
     } catch (error) {
@@ -283,7 +295,7 @@ export default function Usuarios() {
               <span className="text-[10px] bg-brand-500/20 text-brand-400 font-bold px-1.5 py-0.2 rounded">TÚ</span>
             )}
           </div>
-          <div className="text-xs text-slate-400 font-mono">@{fila.usuario || fila.username || 'usuario'} · {fila.email}</div>
+          <div className="text-xs text-slate-400 font-mono">@{fila.usuario || fila.username || 'usuario'}</div>
         </div>
       ),
     },
@@ -408,11 +420,14 @@ export default function Usuarios() {
 
       {/* VISTA 1: USUARIOS */}
       {vista === 'usuarios' && (
-        <Card className="space-y-4">
-          <div className="flex items-center gap-2 max-w-md">
-            <Search className="h-4 w-4 text-slate-400" />
+        <Card bodyClassName="space-y-5">
+          <div className="relative w-full sm:max-w-lg">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
             <Input
-              placeholder="Buscar por nombre, usuario, correo o rol..."
+              type="search"
+              aria-label="Buscar usuarios"
+              className="pl-10"
+              placeholder="Buscar por nombre, usuario o correo"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
             />
@@ -446,6 +461,31 @@ export default function Usuarios() {
               </Button>
             </div>
           </div>
+
+          <fieldset className="space-y-3 rounded-xl border border-slate-700 p-4">
+            <legend className="px-2 font-semibold">Pantallas de teléfono</legend>
+            <p className="text-sm text-slate-400">Cada pantalla asignada requiere acceso de lectura en su módulo.</p>
+            <div className="flex flex-wrap gap-x-5 gap-y-3">
+              {VISTAS_TELEFONO.map(({ modulo, etiqueta }) => (
+                <label key={modulo} className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={telefonoRol.vistas_telefono.includes(modulo)}
+                    onChange={(event) => actualizarTelefonoRol({
+                      vistas_telefono: event.target.checked
+                        ? [...telefonoRol.vistas_telefono, modulo]
+                        : telefonoRol.vistas_telefono.filter((vista) => vista !== modulo),
+                    })} />
+                  {etiqueta}
+                </label>
+              ))}
+            </div>
+            {rolActivo !== 'admin' && (
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={telefonoRol.solo_telefono}
+                  onChange={(event) => actualizarTelefonoRol({ solo_telefono: event.target.checked })} />
+                Solo teléfono
+              </label>
+            )}
+          </fieldset>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-slate-300">
