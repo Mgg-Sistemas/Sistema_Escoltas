@@ -8,7 +8,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
  * activa `hayActualizacion` para mostrar el banner global.
  */
 
-const INTERVALO_POLL_MS = 25_000; // Consulta cada 25 segundos
+const INTERVALO_POLL_MS = 10_000; // Consulta cada 10 segundos para detección rápida
 
 export function useVersionCheck() {
   const versionHorneada = (import.meta.env.VITE_APP_VERSION ?? '').trim();
