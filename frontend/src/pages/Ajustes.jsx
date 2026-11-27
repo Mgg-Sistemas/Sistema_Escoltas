@@ -26,7 +26,7 @@ const PALETAS = [
 ];
 
 export default function Ajustes() {
-  const { user } = useAuth();
+  const { user, role, roleLabel } = useAuth();
   const toast = useToast();
   const [ajustes, setAjustes] = useState([]);
   const [valores, setValores] = useState({});
@@ -50,12 +50,6 @@ export default function Ajustes() {
       const mapeo = Object.fromEntries(
         lista.map((a) => [a.clave, a.valor ?? ''])
       );
-      if (!mapeo.empresa_nombre) mapeo.empresa_nombre = 'Golden Touch 1127 C.A. / Seguridad y Escoltas';
-      if (!mapeo.empresa_rif) mapeo.empresa_rif = 'J-50123456-7';
-      if (!mapeo.tasa_dolar_referencia) mapeo.tasa_dolar_referencia = '60.00';
-      if (!mapeo.dias_descanso_semanal) mapeo.dias_descanso_semanal = '2';
-      if (!mapeo.tema_interfaz) mapeo.tema_interfaz = 'oscuro';
-      if (!mapeo.notificaciones_sonido) mapeo.notificaciones_sonido = 'true';
       setValores(mapeo);
 
       if (tasas.status === 'fulfilled' && tasas.value) {
@@ -78,14 +72,24 @@ export default function Ajustes() {
     setValores((prev) => ({ ...prev, [clave]: valor }));
   };
 
+  const ajustesEditables = useMemo(
+    () => new Set(ajustes.filter(({ editable }) => editable === true).map(({ clave }) => clave)),
+    [ajustes],
+  );
+  const puedeGuardar = (clave) => role === 'admin' && ajustesEditables.has(clave);
+  const cambios = ajustes.filter(({ clave, valor }) =>
+    puedeGuardar(clave) && String(valores[clave] ?? '') !== String(valor ?? ''),
+  ).map(({ clave }) => ({ clave, valor: String(valores[clave] ?? '') }));
+
   const handleGuardar = async () => {
+    if (!cambios.length || guardando) return;
     setGuardando(true);
     try {
-      const listaCambios = Object.entries(valores).map(([clave, valor]) => ({
-        clave,
-        valor: valor != null ? String(valor) : '',
-      }));
-      await api.guardarAjustes(listaCambios);
+      await api.guardarAjustes(cambios);
+      const guardados = new Map(cambios.map(({ clave, valor }) => [clave, valor]));
+      setAjustes((prev) => prev.map((ajuste) =>
+        guardados.has(ajuste.clave) ? { ...ajuste, valor: guardados.get(ajuste.clave) } : ajuste,
+      ));
       localStorage.setItem('escoltas_tema_paleta', paletaSeleccionada);
       document.documentElement.setAttribute('data-paleta', paletaSeleccionada);
       toast.success('Configuración y preferencias de tema guardadas.');
@@ -100,12 +104,15 @@ export default function Ajustes() {
     setPaletaSeleccionada(id);
     localStorage.setItem('escoltas_tema_paleta', id);
     document.documentElement.setAttribute('data-paleta', id);
-    handleChange('tema_paleta', id);
+    if (puedeGuardar('tema_paleta')) handleChange('tema_paleta', id);
     toast.success(`Paleta "${PALETAS.find((p) => p.id === id)?.label}" aplicada en tiempo real.`);
   };
 
   return (
     <div className="space-y-6">
+      {!cargando && role === "admin" && ['tema_interfaz', 'notificaciones_sonido', 'tasa_dolar_referencia', 'dias_descanso_semanal', 'empresa_nombre', 'empresa_rif'].some((clave) => !ajustesEditables.has(clave)) && (
+        <p className="text-sm text-slate-400">Los campos deshabilitados aún requieren configuración en el sistema.</p>
+      )}
       <ReporteModulo titulo="Configuración del sistema" archivo="configuracion" columnas={["Ajuste","Categoría","Editable"]}
         filas={ajustes.filter((r) => r.publico === true).map((r) => [r.clave, r.categoria, r.editable ? 'Sí' : 'No'])} deshabilitado={cargando} />
       {/* Encabezado */}
@@ -117,7 +124,7 @@ export default function Ajustes() {
           </p>
         </div>
 
-        <Button variant="primary" leftIcon={Save} onClick={handleGuardar} disabled={guardando}>
+        <Button variant="primary" leftIcon={Save} onClick={handleGuardar} disabled={cargando || guardando || !cambios.length}>
           {guardando ? 'Guardando...' : 'Guardar Ajustes'}
         </Button>
       </div>
@@ -172,6 +179,7 @@ export default function Ajustes() {
             <div className="border-t border-slate-700/60 pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Select
                 label="Tema por Defecto de Sesión"
+                disabled={!puedeGuardar('tema_interfaz')}
                 value={valores.tema_interfaz ?? 'oscuro'}
                 onChange={(e) => handleChange('tema_interfaz', e.target.value)}
                 options={[
@@ -181,6 +189,7 @@ export default function Ajustes() {
               />
               <Select
                 label="Notificaciones y Sonidos"
+                disabled={!puedeGuardar('notificaciones_sonido')}
                 value={valores.notificaciones_sonido ?? 'true'}
                 onChange={(e) => handleChange('notificaciones_sonido', e.target.value)}
                 options={[
@@ -208,12 +217,14 @@ export default function Ajustes() {
                 label="Tasa de Referencia Oficial BCV (USD / Bs)"
                 type="number"
                 step="0.01"
+                disabled={!puedeGuardar('tasa_dolar_referencia')}
                 value={valores.tasa_dolar_referencia ?? ''}
                 onChange={(e) => handleChange('tasa_dolar_referencia', e.target.value)}
               />
               <Input
                 label="Días de Descanso Reglamentarios por Ciclo"
                 type="number"
+                disabled={!puedeGuardar('dias_descanso_semanal')}
                 value={valores.dias_descanso_semanal ?? ''}
                 onChange={(e) => handleChange('dias_descanso_semanal', e.target.value)}
               />
@@ -239,6 +250,7 @@ export default function Ajustes() {
                     </p>
                     <button
                       type="button"
+                      disabled={!puedeGuardar('tasa_dolar_referencia')}
                       onClick={() => {
                         handleChange('tasa_dolar_referencia', String(tasasEnVivo.bcv_usd));
                         toast.success('Tasa BCV aplicada a los parámetros operacionales.');
@@ -286,12 +298,14 @@ export default function Ajustes() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 label="Razón Social / Nombre"
+                disabled={!puedeGuardar('empresa_nombre')}
                 value={valores.empresa_nombre ?? ''}
                 onChange={(e) => handleChange('empresa_nombre', e.target.value)}
                 placeholder="Golden Touch 1127 C.A. / Seguridad y Escoltas"
               />
               <Input
                 label="RIF Fiscal"
+                disabled={!puedeGuardar('empresa_rif')}
                 value={valores.empresa_rif ?? ''}
                 onChange={(e) => handleChange('empresa_rif', e.target.value)}
                 placeholder="J-50123456-7"
@@ -325,7 +339,7 @@ export default function Ajustes() {
               <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-700/60">
                 <span className="text-xs text-slate-400">Rol Activo</span>
                 <div className="mt-1">
-                  <Badge tone="naranja">{user?.role?.toUpperCase() || 'ADMIN'}</Badge>
+                  <Badge tone="naranja">{roleLabel}</Badge>
                 </div>
               </div>
             </div>
