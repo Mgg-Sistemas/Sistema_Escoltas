@@ -82,7 +82,7 @@ app.get('/api/public/verificar-carnet/:id', async (req, res) => {
 
     let q = sbAdmin
       .from('escoltas')
-      .select('id, codigo, nombres, apellidos, estado, fecha_ingreso, notas');
+      .select('id, codigo, nombres, apellidos, estado, fecha_ingreso, created_at, notas');
 
     if (id.includes('-') && id.length > 20) {
       q = q.eq('id', id);
@@ -95,13 +95,14 @@ app.get('/api/public/verificar-carnet/:id', async (req, res) => {
       return res.status(404).json({ error: 'Credencial no encontrada o no válida' });
     }
 
-    // Cálculo dinámico de vigencia real (1 año desde fecha_ingreso o último periodo)
-    const fechaBase = data.fecha_ingreso ? new Date(data.fecha_ingreso) : new Date(data.created_at || Date.now());
-    const fechaVence = new Date(fechaBase);
-    fechaVence.setFullYear(fechaVence.getFullYear() + 2); // Acreditación bienal reglamentaria
-    const vigenciaReal = `${String(fechaVence.getDate()).padStart(2, '0')} / ${String(fechaVence.getMonth() + 1).padStart(2, '0')} / ${fechaVence.getFullYear()}`;
-
-    const esVigente = data.estado === 'activo' && new Date() <= fechaVence;
+    const personalizada = String(data.notas ?? '').match(/\[VIGENCIA:(\d{4}-\d{2}-\d{2})\]/)?.[1];
+    const fechaBase = String(data.fecha_ingreso || data.created_at || '').slice(0, 10);
+    const fechaVence = fechaBase ? new Date(fechaBase + 'T00:00:00Z') : null;
+    if (fechaVence) fechaVence.setUTCFullYear(fechaVence.getUTCFullYear() + 2);
+    const vence = personalizada || (fechaVence?.toISOString().slice(0, 10) ?? '');
+    const hoy = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Caracas' }).format(new Date());
+    const vigenciaReal = vence ? vence.split('-').reverse().join(' / ') : null;
+    const esVigente = data.estado === 'activo' && Boolean(vence) && hoy <= vence;
 
     // Solo devolver datos mínimos institucionales (sin cédula completa, sin foto, sin teléfono, sin dirección)
     return res.json({

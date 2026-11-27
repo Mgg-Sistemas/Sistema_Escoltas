@@ -1,3 +1,4 @@
+import VistaPreviaPdf from "../components/VistaPreviaPdf.jsx";
 import ReporteModulo from "../components/ReporteModulo.jsx";
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -68,6 +69,7 @@ export default function Rrhh({ soloPersonal = false }) {
   const [personal, setPersonal] = useState([]);
   const [anticipos, setAnticipos] = useState([]);
   const [exportandoAnticipos, setExportandoAnticipos] = useState(false);
+  const [documentoPdf, setDocumentoPdf] = useState(null);
   const [tabulador, setTabulador] = useState([]);
   const [cargando, setCargando] = useState(true);
 
@@ -151,7 +153,7 @@ export default function Rrhh({ soloPersonal = false }) {
     }
   };
 
-  const descargarAnticipos = async (registros, individual = false) => {
+  const prepararPdfAnticipos = async (registros, individual = false) => {
     setExportandoAnticipos(true);
     try {
       const { construirAnticiposPdf } = await import('../lib/anticiposPdf.js');
@@ -160,12 +162,18 @@ export default function Rrhh({ soloPersonal = false }) {
         ...registro,
         personal: registro.personal ?? porId.get(registro.personal_id),
       }));
-      const pdf = await construirAnticiposPdf(datos, { individual });
-      pdf.save(individual ? 'escoltas-ficha-anticipo-prestamo.pdf' : 'escoltas-anticipos-prestamos.pdf');
-    } catch (error) {
-      toast.error(error.message || 'No se pudo preparar el PDF.');
+      return await construirAnticiposPdf(datos, { individual });
     } finally {
       setExportandoAnticipos(false);
+    }
+  };
+
+  const verFichaAnticipo = async (registro) => {
+    try {
+      const pdf = await prepararPdfAnticipos([registro], true);
+      setDocumentoPdf({ pdf, archivo: 'escoltas-ficha-anticipo-prestamo.pdf' });
+    } catch (error) {
+      toast.error(error.message || 'No se pudo preparar el PDF.');
     }
   };
 
@@ -289,6 +297,7 @@ export default function Rrhh({ soloPersonal = false }) {
 
   return (
     <div className="space-y-6">
+      <VistaPreviaPdf documento={documentoPdf} onClose={() => setDocumentoPdf(null)} />
       {soloPersonal ? (
         <ReporteModulo titulo="Fichas administrativas" archivo="fichas-administrativas"
           columnas={['Ficha', 'Nombre', 'Cargo', 'Estado']}
@@ -301,7 +310,7 @@ export default function Rrhh({ soloPersonal = false }) {
             return [[persona?.nombre, persona?.apellido].filter(Boolean).join(' '), r.tipo, r.moneda ?? 'USD',
               Number(r.monto_total), Number(r.cuotas), r.saldo_pendiente == null ? null : Number(r.saldo_pendiente), r.estado];
           })}
-          pdfPersonalizado={() => descargarAnticipos(anticipos)} deshabilitado={cargando} />
+          pdfPersonalizado={() => prepararPdfAnticipos(anticipos)} deshabilitado={cargando} />
       ) : (
         <ReporteModulo titulo="Recursos humanos" archivo="rrhh"
           columnas={['Ficha', 'Nombre', 'Estado']}
@@ -449,7 +458,7 @@ export default function Rrhh({ soloPersonal = false }) {
                       </td>
                       <td className="py-3 px-4">
                         <Button type="button" size="sm" variant="outline" leftIcon={Download}
-                          disabled={exportandoAnticipos} onClick={() => descargarAnticipos([ant], true)}>
+                          disabled={exportandoAnticipos} onClick={() => verFichaAnticipo(ant)}>
                           Ficha PDF
                         </Button>
                       </td>

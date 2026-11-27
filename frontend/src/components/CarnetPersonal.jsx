@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import QRCode from 'qrcode';
 import {
   Building,
-  Calendar,
   CheckCircle2,
   FileText,
   IdCard,
@@ -11,12 +11,18 @@ import {
   ShieldCheck,
   User,
 } from 'lucide-react';
-import { Button } from './ui.jsx';
+import { Button, useToast } from './ui.jsx';
+import VistaPreviaPdf from './VistaPreviaPdf.jsx';
+import { useFotoPersonal } from '../lib/fotosPersonal.js';
 import { formatearFecha, nombreCompleto } from '../lib/data.js';
 
 export default function CarnetPersonal({ escolta, grado = 'Escolta Operativo', alCerrar }) {
   const [lado, setLado] = useState('frente'); // 'frente' | 'reverso'
   const carnetRef = useRef(null);
+  const foto = useFotoPersonal(escolta?.foto_url);
+  const toast = useToast();
+  const [documentoPdf, setDocumentoPdf] = useState(null);
+  const [preparandoPdf, setPreparandoPdf] = useState(false);
 
   if (!escolta) return null;
 
@@ -29,8 +35,11 @@ export default function CarnetPersonal({ escolta, grado = 'Escolta Operativo', a
     : 'C.I. V-20.458.763';
   const cargo = grado || escolta.cargo || 'Escolta Operativo';
   const area = escolta.area || 'Presidencia';
-  const turno = escolta.turno || 'Diurno';
-  const vigencia = '31 / 12 / 2027';
+  const baseVigencia = String(escolta.fecha_ingreso || escolta.created_at || '').slice(0, 10);
+  const vencimientoBase = baseVigencia ? new Date(baseVigencia + 'T00:00:00Z') : null;
+  if (vencimientoBase) vencimientoBase.setUTCFullYear(vencimientoBase.getUTCFullYear() + 2);
+  const vigenciaIso = escolta.vigencia_carnet || vencimientoBase?.toISOString().slice(0, 10);
+  const vigencia = vigenciaIso ? vigenciaIso.split('-').reverse().join(' / ') : 'No indicada';
 
   // Generación local 100% segura en Data URL sin enviar datos a APIs externas
   const [qrDataUrl, setQrDataUrl] = useState('');
@@ -40,7 +49,7 @@ export default function CarnetPersonal({ escolta, grado = 'Escolta Operativo', a
     const urlVerificacion = `https://sistemaescoltas.com/verificar?id=${encodeURIComponent(escolta.id || codigo)}&v=1`;
     QRCode.toDataURL(urlVerificacion, {
       width: 260,
-      margin: 1,
+      margin: 4,
       color: {
         dark: '#000000',
         light: '#ffffff',
@@ -50,152 +59,64 @@ export default function CarnetPersonal({ escolta, grado = 'Escolta Operativo', a
       .catch((err) => console.error('Error generando QR local:', err));
   }, [escolta.id, codigo]);
 
-  // Dimensiones CR-80 estándar a 300 DPI: 85.6mm x 54mm (vertical: 54mm x 85.6mm / 638px x 1011px)
-  const imprimirCarnetOFicha = (modo = 'ficha') => {
-    const ventana = window.open('', '_blank');
-    if (!ventana) return;
-
-    if (modo === 'carnet') {
-      const contenidoCarnet = `
-        <!DOCTYPE html>
-        <html lang="es">
-        <head>
-          <meta charset="utf-8">
-          <title>Carnet CR-80 (300 DPI) - ${nombre}</title>
-          <style>
-            @page {
-              size: 54mm 85.6mm;
-              margin: 0;
-            }
-            * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            body {
-              margin: 0;
-              padding: 0;
-              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-              background: #000;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-            }
-            .card-page {
-              width: 54mm;
-              height: 85.6mm;
-              position: relative;
-              overflow: hidden;
-              page-break-after: always;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="card-page">
-            ${carnetRef.current ? carnetRef.current.innerHTML : ''}
-          </div>
-          <script>
-            window.onload = function() { window.print(); }
-          </script>
-        </body>
-        </html>
-      `;
-      ventana.document.write(contenidoCarnet);
-      ventana.document.close();
-      return;
+  const abrirPdf = async (modo) => {
+    if (preparandoPdf) return;
+    setPreparandoPdf(true);
+    try {
+      if (modo === 'carnet') {
+        const [{ jsPDF }, { default: capturar }] = await Promise.all([import('jspdf'), import('html2canvas')]);
+        const pdf = new jsPDF({ unit: 'mm', format: [54, 85.6], orientation: 'portrait' });
+        for (const cara of ['frente', 'reverso']) {
+          flushSync(() => setLado(cara));
+          const tarjeta = carnetRef.current;
+          if (!tarjeta) throw Error('El carnet no está disponible.');
+          await Promise.all([...tarjeta.querySelectorAll('img')].map((img) => img.decode().catch(() => {})));
+          const imagen = await capturar(tarjeta, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: cara === 'frente' ? '#0d0f12' : '#ffffff',
+            onclone: (doc, elemento) => {
+              doc.documentElement.dataset.tema = 'oscuro';
+              elemento.style.boxShadow = 'none';
+            },
+          });
+          if (cara === 'reverso') pdf.addPage([54, 85.6], 'portrait');
+          pdf.addImage(imagen, 'PNG', 0, 0, 54, 85.6);
+        }
+        setDocumentoPdf({ pdf, archivo: 'carnet-' + codigo + '.pdf' });
+      } else {
+        const { generarPdf } = await import('../lib/reportes.js');
+        const pdf = await generarPdf({
+          titulo: 'Ficha oficial de personal',
+          columnas: ['Campo', 'Detalle'],
+          filas: [
+            ['Nombre', nombre], ['Cédula', cedula], ['Código', codigo],
+            ['Teléfono', escolta.telefono], ['Dirección', escolta.direccion], ['Cargo', cargo],
+            ['Área', area], ['Fecha de ingreso', formatearFecha(escolta.fecha_ingreso)], ['Vigencia del carnet', vigencia],
+          ],
+          tarjetas: [['Código', codigo], ['Estado', escolta.estado || 'Sin dato'], ['Vigencia', vigencia]],
+          firmas: ['Firma del titular', 'Recursos Humanos / Operaciones'],
+        });
+        setDocumentoPdf({ pdf, archivo: 'ficha-' + codigo + '.pdf' });
+      }
+    } catch {
+      toast.error('No se pudo preparar el PDF. Intenta nuevamente.');
+    } finally {
+      setLado(lado);
+      setPreparandoPdf(false);
     }
-
-    const contenido = `
-      <!DOCTYPE html>
-      <html lang="es">
-      <head>
-        <meta charset="utf-8">
-        <title>Ficha de Personal - ${nombre}</title>
-        <style>
-          @page { size: letter; margin: 15mm; }
-          * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #111; margin: 0; padding: 20px; }
-          .header { border-bottom: 2px solid #ff8a00; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-          .header h1 { margin: 0; color: #1c1f24; font-size: 22px; }
-          .header p { margin: 2px 0 0; color: #ff8a00; font-weight: bold; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
-          .badge-status { background: #e6f9f0; color: #16a34a; border: 1px solid #bbf7d0; padding: 4px 10px; border-radius: 99px; font-weight: bold; font-size: 12px; }
-          .section { margin-bottom: 24px; }
-          .section-title { font-size: 14px; font-weight: bold; text-transform: uppercase; color: #475569; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; margin-bottom: 12px; }
-          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px; }
-          .field { background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 8px; }
-          * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-          .field:nth-child(3n+1) { background: #fff1e8; }
-          .field:nth-child(3n+2) { background: #ecfdf3; }
-          .field:nth-child(3n) { background: #fff8db; }
-          .field-label { font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase; }
-          .field-val { font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 2px; }
-          .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 60px; text-align: center; }
-          .sign-line { border-top: 1px solid #334155; padding-top: 6px; font-size: 12px; font-weight: bold; color: #334155; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div>
-            <h1>ESCOLTAS · SEGURIDAD Y VIGILANCIA</h1>
-            <p>Expediente y Ficha Oficial del Personal</p>
-          </div>
-          <div>
-            <span class="badge-status">ESTADO: ACTIVO / VERIFICADO</span>
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="section-title">1. Identificación y Datos Personales</div>
-          <div class="grid">
-            <div class="field"><div class="field-label">Nombre Completo</div><div class="field-val">${nombre}</div></div>
-            <div class="field"><div class="field-label">Cédula de Identidad</div><div class="field-val">${cedula}</div></div>
-            <div class="field"><div class="field-label">Código de Personal</div><div class="field-val">${codigo}</div></div>
-            <div class="field"><div class="field-label">Teléfono de Contacto</div><div class="field-val">${escolta.telefono || 'No registrado'}</div></div>
-            <div class="field" style="grid-column: span 2;"><div class="field-label">Dirección de Residencia</div><div class="field-val">${escolta.direccion || 'No registrada'}</div></div>
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="section-title">2. Asignación Operativa y Cargo</div>
-          <div class="grid">
-            <div class="field"><div class="field-label">Cargo / Función</div><div class="field-val">${cargo}</div></div>
-            <div class="field"><div class="field-label">Área / Sede Asignada</div><div class="field-val">${area}</div></div>
-            <div class="field"><div class="field-label">Turno Habitual</div><div class="field-val">${turno}</div></div>
-            <div class="field"><div class="field-label">Fecha de Ingreso</div><div class="field-val">${formatearFecha(escolta.fecha_ingreso)}</div></div>
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="section-title">3. Validez y Normativa de Seguridad</div>
-          <p style="font-size: 12px; color: #475569; line-height: 1.6;">
-            El presente documento certifica que el titular se encuentra debidamente registrado, acreditado y en cumplimiento
-            con los protocolos operacionales y de custodia establecidos por la organización.
-          </p>
-        </div>
-
-        <div class="signatures">
-          <div>
-            <div class="sign-line">Firma del Escolta / Titular<br><span style="font-size: 10px; font-weight: normal; color: #64748b;">${cedula}</span></div>
-          </div>
-          <div>
-            <div class="sign-line">Recursos Humanos / Operaciones<br><span style="font-size: 10px; font-weight: normal; color: #64748b;">Sello y Firma Autorizada</span></div>
-          </div>
-        </div>
-
-        <script>
-          window.onload = function() { window.print(); }
-        </script>
-      </body>
-      </html>
-    `;
-    ventana.document.write(contenido);
-    ventana.document.close();
   };
 
   return (
     <div className="space-y-6">
+      <VistaPreviaPdf documento={documentoPdf} onClose={() => setDocumentoPdf(null)} />
       {/* Botones de acción superiores y selector Frente / Reverso */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#333944] pb-4">
         <div className="flex items-center gap-2">
           <Button
             size="sm"
             variant={lado === 'frente' ? 'primary' : 'outline'}
+            disabled={preparandoPdf}
             onClick={() => setLado('frente')}
           >
             Frente del Carnet
@@ -203,6 +124,7 @@ export default function CarnetPersonal({ escolta, grado = 'Escolta Operativo', a
           <Button
             size="sm"
             variant={lado === 'reverso' ? 'primary' : 'outline'}
+            disabled={preparandoPdf}
             onClick={() => setLado('reverso')}
           >
             Reverso del Carnet
@@ -214,16 +136,18 @@ export default function CarnetPersonal({ escolta, grado = 'Escolta Operativo', a
             size="sm"
             variant="outline"
             leftIcon={Printer}
-            onClick={() => imprimirCarnetOFicha('carnet')}
+            onClick={() => abrirPdf('carnet')}
+            disabled={preparandoPdf || !qrDataUrl}
             title="Imprimir o Exportar en formato estándar CR-80 a 300 DPI (85.6 x 54 mm)"
           >
-            Imprimir Carnet (CR-80 · 300 DPI)
+            Ver carnet PDF (CR-80)
           </Button>
           <Button
             size="sm"
             variant="primary"
             leftIcon={FileText}
-            onClick={() => imprimirCarnetOFicha('ficha')}
+            onClick={() => abrirPdf('ficha')}
+            disabled={preparandoPdf}
           >
             Ficha Oficial en PDF
           </Button>
@@ -328,9 +252,9 @@ export default function CarnetPersonal({ escolta, grado = 'Escolta Operativo', a
                 <div className="relative">
                   <div className="h-[148px] w-[124px] rounded-2xl p-[2px] bg-gradient-to-b from-[#ff8a00] via-[#ffa733] to-[#d97706] shadow-xl">
                     <div className="h-full w-full overflow-hidden rounded-[14px] bg-[#1c222b] flex items-center justify-center">
-                      {escolta.foto_url ? (
+                      {foto ? (
                         <img
-                          src={escolta.foto_url}
+                          src={foto}
                           alt={nombre}
                           className="h-full w-full object-cover"
                         />
@@ -344,7 +268,7 @@ export default function CarnetPersonal({ escolta, grado = 'Escolta Operativo', a
                   </div>
                 </div>
 
-                {/* QR Code con logo institucional al centro + ID Badge (Generado Localmente) */}
+                {/* Código QR y código de personal */}
                 <div className="flex flex-col items-center justify-center gap-2">
                   <div className="relative h-[116px] w-[116px] rounded-2xl border-2 border-[#ff8a00] bg-white p-1.5 shadow-xl flex items-center justify-center">
                     {qrDataUrl ? (
@@ -358,12 +282,6 @@ export default function CarnetPersonal({ escolta, grado = 'Escolta Operativo', a
                         Generando...
                       </div>
                     )}
-                    {/* Escudo mini al centro del QR */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="h-6 w-6 rounded-md bg-[#ff8a00] p-0.5 shadow flex items-center justify-center">
-                        <Shield className="h-4 w-4 text-black fill-black" />
-                      </div>
-                    </div>
                   </div>
 
                   {/* ID Tag naranja con código */}
@@ -397,7 +315,8 @@ export default function CarnetPersonal({ escolta, grado = 'Escolta Operativo', a
             </div>
           ) : (
             /* LADO REVERSO (Fiel a la referencia oficial) */
-            <div className="relative flex h-full w-full flex-col justify-between overflow-hidden p-3.5 bg-white text-slate-900">
+            <div className="relative flex h-full w-full flex-col justify-between overflow-hidden p-3.5 text-slate-900"
+              style={{ backgroundColor: "#ffffff", "--surface": "#ffffff", "--text": "#25282b", "--text-muted": "#404040" }}>
               {/* Textura de rejilla sutil al fondo */}
               <div
                 className="absolute inset-0 pointer-events-none opacity-10"
@@ -504,24 +423,8 @@ export default function CarnetPersonal({ escolta, grado = 'Escolta Operativo', a
                         <span className="h-1.5 w-1.5 rounded-full bg-[#ff8a00]" />
                         <span className="text-[10px] font-bold text-slate-600">Área / Asignación:</span>
                       </div>
-                      <strong className="block text-[13px] font-black text-slate-950 leading-tight truncate">
+                      <strong className="block text-[13px] font-black text-slate-950 leading-tight break-words">
                         {area}
-                      </strong>
-                    </div>
-                  </div>
-
-                  {/* Turno */}
-                  <div className="flex items-start gap-2.5">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border-2 border-slate-900 bg-white shadow-sm">
-                      <Calendar className="h-4 w-4 text-slate-900" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1">
-                        <span className="h-1.5 w-1.5 rounded-full bg-[#ff8a00]" />
-                        <span className="text-[10px] font-bold text-slate-600">Turno:</span>
-                      </div>
-                      <strong className="block text-[13px] font-black text-slate-950 leading-tight">
-                        {turno}
                       </strong>
                     </div>
                   </div>

@@ -3,7 +3,7 @@ const FONDOS = ['#FFF1E8', '#ECFDF3', '#FFF8DB'];
 const fecha = () => new Intl.DateTimeFormat('es-VE', { dateStyle: 'short', timeZone: 'America/Caracas' }).format(new Date());
 const textoPdf = (valor) => String(valor ?? '').replace(/[^\x20-\xFF]/g, ' ');
 
-export async function generarPdf({ titulo, columnas, filas, tarjetas }) {
+export async function generarPdf({ titulo, columnas, filas, tarjetas, firmas = [] }) {
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([import('jspdf'), import('jspdf-autotable')]);
   const pdf = new jsPDF({ unit: 'pt', format: 'letter', orientation: columnas.length > 6 ? 'landscape' : 'portrait' });
   const ancho = pdf.internal.pageSize.getWidth();
@@ -49,6 +49,24 @@ export async function generarPdf({ titulo, columnas, filas, tarjetas }) {
     headStyles: { fillColor: '#25282B', textColor: '#FFFFFF' },
     alternateRowStyles: { fillColor: '#F2F2F2' },
   });
+
+  if (firmas.length) {
+    let y = pdf.lastAutoTable.finalY + 42;
+    if (y > alto - 85) {
+      pdf.addPage();
+      y = 96;
+    }
+    const anchoFirma = (disponible - (firmas.length - 1) * 20) / firmas.length;
+    pdf.setDrawColor('#A6A6A6');
+    pdf.setTextColor('#404040');
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(9);
+    firmas.forEach((firma, indice) => {
+      const x = margen + indice * (anchoFirma + 20);
+      pdf.line(x, y, x + anchoFirma, y);
+      pdf.text(textoPdf(firma), x + anchoFirma / 2, y + 14, { align: 'center' });
+    });
+  }
 
   const paginas = pdf.getNumberOfPages();
   for (let i = 1; i <= paginas; i++) {

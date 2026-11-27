@@ -1,12 +1,11 @@
 import ReporteModulo from "../components/ReporteModulo.jsx";
-import { Link, useOutletContext } from 'react-router-dom';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRealtimeRecarga } from '../hooks/useRealtime.js';
 import {
   ArchiveRestore,
   BadgeCheck,
   Building,
-  Camera,
   Car,
   CheckCircle2,
   Download,
@@ -72,9 +71,21 @@ const FORM_VACIO = {
   cargo: 'Escolta VIP / Custodia',
   area: 'Presidencia / Seguridad Operativa',
   turno: 'Diurno (08:00 - 20:00)',
+  vigencia_carnet: '',
   notas: '',
   foto_url: '',
 };
+
+function AvatarPersonal({ ficha }) {
+  const foto = useFotoPersonal(ficha.foto_url);
+  if (foto) return <img src={foto} alt="" className="h-10 w-10 shrink-0 rounded-xl border border-slate-700 object-cover" loading="lazy" />;
+  const iniciales = nombreCompleto(ficha).split(' ').map((parte) => parte[0]).slice(0, 2).join('');
+  return (
+    <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-400 text-xs font-bold text-black">
+      {iniciales}
+    </span>
+  );
+}
 
 export default function Escoltas() {
   const telefono = useOutletContext()?.telefono === true;
@@ -118,6 +129,8 @@ export default function Escoltas() {
 
   // Modales
   const [formulario, setFormulario] = useState(FORM_VACIO);
+  const [archivoFoto, setArchivoFoto] = useState(null);
+  const fotoSubida = useRef(null);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [editando, setEditando] = useState(null);
   const [perfilFicha, setPerfilFicha] = useState(null);
@@ -150,6 +163,7 @@ export default function Escoltas() {
         const cargoTag = notasTexto.match(/\[CARGO:([^\]]+)\]/)?.[1];
         const areaTag = notasTexto.match(/\[AREA:([^\]]+)\]/)?.[1];
         const turnoTag = notasTexto.match(/\[TURNO:([^\]]+)\]/)?.[1];
+        const vigencia = notasTexto.match(/\[VIGENCIA:(\d{4}-\d{2}-\d{2})\]/)?.[1] || '';
 
         let cat = catTag || 'escolta';
         if (!catTag) {
@@ -163,6 +177,7 @@ export default function Escoltas() {
           cargo: cargoTag || (cat === 'seguridad' ? 'Seguridad y Vigilancia' : cat === 'chofer' ? 'Chofer de Seguridad' : 'Escolta VIP / Custodia'),
           area: areaTag || 'Presidencia / Seguridad Operativa',
           turno: turnoTag || 'Diurno',
+          vigencia_carnet: vigencia,
         };
       });
 
@@ -237,6 +252,8 @@ export default function Escoltas() {
   const visibles = filtrados.slice((pagina - 1) * porPagina, pagina * porPagina);
 
   const abrirNuevo = () => {
+    setArchivoFoto(null);
+    fotoSubida.current = null;
     setEditando(null);
     const prefijo = categoriaActiva === 'seguridad' ? 'SEG' : categoriaActiva === 'chofer' ? 'CHO' : 'ESC';
     setFormulario({
@@ -249,6 +266,8 @@ export default function Escoltas() {
   };
 
   const abrirEdicion = (escolta) => {
+    setArchivoFoto(null);
+    fotoSubida.current = null;
     setEditando(escolta);
     setFormulario({
       codigo: escolta.codigo || '',
@@ -263,8 +282,9 @@ export default function Escoltas() {
       cargo: escolta.cargo || 'Escolta Operativo',
       area: escolta.area || 'Seguridad y Vigilancia',
       turno: escolta.turno || 'Diurno',
+      vigencia_carnet: escolta.vigencia_carnet || '',
       estado: escolta.estado || 'activo',
-      notas: (escolta.notas || '').replace(/\[(CAT|CARGO|AREA|TURNO):[^\]]+\]/g, '').trim(),
+      notas: (escolta.notas || '').replace(/\[(CAT|CARGO|AREA|TURNO|VIGENCIA):[^\]]+\]/g, '').trim(),
       foto_url: escolta.foto_url || '',
     });
     setErrores({});
@@ -280,6 +300,9 @@ export default function Escoltas() {
     if (!nombreValido.test(formulario.apellidos) || formulario.apellidos.length > 120) nuevosErrores.apellidos = 'Escribe hasta 120 letras y espacios.';
     if (!/^[0-9]{1,9}$/.test(formulario.cedula.trim())) nuevosErrores.cedula = 'Escribe hasta nueve dígitos.';
 
+    if (formulario.vigencia_carnet && !/^\d{4}-\d{2}-\d{2}$/.test(formulario.vigencia_carnet)) {
+      nuevosErrores.vigencia_carnet = 'Indica una fecha de vigencia válida.';
+    }
     if (!formulario.codigo.trim()) nuevosErrores.codigo = 'Asigna un código (ej. ESC-0147).';
 
     if (Object.keys(nuevosErrores).length) {
@@ -288,8 +311,9 @@ export default function Escoltas() {
       return;
     }
 
-    const notasLimpias = (formulario.notas || '').replace(/\[(CAT|CARGO|AREA|TURNO):[^\]]+\]/g, '').trim();
-    const notasConMetadatos = `${notasLimpias} [CAT:${formulario.categoria}] [CARGO:${formulario.cargo}] [AREA:${formulario.area}] [TURNO:${formulario.turno}]`.trim();
+    const notasLimpias = (formulario.notas || '').replace(/\[(CAT|CARGO|AREA|TURNO|VIGENCIA):[^\]]+\]/g, '').trim();
+    const vigencia = formulario.vigencia_carnet ? ' [VIGENCIA:' + formulario.vigencia_carnet + ']' : '';
+    const notasConMetadatos = `${notasLimpias} [CAT:${formulario.categoria}] [CARGO:${formulario.cargo}] [AREA:${formulario.area}] [TURNO:${formulario.turno}]${vigencia}`.trim();
 
     const valores = {
       codigo: formulario.codigo.trim(),
@@ -307,6 +331,12 @@ export default function Escoltas() {
 
     try {
       setGuardando(true);
+      if (archivoFoto) {
+        if (fotoSubida.current?.archivo !== archivoFoto) {
+          fotoSubida.current = { archivo: archivoFoto, referencia: await subirFotoPersonal(archivoFoto, user?.id) };
+        }
+        valores.foto_url = fotoSubida.current.referencia;
+      }
       if (editando) {
         await actualizar(TABLAS.escoltas, editando.id, valores);
         toast.success('Ficha actualizada');
@@ -405,13 +435,7 @@ export default function Escoltas() {
       primary: true,
       render: (fila) => (
         <div className="flex items-center gap-3">
-          {fila.foto_url ? (
-            <img src={fila.foto_url} alt="" className="h-10 w-10 shrink-0 rounded-xl object-cover border border-slate-700 shadow-sm" />
-          ) : (
-            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#ff8a00] to-[#ffd54a] text-xs font-bold text-black shadow-sm">
-              {nombreCompleto(fila).split(' ').map((p) => p[0]).slice(0, 2).join('')}
-            </span>
-          )}
+          <AvatarPersonal ficha={fila} />
           <div className="min-w-0">
             <p className="truncate font-bold text-slate-100 flex items-center gap-2">
               {nombreCompleto(fila)}
@@ -492,11 +516,6 @@ export default function Escoltas() {
         </div>
       </header>
 
-      {!telefono && ['admin', 'supervisor', 'contador', 'rrhh'].includes(role) && (
-        <Link to="/escoltas/administrativo" className="inline-flex min-h-11 items-center rounded-xl border border-brand-500/40 px-4 text-sm font-semibold text-brand-400">
-          Fichas administrativas
-        </Link>
-      )}
 
       {/* Vista resumida de acción rápida para teléfonos */}
       <div className={telefono ? 'space-y-3' : 'space-y-3 md:hidden'}>
@@ -734,7 +753,7 @@ export default function Escoltas() {
               {perfilFicha.notas && (
                 <div className="mt-3 rounded-xl border border-slate-800 bg-[#14171c] p-3 text-xs text-slate-300">
                   <span className="font-bold text-[#ffd54a] block mb-1">Notas y Acreditaciones:</span>
-                  {(perfilFicha.notas || '').replace(/\[(CAT|CARGO|AREA|TURNO):[^\]]+\]/g, '').trim()}
+                  {(perfilFicha.notas || '').replace(/\[(CAT|CARGO|AREA|TURNO|VIGENCIA):[^\]]+\]/g, '').trim()}
                 </div>
               )}
             </div>
@@ -745,7 +764,7 @@ export default function Escoltas() {
       {/* Modal Formulario Registro / Edición */}
       <Modal
         open={modalAbierto}
-        onClose={() => setModalAbierto(false)}
+        onClose={() => { if (!guardando) setModalAbierto(false); }}
         title={editando ? 'Editar Ficha de Personal' : 'Registrar Nuevo Integrante'}
         description="Completa la información del personal."
         size="lg"
@@ -848,17 +867,19 @@ export default function Escoltas() {
             onChange={(e) => cambiarCampo('estado', e.target.value)}
             options={OPCIONES_ESTADO_ESCOLTA}
           />
-          <Input
-            label="URL de la Foto" type="url" value={formulario.foto_url} containerClassName="sm:col-span-2"
-            onChange={(e) => cambiarCampo('foto_url', e.target.value)} placeholder="https://…"
-            help="Opcional. Foto oficial para el carnet y expediente."
+          <Input label="Vigencia del carnet" type="date" value={formulario.vigencia_carnet}
+            error={errores.vigencia_carnet} onChange={(e) => cambiarCampo('vigencia_carnet', e.target.value)}
+            help="Fecha de vencimiento que se verá en el carnet." />
+          <SelectorFotoPersonal
+            referencia={formulario.foto_url} archivo={archivoFoto} disabled={guardando}
+            onSeleccionar={setArchivoFoto} onError={(mensaje) => toast.error(mensaje)}
           />
           <Input
             label="Dirección de Residencia" value={formulario.direccion} containerClassName="sm:col-span-2"
             onChange={(e) => cambiarCampo('direccion', e.target.value)} placeholder="Ciudad, Urbanización o Sector"
           />
           <Textarea
-            label="Notas Internas y Acreditaciones" maxLength={550} value={formulario.notas} containerClassName="sm:col-span-2"
+            label="Notas Internas y Acreditaciones" maxLength={520} value={formulario.notas} containerClassName="sm:col-span-2"
             onChange={(e) => cambiarCampo('notas', e.target.value)}
             placeholder="Cursos tácticos, manejo defensivo, porte de arma, etc."
           />

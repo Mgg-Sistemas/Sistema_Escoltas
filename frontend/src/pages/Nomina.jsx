@@ -1,3 +1,4 @@
+import VistaPreviaPdf from "../components/VistaPreviaPdf.jsx";
 import ReporteModulo from "../components/ReporteModulo.jsx";
 import { useOutletContext } from 'react-router-dom';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -106,6 +107,8 @@ export default function Nomina() {
 
   // Modal Recibo
   const [reciboSeleccionado, setReciboSeleccionado] = useState(null);
+  const [documentoPdf, setDocumentoPdf] = useState(null);
+  const [preparandoPdf, setPreparandoPdf] = useState(false);
   const [mostrarDesgloseMobile, setMostrarDesgloseMobile] = useState(false);
 
   const cargarDatos = useCallback(async () => {
@@ -334,109 +337,44 @@ export default function Nomina() {
     }
   };
 
-  // Función Imprimir Recibo Individual
-  const imprimirRecibo = (recibo) => {
-    const esc = escoltasPorId[recibo.escolta_id] || {};
-    const per = periodos.find((p) => p.id === recibo.periodo_id) || {};
-    const ventana = window.open('', '_blank');
-    if (!ventana) return;
-
-    const contenido = `
-      <!DOCTYPE html>
-      <html lang="es">
-      <head>
-        <meta charset="utf-8">
-        <title>Recibo Oficial de Pago - ${nombreCompleto(esc)}</title>
-        <style>
-          @page { size: letter; margin: 15mm; }
-          * { box-sizing: border-box; }
-          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #111; margin: 0; padding: 25px; }
-          .header { border-bottom: 2px solid #ff8a00; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-          .header h1 { margin: 0; color: #1c1f24; font-size: 20px; }
-          * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-          .metricas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
-          .metrica { padding: 10px 12px; border-radius: 8px; background: #fff1e8; color: #994000; }
-          .metrica:nth-child(2) { background: #fff8db; color: #854d0e; }
-          .metrica:nth-child(3) { background: #ecfdf3; color: #166534; }
-          .metrica strong { display: block; margin-top: 5px; }
-          .header p { margin: 2px 0 0; color: #ff8a00; font-weight: bold; font-size: 12px; text-transform: uppercase; }
-          .badge { background: #dcfce7; color: #15803d; border: 1px solid #86efac; padding: 4px 10px; border-radius: 999px; font-weight: bold; font-size: 11px; }
-          .box { border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 16px; }
-          .box-title { font-size: 12px; font-weight: bold; text-transform: uppercase; color: #475569; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; }
-          .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 12px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
-          th, td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; }
-          th { background: #f8fafc; font-weight: bold; }
-          .total-row { font-size: 15px; font-weight: bold; background: #fff7ed; color: #c2410c; }
-          .signatures { margin-top: 50px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 40px; text-align: center; }
-          .sign-line { border-top: 1px solid #94a3b8; padding-top: 6px; font-size: 11px; font-weight: bold; color: #334155; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div>
-            <h1>ESCOLTAS · SEGURIDAD Y VIGILANCIA</h1>
-            <p>Recibo Oficial de Pago y Liquidación</p>
-          </div>
-          <div>
-            <span class="badge">COMPROBANTE VÁLIDO</span>
-          </div>
-        </div>
-
-        <div class="metricas">
-          <div class="metrica">Base <strong>${formatearMoneda(recibo.sueldo_base ?? recibo.monto)}</strong></div>
-          <div class="metrica">Deducciones <strong>${formatearMoneda(recibo.descuentos ?? 0)}</strong></div>
-          <div class="metrica">Neto <strong>${formatearMoneda(recibo.total ?? recibo.monto)}</strong></div>
-        </div>
-
-        <div class="box">
-          <div class="box-title">Datos del Titular y Periodo</div>
-          <div class="grid">
-            <div><strong>Personal:</strong> ${nombreCompleto(esc)}</div>
-            <div><strong>Cédula:</strong> ${esc.cedula || '—'}</div>
-            <div><strong>Código:</strong> ${esc.codigo || '—'}</div>
-            <div><strong>Cargo:</strong> ${esc.cargo || 'Seguridad y Escolta'}</div>
-            <div><strong>Periodo:</strong> ${per.nombre || 'Liquidación Ordinaria'}</div>
-            <div><strong>Fecha Emisión:</strong> ${formatearFecha(recibo.fecha_pago || hoyISO())}</div>
-          </div>
-        </div>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Concepto</th>
-              <th style="text-align: right;">Monto</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>Sueldo Base Operativo</td><td style="text-align: right;">${formatearMoneda(recibo.sueldo_base ?? recibo.monto)}</td></tr>
-            ${recibo.bonos ? `<tr><td>Bonos y Primas de Servicio</td><td style="text-align: right;">${formatearMoneda(recibo.bonos)}</td></tr>` : ''}
-            ${recibo.horas_extras ? `<tr><td>Horas Extras y Guardias Especiales</td><td style="text-align: right;">${formatearMoneda(recibo.horas_extras)}</td></tr>` : ''}
-            ${recibo.descuentos ? `<tr><td>Deducciones / Anticipos</td><td style="text-align: right; color: #dc2626;">-${formatearMoneda(recibo.descuentos)}</td></tr>` : ''}
-            <tr class="total-row">
-              <td><strong>TOTAL NETO LIQUIDADO</strong></td>
-              <td style="text-align: right;"><strong>${formatearMoneda(recibo.total ?? recibo.monto)}</strong></td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div class="signatures">
-          <div class="sign-line">Firma del Trabajador<br><span style="font-weight: normal; color: #64748b;">Conforme con el pago recibido</span></div>
-          <div class="sign-line">Administración / Pagaduría<br><span style="font-weight: normal; color: #64748b;">Firma y Sello Autorizado</span></div>
-        </div>
-
-        <script>
-          window.onload = function() { window.print(); }
-        </script>
-      </body>
-      </html>
-    `;
-    ventana.document.write(contenido);
-    ventana.document.close();
+  const verPdfRecibo = async (recibo) => {
+    if (preparandoPdf) return;
+    setPreparandoPdf(true);
+    try {
+      const esc = escoltasPorId[recibo.escolta_id] || {};
+      const per = periodos.find((p) => p.id === recibo.periodo_id) || {};
+      const esDetalle = recibo.sueldo_base != null;
+      const neto = recibo.total ?? recibo.monto;
+      const filas = [
+        ['Personal', nombreCompleto(esc)], ['Cédula', esc.cedula], ['Código', esc.codigo], ['Cargo', esc.cargo],
+        ['Periodo', per.nombre || 'Liquidación ordinaria'], ['Fecha', formatearFecha(recibo.fecha_pago || hoyISO())],
+        ['Estado', estadoLabel(recibo.estado)],
+      ];
+      if (esDetalle) filas.push(
+        ['Sueldo base', formatearMoneda(recibo.sueldo_base)], ['Bonos', formatearMoneda(recibo.bonos ?? 0)],
+        ['Horas extras', formatearMoneda(recibo.horas_extras ?? 0)], ['Deducciones', formatearMoneda(recibo.descuentos ?? 0)],
+      );
+      if (recibo.referencia) filas.push(['Referencia', recibo.referencia]);
+      filas.push([esDetalle ? 'Total neto' : 'Monto del pago', formatearMoneda(neto)]);
+      const { generarPdf } = await import('../lib/reportes.js');
+      const pdf = await generarPdf({
+        titulo: esDetalle ? 'Recibo de nómina' : 'Comprobante de pago',
+        columnas: ['Concepto', 'Detalle'],
+        filas,
+        tarjetas: [['Periodo', per.nombre || 'Ordinario'], ['Monto', formatearMoneda(neto)], ['Estado', estadoLabel(recibo.estado)]],
+        firmas: ['Firma del trabajador', 'Administración / Pagaduría'],
+      });
+      setDocumentoPdf({ pdf, archivo: 'recibo-' + (esc.codigo || 'nomina') + '.pdf' });
+    } catch {
+      toast.error('No se pudo preparar el recibo.');
+    } finally {
+      setPreparandoPdf(false);
+    }
   };
 
   return (
     <div className="space-y-6">
+      <VistaPreviaPdf documento={documentoPdf} onClose={() => setDocumentoPdf(null)} />
       <ReporteModulo titulo="Nómina y pagos" archivo="nomina-pagos" columnas={["Personal","Fecha","Monto","Estado"]}
         filas={pestanaActiva === 'nomina' ? detallesDelPeriodo.map((r) => [nombreCompleto(escoltasPorId[r.escolta_id]), periodoActivo?.fecha_inicio, totalNomina(r), r.estado]) : pagosFiltrados.map((r) => [nombreCompleto(escoltasPorId[r.escolta_id]), r.fecha_pago, Number(r.monto), r.estado])} deshabilitado={cargando} />
       {/* Cabecera Principal */}
@@ -644,7 +582,7 @@ export default function Nomina() {
                     size="sm"
                     variant="outline"
                     leftIcon={ReceiptText}
-                    onClick={() => imprimirRecibo(fila)}
+                    onClick={() => verPdfRecibo(fila)}
                     title="Imprimir Recibo"
                   >
                     Recibo
@@ -735,7 +673,7 @@ export default function Nomina() {
                     size="sm"
                     variant="outline"
                     leftIcon={ReceiptText}
-                    onClick={() => imprimirRecibo(fila)}
+                    onClick={() => verPdfRecibo(fila)}
                     title="Imprimir Comprobante"
                   >
                     Comprobante
@@ -811,9 +749,9 @@ export default function Nomina() {
                   size="sm"
                   variant="primary"
                   leftIcon={Printer}
-                  onClick={() => imprimirRecibo(fila)}
+                  onClick={() => verPdfRecibo(fila)}
                 >
-                  Imprimir Recibo PDF
+                  Ver recibo PDF
                 </Button>
               )}
             />

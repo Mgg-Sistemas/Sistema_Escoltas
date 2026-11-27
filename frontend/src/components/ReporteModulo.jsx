@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { FileText } from 'lucide-react';
 import { Button, Modal, useToast } from './ui.jsx';
+import VistaPreviaPdf from './VistaPreviaPdf.jsx';
 
 export default function ReporteModulo({ titulo, archivo, columnas, filas, indicadores = [], pdfPersonalizado, deshabilitado = false }) {
   const toast = useToast();
   const [abierto, setAbierto] = useState(false);
+  const [documentoPdf, setDocumentoPdf] = useState(null);
   const [procesando, setProcesando] = useState(false);
   const permiteExportar = !deshabilitado && filas.length > 0;
   const vistaPrevia = abierto ? filas.slice(0, 8) : [];
@@ -15,14 +17,11 @@ export default function ReporteModulo({ titulo, archivo, columnas, filas, indica
   const exportar = async (formato) => {
     setProcesando(true);
     try {
-      if (formato === 'pdf' && pdfPersonalizado) {
-        await pdfPersonalizado();
-        return;
-      }
       const { generarPdf, generarCsv, generarExcel, descargarArchivo } = await import('../lib/reportes.js');
       if (formato === 'pdf') {
-        const pdf = await generarPdf({ titulo, columnas, filas, tarjetas });
-        pdf.save(archivo + '.pdf');
+        const pdf = pdfPersonalizado ? await pdfPersonalizado() : await generarPdf({ titulo, columnas, filas, tarjetas });
+        setAbierto(false);
+        setDocumentoPdf({ pdf, archivo: archivo + '.pdf' });
       } else if (formato === 'xlsx') {
         descargarArchivo(await generarExcel(columnas, filas), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', archivo + '.xlsx');
       } else {
@@ -50,7 +49,7 @@ export default function ReporteModulo({ titulo, archivo, columnas, filas, indica
         footer={(
           <div className="flex flex-wrap items-center gap-2">
             <Button type="button" size="sm" variant="primary" disabled={!permiteExportar || procesando} onClick={() => exportar('pdf')}>
-              Descargar PDF
+              Ver PDF
             </Button>
             {[['xlsx', 'Excel'], ['csv', 'CSV']].map(([formato, etiqueta]) => (
               <Button key={formato} type="button" size="sm" variant="outline" disabled={!permiteExportar || procesando} onClick={() => exportar(formato)}>
@@ -99,6 +98,7 @@ export default function ReporteModulo({ titulo, archivo, columnas, filas, indica
           </div>
         )}
       </Modal>
+      <VistaPreviaPdf documento={documentoPdf} onClose={() => { setDocumentoPdf(null); setAbierto(true); }} />
     </>
   );
 }
