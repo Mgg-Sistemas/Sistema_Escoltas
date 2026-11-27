@@ -1,6 +1,7 @@
 import ReporteModulo from "../components/ReporteModulo.jsx";
 import { useOutletContext } from 'react-router-dom';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useAuth } from '../context/AuthContext.jsx';
 import { useRealtimeRecarga } from '../hooks/useRealtime.js';
 import {
   CalendarDays,
@@ -35,12 +36,15 @@ const FORM_VACIO = {
   estado: 'planificada',
 };
 
-const nombreCliente = (cliente) => cliente?.nombre || cliente?.razon_social || cliente?.empresa || 'Cliente sin nombre';
+const nombreCliente = (cliente) => cliente?.nombre || cliente?.razon_social || cliente?.empresa || 'Destino sin nombre';
 const nombreTurno = (turno) => turno?.nombre || turno?.descripcion || 'Turno sin nombre';
 
 export default function Distribucion() {
   const telefono = useOutletContext()?.telefono === true;
   const toast = useToast();
+  const { role } = useAuth();
+  const [nuevoDestino, setNuevoDestino] = useState(null);
+  const [guardandoDestino, setGuardandoDestino] = useState(false);
   const [asignaciones, setAsignaciones] = useState([]);
   const [escoltas, setEscoltas] = useState([]);
   const [clientes, setClientes] = useState([]);
@@ -145,6 +149,7 @@ export default function Distribucion() {
 
   const abrirNuevo = () => {
     setEditando(null);
+    setNuevoDestino(null);
     setFormulario({ ...FORM_VACIO, fecha_inicio: aISOFecha() });
     setErrores({});
     setModal(true);
@@ -152,6 +157,7 @@ export default function Distribucion() {
 
   const abrirEdicion = (asignacion) => {
     setEditando(asignacion);
+    setNuevoDestino(null);
     setFormulario({
       escolta_id: asignacion.escolta_id || '',
       cliente_id: asignacion.cliente_id || '',
@@ -166,10 +172,30 @@ export default function Distribucion() {
 
   const cambiar = (campo, valor) => setFormulario((actual) => ({ ...actual, [campo]: valor }));
 
+  const guardarDestino = async () => {
+    const nombre = nuevoDestino?.trim().toUpperCase();
+    if (!nombre || guardandoDestino || role !== 'admin') return;
+    setGuardandoDestino(true);
+    try {
+      const existente = clientes.find((cliente) => cliente.nombre?.trim().toUpperCase() === nombre);
+      const destino = existente || await crear(TABLAS.clientes, { nombre });
+      setClientes((actuales) => [...actuales.filter(({ id }) => id !== destino.id), destino]
+        .sort((a, b) => nombreCliente(a).localeCompare(nombreCliente(b), 'es')));
+      cambiar('cliente_id', destino.id);
+      setErrores((actuales) => ({ ...actuales, cliente_id: undefined }));
+      setNuevoDestino(null);
+      toast.success(existente ? 'Destino seleccionado' : 'Destino registrado');
+    } catch (error) {
+      toast.error('No se pudo registrar el destino', error.message);
+    } finally {
+      setGuardandoDestino(false);
+    }
+  };
+
   const guardar = async () => {
     const nuevosErrores = {};
     if (!formulario.escolta_id) nuevosErrores.escolta_id = 'Selecciona el escolta.';
-    if (!formulario.cliente_id) nuevosErrores.cliente_id = 'Selecciona el cliente.';
+    if (!formulario.cliente_id) nuevosErrores.cliente_id = 'Selecciona a quién se asigna.';
     if (!formulario.fecha_inicio) nuevosErrores.fecha_inicio = 'Indica la fecha de inicio.';
     if (formulario.fecha_fin && formulario.fecha_inicio && formulario.fecha_fin < formulario.fecha_inicio) {
       nuevosErrores.fecha_fin = 'La fecha de fin no puede ser anterior al inicio.';
@@ -232,7 +258,7 @@ export default function Distribucion() {
 
   return (
     <div className="space-y-6">
-      <ReporteModulo titulo="Turnos y distribución" archivo="turnos" columnas={["Personal","Cliente","Turno","Inicio","Fin","Estado"]}
+      <ReporteModulo titulo="Turnos y distribución" archivo="turnos" columnas={["Personal","Asignado a","Turno","Inicio","Fin","Estado"]}
         filas={filtradas.map((r) => [nombreCompleto(mapas.escoltas[r.escolta_id]), nombreCliente(mapas.clientes[r.cliente_id]), nombreTurno(mapas.turnos[r.turno_id]), r.fecha_inicio, r.fecha_fin, r.estado])} indicadores={[["Activas", filtradas.filter((r) => r.estado === "activo").length]]} deshabilitado={cargando} />
       {/* Vista resumida de acción rápida para teléfonos */}
       <div className={telefono ? 'space-y-3' : 'space-y-3 md:hidden'}>
@@ -295,7 +321,7 @@ export default function Distribucion() {
               type="search"
               value={busqueda}
               onChange={(evento) => setBusqueda(evento.target.value.toLocaleUpperCase("es"))}
-              placeholder="Buscar escolta, cliente o turno…"
+              placeholder="Buscar escolta, destino o turno…"
               aria-label="Buscar asignaciones"
               className="min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             />
@@ -360,7 +386,7 @@ export default function Distribucion() {
             <CalendarRange className="mx-auto h-8 w-8 text-brand-400" aria-hidden="true" />
             <h3 className="mt-3 font-bold text-slate-100">No hay asignaciones para estos filtros</h3>
             <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">
-              Prueba quitando filtros o crea una asignación nueva para definir quién cubre cada cliente.
+              Prueba quitando filtros o crea una asignación nueva para definir a quién asignar un escolta.
             </p>
             <Button className="mt-5" leftIcon={Plus} onClick={abrirNuevo}>Nueva asignación</Button>
           </div>
@@ -445,16 +471,16 @@ export default function Distribucion() {
 
       <Modal
         open={modal}
-        onClose={() => setModal(false)}
+        onClose={() => { if (!guardandoDestino) setModal(false); }}
         title={editando ? 'Editar asignación' : 'Nueva asignación'}
-        description="Define escolta, cliente, turno y el rango de fechas en el que aplica."
+        description="Selecciona el escolta, el destino, el turno y las fechas."
         size="lg"
         footer={
           <div className="flex flex-col gap-2 sm:flex-row-reverse">
-            <Button onClick={guardar} loading={guardando} fullWidth className="sm:w-auto">
+            <Button onClick={guardar} loading={guardando} disabled={nuevoDestino !== null} fullWidth className="sm:w-auto">
               {editando ? 'Guardar cambios' : 'Crear asignación'}
             </Button>
-            <Button variant="outline" onClick={() => setModal(false)} disabled={guardando} fullWidth className="sm:w-auto">Cancelar</Button>
+            <Button variant="outline" onClick={() => setModal(false)} disabled={guardando || guardandoDestino} fullWidth className="sm:w-auto">Cancelar</Button>
           </div>
         }
       >
@@ -468,15 +494,35 @@ export default function Distribucion() {
               <option key={escolta.id} value={escolta.id}>{nombreCompleto(escolta)} · {escolta.codigo || '—'}</option>
             ))}
           </Select>
-          <Select
-            label="Cliente" required value={formulario.cliente_id} error={errores.cliente_id}
-            onChange={(evento) => cambiar('cliente_id', evento.target.value)}
-          >
-            <option value="">Selecciona un cliente</option>
-            {clientes.map((cliente) => (
-              <option key={cliente.id} value={cliente.id}>{nombreCliente(cliente)}</option>
+          <div className="space-y-3">
+            <Select
+              label="Asignado a:" required value={formulario.cliente_id} error={errores.cliente_id}
+              onChange={(evento) => cambiar('cliente_id', evento.target.value)}
+            >
+              <option value="">Selecciona un destino</option>
+              {clientes.map((cliente) => (
+                <option key={cliente.id} value={cliente.id}>{nombreCliente(cliente)}</option>
+              ))}
+            </Select>
+            {role === 'admin' && (nuevoDestino === null ? (
+              <Button size="sm" variant="outline" leftIcon={Plus} onClick={() => setNuevoDestino('')} disabled={guardando}>
+                Añadir destino
+              </Button>
+            ) : (
+              <div className="space-y-2">
+                <Input label="Nombre del destino" maxLength={120} value={nuevoDestino} disabled={guardandoDestino}
+                  onChange={(evento) => setNuevoDestino(evento.target.value)} />
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" onClick={guardarDestino} loading={guardandoDestino} disabled={!nuevoDestino.trim()}>
+                    Guardar destino
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setNuevoDestino(null)} disabled={guardandoDestino}>
+                    Cancelar alta
+                  </Button>
+                </div>
+              </div>
             ))}
-          </Select>
+          </div>
           <Select
             label="Turno" value={formulario.turno_id}
             onChange={(evento) => cambiar('turno_id', evento.target.value)}
@@ -504,7 +550,7 @@ export default function Distribucion() {
         <Field label="Resumen" help="Revisa que el rango de fechas y el escolta sean correctos antes de guardar.">
           <p className="rounded-xl border border-slate-800 bg-[#0e1217]/60 p-3 text-sm text-slate-300">
             {formulario.escolta_id ? nombreCompleto(mapas.escoltas[formulario.escolta_id]) : 'Escolta sin seleccionar'} →{' '}
-            {formulario.cliente_id ? nombreCliente(mapas.clientes[formulario.cliente_id]) : 'Cliente sin seleccionar'}
+            {formulario.cliente_id ? nombreCliente(mapas.clientes[formulario.cliente_id]) : 'Destino sin seleccionar'}
           </p>
         </Field>
       </Modal>
