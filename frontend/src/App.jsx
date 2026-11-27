@@ -14,12 +14,10 @@ import Distribucion from './pages/Distribucion.jsx';
 import Permisos from './pages/Permisos.jsx';
 import Asistencias from './pages/Asistencias.jsx';
 import Nomina from './pages/Nomina.jsx';
-import Pagos from './pages/Pagos.jsx';
 import Usuarios from './pages/Usuarios.jsx';
 import RolesPermisos from './pages/RolesPermisos.jsx';
 import Ajustes from './pages/Ajustes.jsx';
 import Ayuda from './pages/Ayuda.jsx';
-import Rrhh from './pages/Rrhh.jsx';
 import Auditoria from './pages/Auditoria.jsx';
 
 function PantallaCarga() {
@@ -102,9 +100,9 @@ export default function App() {
             <Route path="distribucion" element={<Distribucion />} />
             <Route path="permisos" element={<Permisos />} />
             <Route path="asistencias" element={<Asistencias />} />
-            <Route path="rrhh" element={<Rrhh />} />
             <Route path="nomina" element={<Nomina />} />
-            <Route path="pagos" element={<Pagos />} />
+            <Route path="pagos" element={<Navigate to="/nomina" replace />} />
+            <Route path="rrhh" element={<Navigate to="/escoltas" replace />} />
             <Route path="usuarios" element={<Usuarios />} />
             <Route path="roles-permisos" element={<RolesPermisos />} />
             <Route path="ajustes" element={<Ajustes />} />

@@ -1,4 +1,5 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import QRCode from 'qrcode';
 import {
   Building,
   Calendar,
@@ -30,6 +31,24 @@ export default function CarnetPersonal({ escolta, grado = 'Escolta Operativo', a
   const area = escolta.area || 'Presidencia';
   const turno = escolta.turno || 'Diurno';
   const vigencia = '31 / 12 / 2027';
+
+  // Generación local 100% segura en Data URL sin enviar datos a APIs externas
+  const [qrDataUrl, setQrDataUrl] = useState('');
+
+  useEffect(() => {
+    // Generar identificador de verificación seguro con URL oficial del sistema
+    const urlVerificacion = `https://sistemaescoltas.com/verificar?id=${encodeURIComponent(escolta.id || codigo)}&v=1`;
+    QRCode.toDataURL(urlVerificacion, {
+      width: 260,
+      margin: 1,
+      color: {
+        dark: '#000000',
+        light: '#ffffff',
+      },
+    })
+      .then((url) => setQrDataUrl(url))
+      .catch((err) => console.error('Error generando QR local:', err));
+  }, [escolta.id, codigo]);
 
   // Dimensiones CR-80 estándar a 300 DPI: 85.6mm x 54mm (vertical: 54mm x 85.6mm / 638px x 1011px)
   const imprimirCarnetOFicha = (modo = 'ficha') => {

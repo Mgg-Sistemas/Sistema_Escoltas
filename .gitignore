@@ -34,3 +34,8 @@ Thumbs.db
 # Temporal
 tmp/
 .tmp/
+
+# Respaldos y dumps de base de datos
+respaldo_*.json
+*.sql.bak
+*.json.bak

@@ -135,12 +135,18 @@ export default function Escoltas() {
         };
       });
 
-      // Separar activos y papelera (estado === 'inactivo' o marcado)
-      const activos = procesados.filter((p) => p.estado !== 'inactivo');
-      const inactivos = procesados.filter((p) => p.estado === 'inactivo');
+      // Separar activos/bajas operativas de la papelera real
+      // Solo es papelera si tiene el marcador explícito [PAPELERA:true] en notas
+      const procesadosConPapelera = procesados.map((p) => ({
+        ...p,
+        enPapelera: (p.notas || '').includes('[PAPELERA:true]'),
+      }));
+
+      const activos = procesadosConPapelera.filter((p) => !p.enPapelera);
+      const enPapelera = procesadosConPapelera.filter((p) => p.enPapelera);
 
       setPersonal(activos);
-      setPapelera(inactivos);
+      setPapelera(enPapelera);
 
       if (resultadoGrados.status === 'fulfilled') {
         setGrados(resultadoGrados.value || []);
@@ -282,14 +288,19 @@ export default function Escoltas() {
     }
   };
 
-  // Enviar a la Papelera directamente en Supabase (Soft-delete)
+  // Enviar a la Papelera directamente en Supabase (con etiqueta explícita de papelera)
   const enviarAPapelera = async (registro) => {
     try {
       setGuardando(true);
-      await actualizar(TABLAS.escoltas, registro.id, { estado: 'inactivo' });
+      const notasActuales = (registro.notas || '').replace(/\[PAPELERA:[^\]]+\]/g, '').trim();
+      const notasConPapelera = `${notasActuales} [PAPELERA:true]`.trim();
+
+      await actualizar(TABLAS.escoltas, registro.id, {
+        notas: notasConPapelera,
+      });
       toast.success(
         'Movido a la papelera en Supabase',
-        `${nombreCompleto(registro)} fue desactivado y enviado a la papelera.`,
+        `${nombreCompleto(registro)} fue enviado a la papelera. Su historial laboral se conserva.`,
       );
       setPerfilFicha(null);
       setConfirmarEliminar(null);
@@ -305,8 +316,12 @@ export default function Escoltas() {
   const restaurarDePapelera = async (registro) => {
     try {
       setGuardando(true);
-      await actualizar(TABLAS.escoltas, registro.id, { estado: 'activo' });
-      toast.success('Registro restaurado en Supabase', `${nombreCompleto(registro)} vuelve a estar activo.`);
+      const notasSinPapelera = (registro.notas || '').replace(/\[PAPELERA:[^\]]+\]/g, '').trim();
+
+      await actualizar(TABLAS.escoltas, registro.id, {
+        notas: notasSinPapelera,
+      });
+      toast.success('Registro restaurado en Supabase', `${nombreCompleto(registro)} vuelve a estar disponible.`);
       await cargar();
     } catch (error) {
       toast.error('No se pudo restaurar el registro', error.message);
@@ -328,13 +343,16 @@ export default function Escoltas() {
       let protegidos = 0;
 
       for (const item of papelera) {
-        // Verificar dependencias en Supabase antes de eliminar
-        const [asig, nom] = await Promise.all([
+        // Verificar dependencias en Supabase antes de eliminar permanentemente
+        const [asig, nom, asis, perm, pag] = await Promise.all([
           listar(TABLAS.asignaciones, { filtros: { escolta_id: item.id }, limite: 1 }).catch(() => []),
           listar(TABLAS.detallesNomina, { filtros: { escolta_id: item.id }, limite: 1 }).catch(() => []),
+          listar(TABLAS.asistencias, { filtros: { escolta_id: item.id }, limite: 1 }).catch(() => []),
+          listar(TABLAS.permisos, { filtros: { escolta_id: item.id }, limite: 1 }).catch(() => []),
+          listar(TABLAS.pagos, { filtros: { escolta_id: item.id }, limite: 1 }).catch(() => []),
         ]);
 
-        if (asig.length > 0 || nom.length > 0) {
+        if (asig.length > 0 || nom.length > 0 || asis.length > 0 || perm.length > 0 || pag.length > 0) {
           protegidos++;
           continue;
         }

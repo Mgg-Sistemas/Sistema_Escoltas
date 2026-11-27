@@ -43,9 +43,7 @@ const SECCIONES_NAVEGACION = [
   {
     titulo: 'Finanzas y Gestión',
     items: [
-      { to: '/rrhh', label: 'Recursos Humanos', icon: Briefcase, descripcion: 'Tabulador y contratos', modulo: 'rrhh' },
-      { to: '/nomina', label: 'Nómina', icon: WalletCards, descripcion: 'Cálculos y períodos en Bs/$', modulo: 'nomina' },
-      { to: '/pagos', label: 'Pagos y Recibos', icon: CreditCard, descripcion: 'Comprobantes y transferencias', modulo: 'pagos' },
+      { to: '/nomina', label: 'Nómina, Pagos y Recibos', icon: WalletCards, descripcion: 'Cálculos, transferencias y comprobantes', modulo: 'nomina' },
     ],
   },
   {
@@ -161,6 +159,7 @@ export default function Layout() {
     setDrawerAbierto(false);
   }, [location.pathname]);
 
+  const esInicio = location.pathname === '/';
   const segmentos = location.pathname.split('/').filter(Boolean);
   const migas = [
     { label: 'Inicio', to: '/' },
@@ -192,7 +191,7 @@ export default function Layout() {
   return (
     <div className="min-h-screen bg-[#1c1f24] text-[#e7ecf3]">
       {/* Barra superior oscura carbón GT */}
-      <header className="sticky top-0 z-30 border-b border-[#333944] bg-[#23272e]/95 backdrop-blur shadow-sm">
+      <header className={`sticky top-0 z-30 border-b border-[#333944] bg-[#23272e]/95 backdrop-blur shadow-sm ${esInicio ? "hidden md:block" : ""}`}>
         <div className="mx-auto flex h-16 max-w-[1600px] items-center gap-3 px-4 sm:px-6">
           <button
             type="button"
@@ -348,7 +347,7 @@ export default function Layout() {
 
       {/* Drawer móvil */}
       {drawerAbierto && (
-        <div className="fixed inset-0 z-[60] md:hidden" role="dialog" aria-modal="true" aria-label="Menú de navegación">
+        <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label="Menú de navegación">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setDrawerAbierto(false)} aria-hidden="true" />
           <div className="relative flex h-full w-[85%] max-w-xs flex-col bg-[#23272e] border-r border-[#333944] shadow-panel animate-fade-in">
             <div className="flex items-center justify-between border-b border-[#333944] px-4 py-4">
@@ -408,25 +407,32 @@ export default function Layout() {
 
       {/* Contenido principal con fondo carbón descansado GT */}
       <main className="mx-auto max-w-[1600px] px-4 pb-32 pt-6 sm:px-6 md:ml-64 md:pb-12 md:pt-8 bg-[#1c1f24] min-h-[calc(100vh-64px)]">
-        <nav aria-label="Ruta de navegación" className="mb-5 flex flex-wrap items-center gap-1.5 text-xs text-[#9aa6b5]">
-          {migas.map((miga, indice) => (
-            <React.Fragment key={miga.to}>
-              {indice > 0 && <span aria-hidden="true" className="text-[#6a7585]">/</span>}
-              <NavLink
-                to={miga.to}
-                className={indice === migas.length - 1 ? 'font-semibold text-[#ff8a00]' : 'hover:text-[#e7ecf3]'}
-              >
-                {miga.label}
-              </NavLink>
-            </React.Fragment>
-          ))}
-        </nav>
-        <Outlet />
+        {esInicio && (
+          <div className="md:hidden">
+            <VistaTelefono items={todosLosItems} alAbrirMenu={() => setDrawerAbierto(true)} />
+          </div>
+        )}
+        <div className={esInicio ? "hidden md:block" : undefined}>
+          <nav aria-label="Ruta de navegación" className="mb-5 flex flex-wrap items-center gap-1.5 text-xs text-[#9aa6b5]">
+            {migas.map((miga, indice) => (
+              <React.Fragment key={miga.to}>
+                {indice > 0 && <span aria-hidden="true" className="text-[#6a7585]">/</span>}
+                <NavLink
+                  to={miga.to}
+                  className={indice === migas.length - 1 ? 'font-semibold text-[#ff8a00]' : 'hover:text-[#e7ecf3]'}
+                >
+                  {miga.label}
+                </NavLink>
+              </React.Fragment>
+            ))}
+          </nav>
+          <Outlet />
+        </div>
       </main>
 
       {/* Barra inferior móvil */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-[#333944] bg-[#23272e]/95 pb-safe backdrop-blur md:hidden shadow-lg"
+        className={`fixed inset-x-0 bottom-0 z-30 grid-cols-5 border-t border-[#333944] bg-[#23272e]/95 pb-safe backdrop-blur md:hidden shadow-lg ${esInicio ? "hidden" : "grid"}`}
         aria-label="Navegación rápida"
       >
         {movilPrincipal.map((item) => (
@@ -462,7 +468,14 @@ export default function Layout() {
             >
               <X className="h-5 w-5" />
             </button>
-            <VistaTelefono alCerrar={() => setVistaMovilAbierta(false)} soloPreview />
+            <VistaTelefono
+              items={todosLosItems}
+              alNavegar={() => setVistaMovilAbierta(false)}
+              alAbrirMenu={() => {
+                setVistaMovilAbierta(false);
+                setDrawerAbierto(true);
+              }}
+            />
           </div>
         </div>
       )}
