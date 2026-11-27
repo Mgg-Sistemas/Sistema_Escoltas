@@ -55,23 +55,6 @@ import {
 import { estadoLabel, estadoTone } from '../lib/constants.js';
 import { useAuth } from '../context/AuthContext.jsx';
 
-const AREAS_BASE = [
-  { nombre: 'Presidencia / Corporativo', total: 24, estado: 'Activo', cupo: '100%' },
-  { nombre: 'Fundición y Hornos', total: 18, estado: 'Activo', cupo: '100%' },
-  { nombre: 'Matanzas y Siderúrgica', total: 16, estado: 'Activo', cupo: '95%' },
-  { nombre: 'Traslados Ejecutivos VJ', total: 8, estado: 'Activo', cupo: '100%' },
-  { nombre: 'Logística y Almacén Central', total: 12, estado: 'Activo', cupo: '100%' },
-  { nombre: 'Seguridad Perimetral / Garitas', total: 8, estado: 'Activo', cupo: '90%' },
-];
-
-const PROXIMOS_DESCANSOS_BASE = [
-  { id: 'desc-1', nombre: 'Carlos Mendoza', fecha: '14 Nov 2026', dias: 2, puesto: 'Presidencia' },
-  { id: 'desc-2', nombre: 'Luis Figueroa', fecha: '15 Nov 2026', dias: 2, puesto: 'Fundición' },
-  { id: 'desc-3', nombre: 'Andrea Rojas', fecha: '15 Nov 2026', dias: 2, puesto: 'Logística' },
-  { id: 'desc-4', nombre: 'José Paredes', fecha: '16 Nov 2026', dias: 1, puesto: 'Matanzas' },
-  { id: 'desc-5', nombre: 'María Salazar', fecha: '16 Nov 2026', dias: 2, puesto: 'Traslados' },
-];
-
 export default function Dashboard() {
   const { role, roleLabel, user, profile, puede } = useAuth();
   const toast = useToast();
@@ -180,30 +163,29 @@ export default function Dashboard() {
     tablas: ['escoltas', 'asignaciones', 'asistencias', 'permisos', 'nomina_detalles', 'periodos_nomina'],
   });
 
-  // Métricas calculadas operativas 360 (combinando datos reales + modelo conceptual de la maqueta)
-  const totalPersonal = conteos.escoltas > 0 ? conteos.escoltas : 86;
-  const enTurnoHoy = conteos.asistenciasHoy > 0 ? conteos.asistenciasHoy : Math.round(totalPersonal * 0.74);
-  const enDescansoHoy = conteos.pendientes > 0 ? conteos.pendientes : Math.round(totalPersonal * 0.26);
+  // Métricas calculadas operativas (estrictamente basadas en datos reales)
+  const totalPersonal = conteos.escoltas;
+  const enTurnoHoy = conteos.asistenciasHoy;
+  const enDescansoHoy = conteos.pendientes;
   const disponiblesHoy = Math.max(0, totalPersonal - enTurnoHoy);
+  const porcentajeTurno = totalPersonal > 0 ? Math.round((enTurnoHoy / totalPersonal) * 100) : 0;
+  const porcentajeDescanso = totalPersonal > 0 ? Math.round((enDescansoHoy / totalPersonal) * 100) : 0;
+  const porcentajeDisponibles = totalPersonal > 0 ? Math.round((disponiblesHoy / totalPersonal) * 100) : 0;
 
-  // Lista de personal para la matriz de turnos (de la BD o seed representativo)
+  // Lista de personal para la matriz de turnos (estrictamente de la BD)
   const listaMatriz = useMemo(() => {
-    if (escoltas.length >= 4) {
-      return escoltas.slice(0, 6).map((esc, i) => ({
-        id: esc.id,
-        codigo: esc.codigo || `ESC-00${i + 1}`,
-        nombre: nombreCompleto(esc) || `Escolta ${i + 1}`,
-        cargo: esc.cargo || 'Escolta Operativo',
-      }));
-    }
-    return [
-      { id: '1', codigo: 'ESC-001', nombre: 'Carlos Mendoza', cargo: 'Escolta VIP' },
-      { id: '2', codigo: 'ESC-002', nombre: 'Luis Figueroa', cargo: 'Vigilante Planta' },
-      { id: '3', codigo: 'ESC-003', nombre: 'José Rodríguez', cargo: 'Escolta Custodia' },
-      { id: '4', codigo: 'ESC-004', nombre: 'Miguel Pérez', cargo: 'Supervisor de Turno' },
-      { id: '5', codigo: 'ESC-005', nombre: 'Andrea Rojas', cargo: 'Escolta Perim.' },
-    ];
+    return escoltas.map((esc, i) => ({
+      id: esc.id,
+      codigo: esc.codigo || `ESC-00${i + 1}`,
+      nombre: nombreCompleto(esc) || `Escolta ${i + 1}`,
+      cargo: esc.cargo || 'Escolta Operativo',
+    }));
   }, [escoltas]);
+
+  // Próximos descansos y permisos reales
+  const proximosDescansos = useMemo(() => {
+    return permisos.filter((p) => p.estado === 'aprobado' || p.estado === 'pendiente').slice(0, 5);
+  }, [permisos]);
 
   // VISTA MÓVIL DEDICADA PARA ESCOLTAS / VIGILANTES (Según maqueta 2 del usuario)
   if (role === 'escolta') {
@@ -456,7 +438,7 @@ export default function Dashboard() {
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-3xl font-black text-slate-100">{enTurnoHoy}</span>
-            <span className="text-xs font-bold text-amber-400">74% de cobertura</span>
+            <span className="text-xs font-bold text-amber-400">{porcentajeTurno}% de cobertura</span>
           </div>
           <p className="mt-1 text-xs text-slate-400">Personal asignado en guardia activa</p>
         </div>
@@ -471,7 +453,7 @@ export default function Dashboard() {
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-3xl font-black text-slate-100">{enDescansoHoy}</span>
-            <span className="text-xs font-bold text-blue-400">26% del total</span>
+            <span className="text-xs font-bold text-blue-400">{porcentajeDescanso}% del total</span>
           </div>
           <p className="mt-1 text-xs text-slate-400">Rotación y descanso compensatorio</p>
         </div>
@@ -485,14 +467,20 @@ export default function Dashboard() {
             </span>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-slate-100">$ 128,540.00</span>
-            <span className="text-[11px] font-bold text-emerald-400">98% autorizada</span>
+            <span className="text-2xl font-black text-slate-100">
+              ${Number(resumen?.total_nomina_periodo || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
+            <span className="text-[11px] font-bold text-emerald-400">
+              {resumen?.periodo_abierto ? 'En curso' : 'Sin período'}
+            </span>
           </div>
-          <p className="mt-1 text-xs text-oro">Bs. 452.840,00 (Quincena 1 - Nov 2026)</p>
+          <p className="mt-1 text-xs text-oro">
+            {resumen?.periodo_abierto ? (resumen.periodo_abierto.nombre || `Período ${resumen.periodo_abierto.fecha_inicio} a ${resumen.periodo_abierto.fecha_fin}`) : 'Sin período de nómina abierto'}
+          </p>
         </div>
       </div>
 
-      {/* FILA 2: DISPONIBILIDAD 360 + ASIGNACIÓN DE SERVICIOS + ALERTAS OPERATIVAS */}
+      {/* FILA 2: DISPONIBILIDAD OPERATIVA + ASIGNACIÓN DE SERVICIOS + ALERTAS OPERATIVAS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* PANEL 1: DISPONIBILIDAD Y DISTRIBUCIÓN OPERATIVA */}
         <Card bodyClassName="space-y-5">
@@ -504,13 +492,12 @@ export default function Dashboard() {
             <span className="text-xs font-mono font-bold text-slate-400">{totalPersonal} Total</span>
           </div>
 
-          {/* Gráfico circular / Barra de ocupación conceptual */}
           <div className="rounded-xl border border-[#333944] bg-[#1c1f24] p-4 text-center">
             <div className="flex items-center justify-center gap-4 py-2">
               <div className="relative inline-flex h-24 w-24 items-center justify-center rounded-full border-4 border-[#ff8a00] bg-[#23272e] shadow-inner">
                 <div className="text-center">
                   <span className="block text-2xl font-black text-slate-100">{totalPersonal}</span>
-                  <span className="text-[10px] font-bold uppercase text-slate-400">Escoltas</span>
+                  <span className="text-[10px] font-bold uppercase text-slate-400">Personal</span>
                 </div>
               </div>
 
@@ -518,17 +505,17 @@ export default function Dashboard() {
                 <div className="flex items-center gap-2">
                   <span className="h-3 w-3 rounded-full bg-[#ff8a00]" />
                   <span className="text-slate-300">En Turno:</span>
-                  <strong className="text-slate-100">{enTurnoHoy} (74%)</strong>
+                  <strong className="text-slate-100">{enTurnoHoy} ({porcentajeTurno}%)</strong>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="h-3 w-3 rounded-full bg-blue-400" />
                   <span className="text-slate-300">En Descanso:</span>
-                  <strong className="text-slate-100">{enDescansoHoy} (26%)</strong>
+                  <strong className="text-slate-100">{enDescansoHoy} ({porcentajeDescanso}%)</strong>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="h-3 w-3 rounded-full bg-[#29c081]" />
                   <span className="text-slate-300">Disponibles:</span>
-                  <strong className="text-slate-100">{disponiblesHoy} (21%)</strong>
+                  <strong className="text-slate-100">{disponiblesHoy} ({porcentajeDisponibles}%)</strong>
                 </div>
               </div>
             </div>
@@ -545,7 +532,7 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        {/* PANEL 2: ASIGNACIÓN DE SERVICIOS POR ÁREA (HOY) */}
+        {/* PANEL 2: ASIGNACIÓN DE SERVICIOS (HOY) */}
         <Card bodyClassName="space-y-4">
           <div className="flex items-center justify-between border-b border-[#333944] pb-3">
             <div className="flex items-center gap-2">
@@ -558,23 +545,15 @@ export default function Dashboard() {
           </div>
 
           <div className="space-y-2.5 text-xs">
-            {AREAS_BASE.map((area) => (
-              <div
-                key={area.nombre}
-                className="flex items-center justify-between rounded-xl border border-[#333944] bg-[#1c1f24] px-3 py-2.5 transition hover:bg-[#2b3038]"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-[#ff8a00]" />
-                  <span className="font-semibold text-slate-200">{area.nombre}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-slate-400">{area.total} Escoltas</span>
-                  <span className="rounded-full bg-[#29c081]/15 border border-[#29c081]/30 px-2 py-0.5 text-[10px] font-bold text-[#29c081]">
-                    {area.estado}
-                  </span>
-                </div>
+            {enTurnoHoy === 0 ? (
+              <p className="text-xs text-slate-400 py-8 text-center">
+                No hay personal con asistencia o turno activo hoy.
+              </p>
+            ) : (
+              <div className="rounded-xl border border-[#333944] bg-[#1c1f24] p-3 text-center">
+                <span className="text-xs font-bold text-slate-200">{enTurnoHoy} guardia(s) operativa(s) en curso</span>
               </div>
-            ))}
+            )}
           </div>
         </Card>
 
@@ -585,35 +564,25 @@ export default function Dashboard() {
               <ShieldAlert className="h-5 w-5 text-[#ef4f5e]" />
               <h2 className="text-base font-bold text-slate-100">Alertas Operativas</h2>
             </div>
-            <span className="rounded-full bg-[#ef4f5e]/15 border border-[#ef4f5e]/30 px-2 py-0.5 text-[11px] font-bold text-[#ef4f5e]">
-              3 activas
+            <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${conteos.pendientes > 0 ? 'bg-[#ef4f5e]/15 border border-[#ef4f5e]/30 text-[#ef4f5e]' : 'bg-[#29c081]/15 border border-[#29c081]/30 text-[#29c081]'}`}>
+              {conteos.pendientes > 0 ? `${conteos.pendientes} activa(s)` : '0 activas'}
             </span>
           </div>
 
           <div className="space-y-3 text-xs">
-            <div className="rounded-xl border border-[#ef4f5e]/30 bg-[#ef4f5e]/10 p-3">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-[#ef4f5e]">Turno sin cubrir</span>
-                <span className="text-[10px] text-slate-400">Hoy</span>
+            {conteos.pendientes > 0 ? (
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-amber-400">Permisos pendientes</span>
+                  <span className="text-[10px] text-slate-400">Hoy</span>
+                </div>
+                <p className="mt-1 text-slate-300">Hay {conteos.pendientes} solicitud(es) de permiso/descanso por revisar.</p>
               </div>
-              <p className="mt-1 text-slate-300">Puesto: Torre Norte – 20:00 a 08:00 (Falta relevo).</p>
-            </div>
-
-            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-amber-400">Descanso por vencer</span>
-                <span className="text-[10px] text-slate-400">Hoy</span>
-              </div>
-              <p className="mt-1 text-slate-300">4 escoltas completan ciclo continuo de 6 días de guardia.</p>
-            </div>
-
-            <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-3">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-blue-400">Nómina quincenal pendiente</span>
-                <span className="text-[10px] text-slate-400">Mañana</span>
-              </div>
-              <p className="mt-1 text-slate-300">Autorizar pago de Quincena activa antes de las 18:00.</p>
-            </div>
+            ) : (
+              <p className="text-xs text-slate-400 py-8 text-center">
+                No hay alertas operativas pendientes. El sistema está al día.
+              </p>
+            )}
           </div>
         </Card>
       </div>
@@ -650,61 +619,67 @@ export default function Dashboard() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-[#333944] text-slate-400">
-                <th className="py-2.5 px-3 font-bold">Personal / Escolta</th>
-                <th className="py-2.5 px-2 text-center font-bold">Lun</th>
-                <th className="py-2.5 px-2 text-center font-bold">Mar</th>
-                <th className="py-2.5 px-2 text-center font-bold">Mié</th>
-                <th className="py-2.5 px-2 text-center font-bold">Jue</th>
-                <th className="py-2.5 px-2 text-center font-bold">Vie</th>
-                <th className="py-2.5 px-2 text-center font-bold">Sáb</th>
-                <th className="py-2.5 px-2 text-center font-bold">Dom</th>
-                <th className="py-2.5 px-3 text-right font-bold">Módulo</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#333944]">
-              {listaMatriz.map((m, idx) => (
-                <tr key={m.id} className="hover:bg-[#23272e]/60 transition">
-                  <td className="py-3 px-3">
-                    <p className="font-bold text-slate-100">{m.nombre}</p>
-                    <p className="text-[10px] text-slate-400">{m.codigo} · {m.cargo}</p>
-                  </td>
-
-                  {['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'].map((dia, diaIdx) => {
-                    const clave = `${m.id}-${diaIdx}`;
-                    const valorPorDefecto = ['D', 'D', 'N', 'N', 'L', 'L', 'D'][(diaIdx + idx) % 7];
-                    const valor = turnosMatriz[clave] || valorPorDefecto;
-
-                    const colorClase =
-                      valor === 'D'
-                        ? 'bg-[#ff8a00] text-black font-extrabold shadow'
-                        : valor === 'N'
-                          ? 'bg-[#333944] text-white font-extrabold'
-                          : 'bg-slate-300 text-black font-extrabold';
-
-                    return (
-                      <td key={dia} className="py-2 px-1 text-center">
-                        <span
-                          className={`inline-flex items-center justify-center h-8 w-8 rounded-lg text-xs select-none ${colorClase}`}
-                          title={`${m.nombre} - ${dia}: ${valor === 'D' ? 'Diurno' : valor === 'N' ? 'Nocturno' : 'Libre'}`}
-                        >
-                          {valor}
-                        </span>
-                      </td>
-                    );
-                  })}
-
-                  <td className="py-3 px-3 text-right">
-                    <Link to="/distribucion" className="text-xs font-semibold text-[#ff8a00] hover:underline">
-                      Ajustar
-                    </Link>
-                  </td>
+          {listaMatriz.length === 0 ? (
+            <div className="py-10 text-center text-xs text-slate-400">
+              No hay personal registrado en el sistema. Registra personal en el módulo correspondiente para ver la matriz de turnos.
+            </div>
+          ) : (
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-[#333944] text-slate-400">
+                  <th className="py-2.5 px-3 font-bold">Personal / Escolta</th>
+                  <th className="py-2.5 px-2 text-center font-bold">Lun</th>
+                  <th className="py-2.5 px-2 text-center font-bold">Mar</th>
+                  <th className="py-2.5 px-2 text-center font-bold">Mié</th>
+                  <th className="py-2.5 px-2 text-center font-bold">Jue</th>
+                  <th className="py-2.5 px-2 text-center font-bold">Vie</th>
+                  <th className="py-2.5 px-2 text-center font-bold">Sáb</th>
+                  <th className="py-2.5 px-2 text-center font-bold">Dom</th>
+                  <th className="py-2.5 px-3 text-right font-bold">Módulo</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-[#333944]">
+                {listaMatriz.map((m, idx) => (
+                  <tr key={m.id} className="hover:bg-[#23272e]/60 transition">
+                    <td className="py-3 px-3">
+                      <p className="font-bold text-slate-100">{m.nombre}</p>
+                      <p className="text-[10px] text-slate-400">{m.codigo} · {m.cargo}</p>
+                    </td>
+
+                    {['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'].map((dia, diaIdx) => {
+                      const clave = `${m.id}-${diaIdx}`;
+                      const valorPorDefecto = ['D', 'D', 'N', 'N', 'L', 'L', 'D'][(diaIdx + idx) % 7];
+                      const valor = turnosMatriz[clave] || valorPorDefecto;
+
+                      const colorClase =
+                        valor === 'D'
+                          ? 'bg-[#ff8a00] text-black font-extrabold shadow'
+                          : valor === 'N'
+                            ? 'bg-[#333944] text-white font-extrabold'
+                            : 'bg-slate-300 text-black font-extrabold';
+
+                      return (
+                        <td key={dia} className="py-2 px-1 text-center">
+                          <span
+                            className={`inline-flex items-center justify-center h-8 w-8 rounded-lg text-xs select-none ${colorClase}`}
+                            title={`${m.nombre} - ${dia}: ${valor === 'D' ? 'Diurno' : valor === 'N' ? 'Nocturno' : 'Libre'}`}
+                          >
+                            {valor}
+                          </span>
+                        </td>
+                      );
+                    })}
+
+                    <td className="py-3 px-3 text-right">
+                      <Link to="/distribucion" className="text-xs font-semibold text-[#ff8a00] hover:underline">
+                        Ajustar
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </Card>
 
@@ -723,20 +698,26 @@ export default function Dashboard() {
           </div>
 
           <div className="space-y-2.5 text-xs">
-            {PROXIMOS_DESCANSOS_BASE.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between rounded-xl border border-[#333944] bg-[#1c1f24] p-3 transition hover:bg-[#2b3038]"
-              >
-                <div>
-                  <p className="font-bold text-slate-100">{item.nombre}</p>
-                  <p className="text-[11px] text-slate-400">{item.puesto} · {item.dias} días libres</p>
+            {proximosDescansos.length === 0 ? (
+              <p className="text-xs text-slate-400 py-8 text-center">
+                No hay descansos o permisos programados.
+              </p>
+            ) : (
+              proximosDescansos.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between rounded-xl border border-[#333944] bg-[#1c1f24] p-3 transition hover:bg-[#2b3038]"
+                >
+                  <div>
+                    <p className="font-bold text-slate-100">{item.motivo || 'Permiso/Descanso'}</p>
+                    <p className="text-[11px] text-slate-400">{item.dias || 1} día(s)</p>
+                  </div>
+                  <span className="rounded-lg bg-blue-500/15 border border-blue-500/30 px-2 py-1 font-mono font-bold text-blue-400">
+                    {item.fecha_inicio}
+                  </span>
                 </div>
-                <span className="rounded-lg bg-blue-500/15 border border-blue-500/30 px-2 py-1 font-mono font-bold text-blue-400">
-                  {item.fecha}
-                </span>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </Card>
 
@@ -754,30 +735,22 @@ export default function Dashboard() {
 
           <div className="space-y-2 text-xs">
             <div className="flex justify-between py-1.5 border-b border-[#333944]/60">
-              <span className="text-slate-400">Total Empleados:</span>
-              <span className="font-bold text-slate-100">86</span>
+              <span className="text-slate-400">Personal en Nómina:</span>
+              <span className="font-bold text-slate-100">{resumen?.periodo_abierto ? totalPersonal : 0}</span>
             </div>
             <div className="flex justify-between py-1.5 border-b border-[#333944]/60">
-              <span className="text-slate-400">Horas Normales:</span>
-              <span className="font-bold text-slate-100">7,820 hrs</span>
-            </div>
-            <div className="flex justify-between py-1.5 border-b border-[#333944]/60">
-              <span className="text-slate-400">Horas Extras Operativas:</span>
-              <span className="font-bold text-slate-100">340 hrs</span>
-            </div>
-            <div className="flex justify-between py-1.5 border-b border-[#333944]/60">
-              <span className="text-slate-400">Bonificaciones Nocturnas:</span>
-              <span className="font-bold text-emerald-400">+$ 6,500.00</span>
-            </div>
-            <div className="flex justify-between py-1.5 border-b border-[#333944]/60">
-              <span className="text-slate-400">Deducciones / Préstamos:</span>
-              <span className="font-bold text-rose-400">-$ 2,340.00</span>
+              <span className="text-slate-400">Estado del Período:</span>
+              <span className="font-bold text-emerald-400">{resumen?.periodo_abierto ? 'Abierto / En cálculo' : 'Sin período abierto'}</span>
             </div>
 
             <div className="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-center">
-              <span className="text-xs font-bold uppercase text-slate-300">Total a Pagar (Quincena)</span>
-              <p className="text-2xl font-black text-emerald-400 mt-0.5">$ 128,540.00</p>
-              <p className="text-xs text-oro mt-0.5 font-medium">Bs. 452.840,00</p>
+              <span className="text-xs font-bold uppercase text-slate-300">Total a Pagar (Período)</span>
+              <p className="text-2xl font-black text-emerald-400 mt-0.5">
+                ${Number(resumen?.total_nomina_periodo || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+              <p className="text-xs text-oro mt-0.5 font-medium">
+                {resumen?.periodo_abierto?.nombre || 'Ningún período de nómina activo'}
+              </p>
             </div>
           </div>
         </Card>
@@ -819,20 +792,9 @@ export default function Dashboard() {
               })}
             </ul>
           ) : (
-            <div className="space-y-2.5 text-xs">
-              <div className="rounded-xl border border-[#333944] bg-[#1c1f24] p-2.5">
-                <p className="font-semibold text-slate-200">Turno asignado: Torre Este – Turno B</p>
-                <p className="text-[10px] text-slate-400">Hoy, 10:24</p>
-              </div>
-              <div className="rounded-xl border border-[#333944] bg-[#1c1f24] p-2.5">
-                <p className="font-semibold text-slate-200">Descanso registrado: Carlos Mendoza</p>
-                <p className="text-[10px] text-slate-400">Hoy, 09:47</p>
-              </div>
-              <div className="rounded-xl border border-[#333944] bg-[#1c1f24] p-2.5">
-                <p className="font-semibold text-slate-200">Nómina quincenal autorizada</p>
-                <p className="text-[10px] text-slate-400">Hoy, 08:30</p>
-              </div>
-            </div>
+            <p className="text-xs text-slate-400 py-8 text-center">
+              Sin actividad reciente registrada.
+            </p>
           )}
         </Card>
       </div>

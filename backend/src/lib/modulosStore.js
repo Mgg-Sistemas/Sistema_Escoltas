@@ -27,10 +27,7 @@ const SEED_DATA = {
   choferes_viajes: [],
   choferes_viaticos: [],
   choferes_pagos: [],
-  choferes_flota: [
-    { id: '1', placa: 'AB123CD', modelo: 'Toyota Hilux 4x4', color: 'Negro', estado: 'activo', ano: 2023, tipo: 'Camioneta Escolta' },
-    { id: '2', placa: 'EF456GH', modelo: 'Toyota Fortuner Blindada', color: 'Gris Plomo', estado: 'activo', ano: 2024, tipo: 'Vehículo Blindado' },
-  ],
+  choferes_flota: [],
   custom_roles: [],
   autorizados: [],
 };
