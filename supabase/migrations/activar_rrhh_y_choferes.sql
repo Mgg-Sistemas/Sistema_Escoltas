@@ -7,6 +7,29 @@
 SET search_path = public, extensions;
 
 -- =====================================================================
+-- 0. AMPLIACIÓN DE RESTRICCIONES DE ROLES (COMPATIBILIDAD CON CHOFER Y RRHH)
+-- =====================================================================
+
+ALTER TABLE public.roles DROP CONSTRAINT IF EXISTS roles_nombre_check;
+ALTER TABLE public.roles ADD CONSTRAINT roles_nombre_check CHECK (nombre IN ('admin', 'supervisor', 'contador', 'escolta', 'chofer', 'rrhh'));
+
+ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
+ALTER TABLE public.profiles ADD CONSTRAINT profiles_role_check CHECK (role IN ('admin', 'supervisor', 'contador', 'escolta', 'chofer', 'rrhh'));
+
+-- Insertar roles faltantes en public.roles para satisfacer la clave foránea roles_permisos_role_fkey
+INSERT INTO public.roles (nombre, descripcion, activo, es_sistema)
+VALUES
+  ('admin', 'Administrador del sistema', true, true),
+  ('supervisor', 'Supervisor de Operaciones', true, true),
+  ('contador', 'Contabilidad y Finanzas', true, true),
+  ('escolta', 'Personal de Seguridad y Escolta', true, true),
+  ('chofer', 'Chofer y Conductor de Flota', true, true),
+  ('rrhh', 'Recursos Humanos y Fichas', true, true)
+ON CONFLICT (nombre) DO UPDATE SET
+  descripcion = EXCLUDED.descripcion,
+  activo = true;
+
+-- =====================================================================
 -- 1. ROLES Y PERMISOS (ESTRUCTURA GT)
 -- =====================================================================
 
