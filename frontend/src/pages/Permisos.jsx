@@ -11,6 +11,7 @@ import {
   Search,
   XCircle,
 } from 'lucide-react';
+import CalendarioDescansos from '../components/CalendarioDescansos.jsx';
 import DataTable from '../components/DataTable.jsx';
 import {
   Badge,
@@ -258,6 +259,8 @@ export default function Permisos() {
           <span className="text-slate-400 font-mono text-xs">{mostrarHistorialMobile ? '▲ Ocultar' : '▼ Expandir'}</span>
         </button>
       </div>
+
+      {!cargando || escoltas.length > 0 ? <CalendarioDescansos escoltas={escoltas} permisos={permisos} /> : null}
 
       {/* Contenedor completo: visible en desktop (md:block) o bajo demanda en móvil */}
       <div className={mostrarHistorialMobile ? 'space-y-6 block' : (telefono ? 'hidden' : 'hidden md:block') + ' space-y-6'}>
