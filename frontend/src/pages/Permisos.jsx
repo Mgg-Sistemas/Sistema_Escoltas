@@ -5,10 +5,8 @@ import { useRealtimeRecarga } from '../hooks/useRealtime.js';
 import {
   CalendarClock,
   CheckCircle2,
-  ExternalLink,
   FileCheck2,
   Filter,
-  Paperclip,
   Plus,
   Search,
   XCircle,
@@ -18,7 +16,6 @@ import {
   Badge,
   Button,
   Card,
-  HelpTip,
   Input,
   Modal,
   Select,
@@ -36,7 +33,6 @@ const FORM_VACIO = {
   fecha_inicio: '',
   fecha_fin: '',
   motivo: '',
-  comprobante_url: '',
 };
 
 const nombreTipo = (tipo) => tipo?.nombre || tipo?.descripcion || 'Tipo sin nombre';
@@ -146,7 +142,6 @@ export default function Permisos() {
       fecha_inicio: formulario.fecha_inicio,
       fecha_fin: formulario.fecha_fin || null,
       motivo: formulario.motivo.trim(),
-      comprobante_url: formulario.comprobante_url.trim() || null,
       estado: 'pendiente',
       solicitado_por: user?.id ?? null,
       notas_revision: null,
@@ -290,7 +285,6 @@ export default function Permisos() {
         <Card
           title="Solicitudes registradas"
           subtitle={`${filtrados.length} ${filtrados.length === 1 ? 'resultado' : 'resultados'}`}
-          actions={<HelpTip title="Comprobantes">Si el permiso requiere soporte (por ejemplo, un certificado médico), adjunta un enlace al comprobante al crear la solicitud.</HelpTip>}
         >
           <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="relative">
@@ -327,22 +321,12 @@ export default function Permisos() {
             emptyTitle="No hay solicitudes por aquí"
             emptyDescription={busqueda || filtroEstado !== 'todos'
               ? 'Cambia los filtros para ver otras solicitudes.'
-              : 'Cuando se solicite un permiso aparecerá aquí con su estado y comprobante.'}
+              : 'Cuando se solicite un permiso aparecerá aquí con su estado.'}
             emptyActionLabel={puedeSolicitar && !busqueda && filtroEstado === 'todos' ? 'Solicitar el primero' : undefined}
             onEmptyAction={puedeSolicitar ? abrirSolicitud : undefined}
             emptyIcon={FileCheck2}
             actions={(fila) => (
               <>
-                {fila.comprobante_url && (
-                  <a
-                    href={fila.comprobante_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-700 bg-slate-900 px-3 text-xs font-semibold text-slate-300 hover:bg-slate-800"
-                  >
-                    <Paperclip className="h-3.5 w-3.5" aria-hidden="true" /> Ver comprobante
-                  </a>
-                )}
                 {puedeRevisar && fila.estado === 'pendiente' && (
                   <>
                     <Button variant="success" size="sm" leftIcon={CheckCircle2} onClick={() => abrirRevision(fila, 'aprobado')}>Aprobar</Button>
@@ -410,12 +394,6 @@ export default function Permisos() {
             onChange={(evento) => cambiar('fecha_fin', evento.target.value)}
             help="Para un solo día puedes dejarla igual o vacía."
           />
-          <Input
-            label="Enlace del comprobante" type="url" value={formulario.comprobante_url} containerClassName="sm:col-span-2"
-            onChange={(evento) => cambiar('comprobante_url', evento.target.value)}
-            placeholder="https://…"
-            help="Opcional. Ejemplo: enlace a un certificado o justificativo."
-          />
           <Textarea
             label="Motivo" required value={formulario.motivo} error={errores.motivo} containerClassName="sm:col-span-2"
             onChange={(evento) => cambiar('motivo', evento.target.value)}
@@ -450,11 +428,6 @@ export default function Permisos() {
             <div className="rounded-xl border border-slate-800 bg-[#0e1217] p-3 text-sm text-slate-300">
               <p><strong>Periodo:</strong> {formatearFecha(revision.permiso.fecha_inicio)} {revision.permiso.fecha_fin ? `→ ${formatearFecha(revision.permiso.fecha_fin)}` : ''}</p>
               <p className="mt-1"><strong>Motivo:</strong> {revision.permiso.motivo}</p>
-              {revision.permiso.comprobante_url && (
-                <a href={revision.permiso.comprobante_url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 font-semibold text-brand-400 hover:underline">
-                  <ExternalLink className="h-4 w-4" aria-hidden="true" /> Abrir comprobante
-                </a>
-              )}
             </div>
             <Textarea
               label="Notas de revisión"
