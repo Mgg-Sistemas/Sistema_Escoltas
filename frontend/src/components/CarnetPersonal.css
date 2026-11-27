@@ -1,0 +1,251 @@
+.carnet-preview {
+  display: flex;
+  justify-content: safe center;
+  overflow-x: auto;
+  padding: 12px 0;
+}
+
+.carnet-tarjeta {
+  position: relative;
+  isolation: isolate;
+  flex: 0 0 320px;
+  width: 320px;
+  height: 507px;
+  overflow: hidden;
+  border: 2px solid #a6adb7;
+  border-radius: 22px;
+  background: linear-gradient(150deg, #373e45, #090b0d 34%, #171c21 69%, #050505);
+  box-shadow: 0 12px 32px #0007;
+  color: #fff;
+  font-family: Arial, sans-serif;
+}
+
+.carnet-banda {
+  position: absolute;
+  z-index: -1;
+  width: 180px;
+  height: 25px;
+  border-block: 1px solid #ffe381;
+  background: linear-gradient(100deg, #963100, #ff6600 32%, #ffda51 73%, #e45a00);
+  box-shadow: 0 6px #0a0c0e, 0 10px #85909a, 0 12px #ced2d7;
+  transform: rotate(-43deg);
+}
+
+.carnet-banda--superior {
+  top: 35px;
+  left: -75px;
+}
+
+.carnet-banda--inferior {
+  right: -56px;
+  bottom: 23px;
+  transform: rotate(-37deg);
+}
+
+.carnet-marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 124px;
+  padding: 24px 20px 6px;
+}
+
+.carnet-marca img {
+  width: 73px;
+  height: 73px;
+  object-fit: contain;
+}
+
+.carnet-marca strong,
+.carnet-marca span {
+  display: block;
+  color: #f2f2f2;
+  font-style: italic;
+  white-space: nowrap;
+}
+
+.carnet-marca strong {
+  color: #e2e6eb;
+  font-size: 31px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.7px;
+  text-shadow: 0 2px #717b86;
+}
+
+.carnet-marca span {
+  margin-top: 5px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.65px;
+}
+
+.carnet-frente {
+  padding: 8px 22px 0;
+}
+
+.carnet-identificacion {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 94px;
+  gap: 10px;
+  align-items: center;
+}
+
+.carnet-foto {
+  display: grid;
+  place-items: center;
+  height: 196px;
+  overflow: hidden;
+  border: 3px solid #ff9600;
+  border-radius: 19px;
+  background: linear-gradient(150deg, #f2f5f8, #acb6c3);
+  color: #343e49;
+}
+
+.carnet-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.carnet-foto svg {
+  width: 50px;
+  height: 50px;
+}
+
+.carnet-codigos {
+  display: grid;
+  gap: 9px;
+  text-align: center;
+}
+
+.carnet-qr {
+  overflow: hidden;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.carnet-qr img {
+  display: block;
+  width: 100%;
+}
+
+.carnet-codigos strong {
+  padding: 4px 3px;
+  border: 1px solid #ffb800;
+  border-radius: 5px;
+  background: linear-gradient(105deg, #ffb800, #cc4400);
+  color: #16110a;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.carnet-identidad {
+  display: grid;
+  align-content: center;
+  min-height: 93px;
+  padding: 6px 0;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.carnet-identidad strong {
+  font-size: 21px;
+  line-height: 1.04;
+  text-transform: uppercase;
+}
+
+.carnet-identidad span {
+  margin-top: 5px;
+  font-size: 13px;
+}
+
+.carnet-cedula {
+  padding: 7px;
+  border-block: 1px solid #f2f2f2;
+  background: linear-gradient(100deg, #78818c, #ebeff4 52%, #838c97);
+  color: #101318;
+  font-size: 17px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.carnet-tarjeta--reverso .carnet-marca {
+  height: 129px;
+  border-bottom: 4px solid #ff9400;
+}
+
+.carnet-reverso {
+  position: relative;
+  height: 343px;
+  padding: 19px 23px;
+  border-radius: 0 0 42% 8% / 0 0 10% 3%;
+  background: linear-gradient(130deg, #c7ced8, #f2f4f7 58%, #c9d0d9);
+  color: #12161b;
+}
+
+.carnet-marca-agua {
+  position: absolute;
+  top: 40px;
+  right: 10px;
+  width: 134px;
+  opacity: 0.13;
+}
+
+.carnet-datos,
+.carnet-reverso p,
+.carnet-codigo-reverso {
+  position: relative;
+}
+
+.carnet-datos {
+  display: grid;
+  gap: 10px;
+  min-height: 159px;
+  margin: 0;
+}
+
+.carnet-datos > div {
+  display: grid;
+  grid-template-columns: 25px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+
+.carnet-datos svg {
+  width: 24px;
+  height: 24px;
+}
+
+.carnet-datos dt {
+  font-size: 11px;
+  line-height: 1.15;
+}
+
+.carnet-datos dd {
+  margin: 2px 0 0;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.13;
+  overflow-wrap: anywhere;
+}
+
+.carnet-reverso p {
+  margin: 8px 0 12px;
+  padding-top: 12px;
+  border-top: 2px solid #e76a00;
+  color: #29313b;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.carnet-codigo-reverso {
+  padding: 6px;
+  border: 1px solid #9da8b4;
+  background: #f2f4f7;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
