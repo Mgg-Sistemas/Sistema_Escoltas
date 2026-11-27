@@ -214,7 +214,7 @@ router.post(
     if (envioError) {
       throw new ApiError(
         502,
-        'No se pudo enviar el correo. Revisa la configuración de SMTP en Supabase.',
+        'No se pudo enviar el correo. Contacta al administrador del sistema.',
         'CORREO_NO_ENVIADO',
       );
     }

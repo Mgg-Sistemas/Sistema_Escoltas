@@ -156,7 +156,7 @@ export default function Escoltas() {
         setGrados(resultadoGrados.value || []);
       }
     } catch (err) {
-      toast.error('No se pudo cargar la lista de personal desde Supabase', err.message);
+      toast.error('No se pudo cargar la lista de personal', err.message);
     } finally {
       setCargando(false);
     }
@@ -277,10 +277,10 @@ export default function Escoltas() {
       setGuardando(true);
       if (editando) {
         await actualizar(TABLAS.escoltas, editando.id, valores);
-        toast.success('Ficha actualizada correctamente en Supabase');
+        toast.success('Ficha actualizada');
       } else {
         await crear(TABLAS.escoltas, valores);
-        toast.success('Personal registrado con éxito en Supabase');
+        toast.success('Personal registrado');
       }
 
       setModalAbierto(false);
@@ -303,7 +303,7 @@ export default function Escoltas() {
         notas: notasConPapelera,
       });
       toast.success(
-        'Movido a la papelera en Supabase',
+        'Movido a la papelera',
         `${nombreCompleto(registro)} fue enviado a la papelera. Su historial laboral se conserva.`,
       );
       setPerfilFicha(null);
@@ -325,7 +325,7 @@ export default function Escoltas() {
       await actualizar(TABLAS.escoltas, registro.id, {
         notas: notasSinPapelera,
       });
-      toast.success('Registro restaurado en Supabase', `${nombreCompleto(registro)} vuelve a estar disponible.`);
+      toast.success('Registro restaurado', `${nombreCompleto(registro)} vuelve a estar disponible.`);
       await cargar();
     } catch (error) {
       toast.error('No se pudo restaurar el registro', error.message);
@@ -432,7 +432,7 @@ export default function Escoltas() {
             </div>
           </div>
           <p className="mt-2 text-sm text-slate-400 max-w-2xl">
-            Expediente digital, emisión de carnet institucional con QR escaneable y código de barras, ficha oficial en PDF y gestión conectada a Supabase.
+            Expediente digital, emisión de carnet institucional con QR escaneable y código de barras y ficha oficial en PDF.
           </p>
         </div>
 
@@ -544,7 +544,7 @@ export default function Escoltas() {
         subtitle={`${filtrados.length} integrantes registrados en base de datos`}
         actions={
           <HelpTip title="Gestión de Personal">
-            Información sincronizada en tiempo real con Supabase. Haz clic en cualquier fila para abrir el expediente técnico, emitir el carnet o imprimir la ficha oficial.
+            Selecciona una fila para abrir la ficha, emitir el carnet o imprimir el expediente.
           </HelpTip>
         }
       >
@@ -710,7 +710,7 @@ export default function Escoltas() {
         open={modalAbierto}
         onClose={() => setModalAbierto(false)}
         title={editando ? 'Editar Ficha de Personal' : 'Registrar Nuevo Integrante'}
-        description="Completa la información del personal en Supabase."
+        description="Completa la información del personal."
         size="lg"
         footer={
           <div className="flex flex-col gap-2 sm:flex-row-reverse">
@@ -833,7 +833,7 @@ export default function Escoltas() {
         title="¿Enviar a la papelera?"
         description={
           confirmarEliminar
-            ? `Se moverá la ficha de ${nombreCompleto(confirmarEliminar)} a la papelera en Supabase. Podrás restaurarla en cualquier momento.`
+            ? `Se moverá la ficha de ${nombreCompleto(confirmarEliminar)} a la papelera. Podrás restaurarla en cualquier momento.`
             : ''
         }
         confirmLabel="Sí, mover a papelera"

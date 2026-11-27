@@ -138,8 +138,7 @@ export default function Login() {
               <div className="mt-5 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-950/40 p-3 text-sm text-amber-200">
                 <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                 <p>
-                  Falta configurar <strong>VITE_SUPABASE_ANON_KEY</strong>. Copia <code>.env.example</code>{' '}
-                  a <code>.env</code> y reinicia el servidor para poder ingresar.
+                  El acceso no está disponible en este momento. Contacta al administrador del sistema.
                 </p>
               </div>
             )}
