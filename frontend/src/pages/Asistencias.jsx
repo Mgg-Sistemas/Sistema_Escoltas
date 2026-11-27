@@ -1,3 +1,4 @@
+import { useOutletContext } from 'react-router-dom';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRealtimeRecarga } from '../hooks/useRealtime.js';
 import {
@@ -52,6 +53,7 @@ function horaActual() {
 }
 
 export default function Asistencias() {
+  const telefono = useOutletContext()?.telefono === true;
   const { role, user } = useAuth();
   const toast = useToast();
   const puedeEditar = ['admin', 'supervisor'].includes(role);
@@ -244,7 +246,7 @@ export default function Asistencias() {
   return (
     <div className="space-y-6">
       {/* Vista resumida de acción rápida para teléfonos (Acción Principal Primero) */}
-      <div className="block md:hidden space-y-3">
+      <div className={telefono ? 'space-y-3' : 'space-y-3 md:hidden'}>
         <div className="rounded-2xl border border-slate-800 bg-[#161a22] p-4 shadow-md space-y-3">
           <div className="flex items-center justify-between border-b border-slate-800 pb-2">
             <div className="flex items-center gap-2">
@@ -280,7 +282,7 @@ export default function Asistencias() {
       </div>
 
       {/* Contenedor completo: siempre visible en desktop (md:block), bajo demanda en teléfono */}
-      <div className={mostrarHistorialMobile ? 'space-y-6 block' : 'space-y-6 hidden md:block'}>
+      <div className={mostrarHistorialMobile ? 'space-y-6 block' : (telefono ? 'hidden' : 'hidden md:block') + ' space-y-6'}>
         <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-100 sm:text-3xl">Asistencias</h1>

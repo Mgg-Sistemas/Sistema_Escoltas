@@ -2,23 +2,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, ShieldCheck } from 'lucide-react';
 
-const ETIQUETAS = [
-  ['/distribucion', 'Turnos'],
-  ['/asistencias', 'Asistencia'],
-  ['/permisos', 'Permisos'],
-  ['/escoltas', 'Personal'],
-  ['/nomina', 'Nómina'],
-];
-
 const claseAcceso =
   'flex min-h-24 w-full flex-col items-start justify-center gap-2 rounded-2xl border border-slate-800 bg-[#161a22] p-4 text-left text-sm font-bold text-white hover:border-[#ff8a00] hover:bg-[#1c222b] transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#ff8a00] shadow-md';
 
-export default function VistaTelefono({ items = [], alNavegar, alAbrirMenu }) {
-  // Filtra los accesos basándose estrictamente en los módulos autorizados para el rol actual
-  const accesos = ETIQUETAS.flatMap(([ruta, etiqueta]) => {
-    const item = items.find(({ to }) => to === ruta);
-    return item ? [{ ...item, etiqueta }] : [];
-  });
+export default function VistaTelefono({ accesos, alNavegar, alAbrirMenu }) {
 
   return (
     <section className="mx-auto w-full max-w-md rounded-3xl border border-slate-800 bg-[#0e1217] p-5 sm:p-6 shadow-2xl select-none" aria-label="Inicio para teléfono">
@@ -41,7 +28,7 @@ export default function VistaTelefono({ items = [], alNavegar, alAbrirMenu }) {
       {/* Grid oficial de 6 botones limpios (accesos permitidos + Más) */}
       <nav aria-label="Accesos principales" className="grid grid-cols-2 gap-3.5">
         {accesos.map(({ to, etiqueta, icon: Icono }) => (
-          <Link key={to} to={to} onClick={alNavegar} className={claseAcceso}>
+          <Link key={to} to={to + "?telefono=1"} onClick={alNavegar} className={claseAcceso}>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800 border border-slate-700/60 text-[#ff8a00]">
               <Icono className="h-5 w-5" aria-hidden="true" />
             </div>
@@ -49,14 +36,14 @@ export default function VistaTelefono({ items = [], alNavegar, alAbrirMenu }) {
           </Link>
         ))}
 
-        {/* Botón 6: Más (abre el menú lateral completo con el resto de opciones permitidas) */}
-        <button type="button" onClick={alAbrirMenu} className={claseAcceso}>
+        {alAbrirMenu && <button type="button" onClick={alAbrirMenu} className={claseAcceso}>
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800 border border-slate-700/60 text-[#ffd54a]">
             <Menu className="h-5 w-5" aria-hidden="true" />
           </div>
           <span className="text-sm font-black text-slate-100">Más</span>
-        </button>
+        </button>}
       </nav>
+      {!accesos.length && <p className="mt-4 text-sm text-slate-300">Tu rol no tiene pantallas de teléfono disponibles.</p>}
     </section>
   );
 }

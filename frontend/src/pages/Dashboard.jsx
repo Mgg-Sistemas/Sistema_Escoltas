@@ -213,7 +213,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-4">
             <div className="relative">
               <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-[#2b3038] border border-[#ff8a00]/40 text-xl font-bold text-[#ff8a00] shadow">
-                {profile?.nombres?.[0] || user?.email?.[0]?.toUpperCase() || 'E'}
+                {profile?.nombres?.[0] || profile?.usuario?.[0]?.toUpperCase() || 'E'}
               </div>
               <span className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-[#23272e] ${disponibilidadPersonal ? 'bg-[#29c081]' : 'bg-[#ef4f5e]'}`} />
             </div>

@@ -1,3 +1,4 @@
+import { useOutletContext } from 'react-router-dom';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRealtimeRecarga } from '../hooks/useRealtime.js';
 import {
@@ -70,6 +71,7 @@ const FORM_PAGO = {
 };
 
 export default function Nomina() {
+  const telefono = useOutletContext()?.telefono === true;
   const { role } = useAuth();
   const toast = useToast();
   const puedeEditar = ['admin', 'contador'].includes(role);
@@ -475,7 +477,7 @@ export default function Nomina() {
       </header>
 
       {/* Vista resumida de acción rápida para teléfonos */}
-      <div className="block md:hidden space-y-3">
+      <div className={telefono ? 'space-y-3' : 'space-y-3 md:hidden'}>
         <div className="rounded-2xl border border-slate-800 bg-[#161a22] p-4 shadow-md space-y-3">
           <div className="flex items-center justify-between border-b border-slate-800 pb-2">
             <div className="flex items-center gap-2">
@@ -521,7 +523,7 @@ export default function Nomina() {
       </div>
 
       {/* Contenedor completo: visible en desktop (md:block) o bajo demanda en móvil */}
-      <div className={mostrarDesgloseMobile ? 'space-y-6 block' : 'space-y-6 hidden md:block'}>
+      <div className={mostrarDesgloseMobile ? 'space-y-6 block' : (telefono ? 'hidden' : 'hidden md:block') + ' space-y-6'}>
         {/* Pestañas de Navegación del Módulo Financiero */}
       <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl border border-slate-800 bg-[#0e1217]">
         {PESTANAS_MODULO.map((p) => {

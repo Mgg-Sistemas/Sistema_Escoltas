@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   Briefcase,
   CalendarCheck2,
@@ -26,8 +26,9 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useRealtime } from '../context/RealtimeContext.jsx';
 import { Badge, Button } from './ui.jsx';
 import { iniciales } from '../lib/data.js';
-import { api } from '../lib/api.js';
+import { api, apiFetch } from '../lib/api.js';
 import VistaTelefono from './VistaTelefono.jsx';
+import { resolverVistasTelefono } from '../lib/vistasTelefono.js';
 
 const SECCIONES_NAVEGACION = [
   {
@@ -115,7 +116,7 @@ function EnlaceNav({ item, alNavegar, barra = false }) {
 }
 
 export default function Layout() {
-  const { user, profile, roleLabel, signOut, puede } = useAuth();
+  const { user, profile, role, roleLabel, signOut, puede } = useAuth();
   const { conectado, estado: estadoTiempoReal } = useRealtime();
   const location = useLocation();
   const navigate = useNavigate();
@@ -158,6 +159,21 @@ export default function Layout() {
     setDrawerAbierto(false);
   }, [location.pathname]);
 
+  const [configTelefono, setConfigTelefono] = useState(null);
+
+  useEffect(() => {
+    const consulta = new AbortController();
+    if (!user?.id) return;
+    apiFetch('/me', { senal: consulta.signal })
+      .then((datos) => { if (!consulta.signal.aborted) setConfigTelefono({ id: user.id, datos }); })
+      .catch(() => { if (!consulta.signal.aborted) setConfigTelefono({ id: user.id, error: true }); });
+    return () => consulta.abort();
+  }, [user?.id, role]);
+
+  const configuracion = configTelefono?.id === user?.id ? configTelefono?.datos : null;
+  const accesosTelefono = resolverVistasTelefono(todosLosItems, configuracion, role);
+  const soloTelefono = configuracion?.solo_telefono === true;
+  const solicitaTelefono = new URLSearchParams(location.search).get('telefono') === '1';
   const esInicio = location.pathname === '/';
   const segmentos = location.pathname.split('/').filter(Boolean);
   const migas = [
@@ -186,6 +202,29 @@ export default function Layout() {
     todosLosItems.find((item) => item.to === '/distribucion') || todosLosItems.find((item) => item.to === '/rrhh'),
     todosLosItems.find((item) => item.to === '/nomina') || todosLosItems.find((item) => item.to === '/usuarios'),
   ].filter(Boolean);
+
+  if (soloTelefono || solicitaTelefono) {
+    if (!configuracion && !configTelefono?.error) return <p className="p-6">Cargando pantallas…</p>;
+    if (configTelefono?.error) return <p className="p-6" role="alert">No se pudo cargar la configuración de teléfono.</p>;
+
+    if (esInicio && accesosTelefono.length === 1) {
+      return <Navigate replace to={accesosTelefono[0].to + '?telefono=1'} />;
+    }
+    if (!esInicio && !accesosTelefono.some(({ to }) => to === location.pathname)) {
+      return <Navigate replace to="/?telefono=1" />;
+    }
+    return (
+      <main className="mx-auto min-h-screen w-full max-w-2xl space-y-4 p-4">
+        <div className="flex items-center justify-between gap-3">
+          {!esInicio && (accesosTelefono.length > 1 || !soloTelefono) && (
+            <Link className="p-2 text-brand-400" to={soloTelefono ? '/?telefono=1' : '/'}>Volver al inicio</Link>
+          )}
+          <button type="button" className="ml-auto p-2 text-slate-300" onClick={cerrarSesion} disabled={cerrandoSesion}>Cerrar sesión</button>
+        </div>
+        {esInicio ? <VistaTelefono accesos={accesosTelefono} /> : <Outlet context={{ telefono: true }} />}
+      </main>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#1c1f24] text-[#e7ecf3]">
@@ -289,7 +328,7 @@ export default function Layout() {
             <div className="hidden items-center gap-2 border-l border-[#333944] pl-3 md:flex">
               <div className="text-right">
                 <p className="max-w-[160px] truncate text-sm font-semibold text-[#e7ecf3]">
-                  {profile?.full_name || profile?.usuario || user?.email || 'Usuario'}
+                  {profile?.full_name || profile?.usuario || 'Usuario'}
                 </p>
                 <p className="text-xs text-[#9aa6b5]">{roleLabel}</p>
               </div>
@@ -339,7 +378,6 @@ export default function Layout() {
                 <span className="h-1.5 w-1.5 rounded-full bg-[#29c081] animate-ping" /> Activo
               </span>
             </div>
-            <p className="mt-2 truncate text-xs text-[#9aa6b5] font-mono">{user?.email}</p>
           </div>
         </div>
       </aside>
@@ -392,7 +430,7 @@ export default function Layout() {
                   {iniciales(profile) || 'US'}
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-[#e7ecf3]">{profile?.full_name || user?.email}</p>
+                  <p className="truncate text-sm font-semibold text-[#e7ecf3]">{profile?.full_name || profile?.usuario || 'Usuario'}</p>
                   <p className="text-xs text-[#9aa6b5]">{roleLabel}</p>
                 </div>
               </div>
@@ -408,7 +446,7 @@ export default function Layout() {
       <main className="mx-auto max-w-[1600px] px-4 pb-32 pt-6 sm:px-6 md:ml-64 md:pb-12 md:pt-8 bg-[#1c1f24] min-h-[calc(100vh-64px)]">
         {esInicio && (
           <div className="md:hidden">
-            <VistaTelefono items={todosLosItems} alAbrirMenu={() => setDrawerAbierto(true)} />
+            <VistaTelefono accesos={accesosTelefono} alAbrirMenu={() => setDrawerAbierto(true)} />
           </div>
         )}
         <div className={esInicio ? "hidden md:block" : undefined}>
@@ -468,7 +506,7 @@ export default function Layout() {
               <X className="h-5 w-5" />
             </button>
             <VistaTelefono
-              items={todosLosItems}
+              accesos={accesosTelefono}
               alNavegar={() => setVistaMovilAbierta(false)}
               alAbrirMenu={() => {
                 setVistaMovilAbierta(false);

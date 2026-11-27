@@ -570,7 +570,7 @@ export default function Usuarios() {
                   autorizados.map((aut) => (
                     <tr key={aut.id} className="hover:bg-slate-800/40">
                       <td className="py-3 px-4 font-semibold text-slate-100">
-                        {aut.usuario?.full_name || aut.usuario?.nombre_completo || aut.usuario?.usuario || aut.usuario?.email || 'Usuario'}
+                        {aut.usuario?.full_name || aut.usuario?.nombre_completo || aut.usuario?.usuario || 'Usuario'}
                       </td>
                       <td className="py-3 px-4 uppercase font-mono font-bold text-brand-400">{aut.modulo}</td>
                       <td className="py-3 px-4 capitalize">{aut.accion}</td>
@@ -696,7 +696,6 @@ export default function Usuarios() {
             <p className="text-sm font-semibold">Copia y entrega estos datos de acceso al usuario:</p>
             <div className="font-mono text-sm space-y-1 bg-black/40 p-3 rounded-lg border border-amber-800/40">
               <div>Usuario: <strong className="text-white">@{credencial?.usuario}</strong></div>
-              <div>Correo: <strong className="text-white">{credencial?.email}</strong></div>
               <div>Contraseña temporal: <strong className="text-emerald-400">{credencial?.password_temporal}</strong></div>
             </div>
             <p className="text-xs text-amber-300">El sistema solicitará el cambio de contraseña al iniciar sesión por primera vez.</p>
