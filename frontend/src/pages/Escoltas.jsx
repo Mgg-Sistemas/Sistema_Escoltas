@@ -29,6 +29,8 @@ import {
 } from 'lucide-react';
 import DataTable from '../components/DataTable.jsx';
 import CarnetPersonal from '../components/CarnetPersonal.jsx';
+import SelectorFotoPersonal from '../components/SelectorFotoPersonal.jsx';
+import { subirFotoPersonal, useFotoPersonal } from '../lib/fotosPersonal.js';
 import PapeleraModal from '../components/PapeleraModal.jsx';
 import {
   Badge,
