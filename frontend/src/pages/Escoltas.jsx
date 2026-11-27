@@ -88,6 +88,31 @@ export default function Escoltas() {
   const [cargando, setCargando] = useState(true);
   const [busqueda, setBusqueda] = useState('');
   const [categoriaActiva, setCategoriaActiva] = useState('todos');
+  const [categoriasNuevas, setCategoriasNuevas] = useState([]);
+  const [agregandoCategoria, setAgregandoCategoria] = useState(false);
+  const [nombreCategoria, setNombreCategoria] = useState('');
+  const [guardandoCategoria, setGuardandoCategoria] = useState(false);
+  const categorias = useMemo(() => [
+    ...CATEGORIAS_PERSONAL,
+    ...categoriasNuevas.map((categoria) => ({ ...categoria, icon: Shield, countKey: categoria.id })),
+  ], [categoriasNuevas]);
+
+  const guardarCategoria = async () => {
+    if (!nombreCategoria.trim() || guardandoCategoria) return;
+    setGuardandoCategoria(true);
+    try {
+      const creada = await apiFetch('/escoltas/categorias', { method: 'POST', body: { nombre: nombreCategoria } });
+      setCategoriasNuevas((prev) => prev.some(({ id }) => id === creada.id) ? prev : [...prev, creada]);
+      setFormulario((prev) => ({ ...prev, categoria: creada.id }));
+      setNombreCategoria('');
+      setAgregandoCategoria(false);
+      toast.success('Categoría añadida.');
+    } catch (error) {
+      toast.error(error.message || 'No se pudo añadir la categoría.');
+    } finally {
+      setGuardandoCategoria(false);
+    }
+  };
   const [filtroEstado, setFiltroEstado] = useState('todos');
   const [pagina, setPagina] = useState(1);
 
@@ -106,9 +131,10 @@ export default function Escoltas() {
   const cargar = useCallback(async () => {
     setCargando(true);
     try {
-      const [resultadoEscoltas, resultadoGrados] = await Promise.allSettled([
+      const [resultadoEscoltas, resultadoGrados, resultadoCategorias] = await Promise.allSettled([
         listar(TABLAS.escoltas, { ordenarPor: 'nombres', ascendente: true }),
         listar(TABLAS.grados, { ordenarPor: 'nombre', ascendente: true }),
+        apiFetch('/escoltas/categorias'),
       ]);
 
       if (resultadoEscoltas.status === 'rejected') {
@@ -153,6 +179,9 @@ export default function Escoltas() {
       setPersonal(activos);
       setPapelera(enPapelera);
 
+      if (resultadoCategorias.status === 'fulfilled' && Array.isArray(resultadoCategorias.value)) {
+        setCategoriasNuevas(resultadoCategorias.value);
+      }
       if (resultadoGrados.status === 'fulfilled') {
         setGrados(resultadoGrados.value || []);
       }
@@ -179,7 +208,7 @@ export default function Escoltas() {
     const conteo = { todos: personal.length, escolta: 0, seguridad: 0, chofer: 0 };
     personal.forEach((p) => {
       const cat = p.categoria || 'escolta';
-      if (conteo[cat] !== undefined) conteo[cat]++;
+      if (cat !== 'todos') conteo[cat] = (Object.hasOwn(conteo, cat) ? conteo[cat] : 0) + 1;
     });
     return conteo;
   }, [personal]);
@@ -403,7 +432,7 @@ export default function Escoltas() {
           escolta: { label: 'ESCOLTA VIP', tone: 'naranja' },
           seguridad: { label: 'SEGURIDAD', tone: 'azul' },
           chofer: { label: 'CHOFER', tone: 'verde' },
-        }[cat] || { label: 'PERSONAL', tone: 'gris' };
+        }[cat] || { label: categorias.find(({ id }) => id === cat)?.label || cat, tone: 'gris' };
 
         return <Badge tone={config.tone}>{config.label}</Badge>;
       },
@@ -417,7 +446,7 @@ export default function Escoltas() {
   return (
     <div className="space-y-6">
       <ReporteModulo titulo="Personal" archivo="personal" columnas={["Código","Nombre","Categoría","Cargo","Estado"]}
-        filas={filtrados.map((r) => [r.codigo, nombreCompleto(r), r.categoria, r.cargo, r.estado])} indicadores={[["Activos", filtrados.filter((r) => r.estado === "activo").length]]} deshabilitado={cargando} />
+        filas={filtrados.map((r) => [r.codigo, nombreCompleto(r), categorias.find(({ id }) => id === r.categoria)?.label || r.categoria, r.cargo, r.estado])} indicadores={[["Activos", filtrados.filter((r) => r.estado === "activo").length]]} deshabilitado={cargando} />
       {/* Cabecera Principal con Identidad Corporativa */}
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-800 pb-5">
         <div>
@@ -517,7 +546,7 @@ export default function Escoltas() {
       <div className={mostrarDirectorioMobile ? 'space-y-6 block' : (telefono ? 'hidden' : 'hidden md:block') + ' space-y-6'}>
         {/* Pestañas de Selección de Categoría (Escoltas / Seguridad / Choferes) */}
       <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl border border-slate-800 bg-[#0e1217]">
-        {CATEGORIAS_PERSONAL.map((cat) => {
+        {categorias.map((cat) => {
           const Icono = cat.icon;
           const activa = categoriaActiva === cat.id;
           const cantidad = conteoPorCategoria[cat.countKey] || 0;
@@ -548,7 +577,7 @@ export default function Escoltas() {
 
       {/* Tarjeta de Lista con Filtros */}
       <Card
-        title={`Listado: ${CATEGORIAS_PERSONAL.find((c) => c.id === categoriaActiva)?.label || 'Personal'}`}
+        title={`Listado: ${categorias.find((c) => c.id === categoriaActiva)?.label || 'Personal'}`}
         subtitle={`${filtrados.length} integrantes registrados en base de datos`}
         actions={
           <HelpTip title="Gestión de Personal">
@@ -738,14 +767,11 @@ export default function Escoltas() {
               Categoría / Especialidad de Servicio *
             </label>
             <div className="grid grid-cols-3 gap-2">
-              {[
-                { id: 'escolta', label: 'Escolta VIP' },
-                { id: 'seguridad', label: 'Seguridad' },
-                { id: 'chofer', label: 'Chofer' },
-              ].map((opt) => (
+              {categorias.filter(({ id }) => id !== 'todos').map((opt) => (
                 <button
                   type="button"
                   key={opt.id}
+                  aria-pressed={formulario.categoria === opt.id}
                   onClick={() => {
                     cambiarCampo('categoria', opt.id);
                     if (opt.id === 'escolta') cambiarCampo('cargo', 'Escolta VIP / Custodia Directa');
@@ -762,6 +788,23 @@ export default function Escoltas() {
                 </button>
               ))}
             </div>
+            {role === 'admin' && (
+              <div className="mt-3">
+                {agregandoCategoria ? (
+                  <div className="flex flex-wrap items-end gap-2">
+                    <Input label="Nombre de la categoría" value={nombreCategoria} maxLength={60}
+                      containerClassName="flex-1 basis-48" onChange={(evento) => setNombreCategoria(evento.target.value)} />
+                    <Button type="button" size="sm" onClick={guardarCategoria}
+                      disabled={guardandoCategoria || !nombreCategoria.trim()}>
+                      {guardandoCategoria ? 'Guardando…' : 'Guardar categoría'}
+                    </Button>
+                    <Button type="button" size="sm" variant="outline" onClick={() => setAgregandoCategoria(false)}>Cancelar</Button>
+                  </div>
+                ) : (
+                  <Button type="button" size="sm" variant="outline" onClick={() => setAgregandoCategoria(true)}>Añadir categoría</Button>
+                )}
+              </div>
+            )}
           </div>
 
           <Input
@@ -815,7 +858,7 @@ export default function Escoltas() {
             onChange={(e) => cambiarCampo('direccion', e.target.value)} placeholder="Ciudad, Urbanización o Sector"
           />
           <Textarea
-            label="Notas Internas y Acreditaciones" maxLength={600} value={formulario.notas} containerClassName="sm:col-span-2"
+            label="Notas Internas y Acreditaciones" maxLength={550} value={formulario.notas} containerClassName="sm:col-span-2"
             onChange={(e) => cambiarCampo('notas', e.target.value)}
             placeholder="Cursos tácticos, manejo defensivo, porte de arma, etc."
           />

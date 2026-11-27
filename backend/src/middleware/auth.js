@@ -55,7 +55,8 @@ export const authenticate = asyncHandler(async (req, res, next) => {
   }
 
   // Los roles personalizados no heredan rutas privilegiadas de los roles del sistema.
-  if (!ROLES_BASE.includes(req.user.role) && !rutasPermitidas.includes(req.path)) {
+  const lecturaCategorias = req.method === 'GET' && req.path === '/escoltas/categorias';
+  if (!ROLES_BASE.includes(req.user.role) && !rutasPermitidas.includes(req.path) && !lecturaCategorias) {
     throw new ApiError(403, 'Este rol no tiene acceso a esta operación.', 'PROHIBIDO');
   }
 

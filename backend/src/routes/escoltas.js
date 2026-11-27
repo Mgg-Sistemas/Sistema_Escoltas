@@ -37,6 +37,44 @@ const routerCrud = crearRouterCrud({
 });
 
 const router = Router();
+const PREFIJO_CATEGORIA = 'personal.categoria.';
+const CATEGORIAS_RESERVADAS = new Set([
+  'todos', 'escolta', 'escolta-vip', 'seguridad', 'seguridad-y-vigilancia', 'chofer', 'choferes-de-seguridad',
+]);
+
+router.get('/categorias', asyncHandler(async (req, res) => {
+  const { data, error } = await supabase.from('ajustes_sistema')
+    .select('clave,valor').like('clave', PREFIJO_CATEGORIA + '%').order('valor');
+  if (error) throw mapSupabaseError(error, 'No fue posible consultar las categorías.');
+  return ok(res, (data ?? []).map(({ clave, valor }) => ({
+    id: clave.slice(PREFIJO_CATEGORIA.length), label: valor,
+  })));
+}));
+
+router.post('/categorias', requireRole('admin'), asyncHandler(async (req, res) => {
+  const nombre = typeof req.body?.nombre === 'string' ? req.body.nombre.trim().replace(/\s+/g, ' ') : '';
+  if (!nombre || nombre.length > 60 || !/^[\p{L}\p{M}0-9 /-]+$/u.test(nombre)) {
+    throw new ApiError(400, 'Escribe un nombre de hasta 60 caracteres para la categoría.', 'VALIDACION');
+  }
+  const id = nombre.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  if (!id) throw new ApiError(400, 'El nombre necesita al menos una letra o un número.', 'VALIDACION');
+  if (CATEGORIAS_RESERVADAS.has(id)) {
+    throw new ApiError(409, 'Ya existe una categoría con ese nombre.', 'CONFLICTO');
+  }
+  const { error } = await supabase.from('ajustes_sistema').insert({
+    clave: PREFIJO_CATEGORIA + id,
+    valor: nombre,
+    categoria: 'categorias_personal',
+    tipo: 'texto',
+    publico: false,
+    editable: false,
+    updated_by: req.user.id,
+  });
+  if (error?.code === '23505') throw new ApiError(409, 'Ya existe una categoría con ese nombre.', 'CONFLICTO');
+  if (error) throw mapSupabaseError(error, 'No fue posible crear la categoría.');
+  return res.status(201).json({ ok: true, data: { id, label: nombre } });
+}));
 
 // Endpoint seguro atómico para vaciado de papelera protegiendo historial en el backend
 router.post(
