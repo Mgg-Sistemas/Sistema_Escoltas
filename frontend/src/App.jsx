@@ -20,6 +20,8 @@ import Ajustes from './pages/Ajustes.jsx';
 import Ayuda from './pages/Ayuda.jsx';
 import Auditoria from './pages/Auditoria.jsx';
 import VerificarCarnet from './pages/VerificarCarnet.jsx';
+import Rrhh from './pages/Rrhh.jsx';
+import Choferes from './pages/Choferes.jsx';
 
 function PantallaCarga() {
   return (
@@ -104,7 +106,8 @@ export default function App() {
             <Route path="asistencias" element={<Asistencias />} />
             <Route path="nomina" element={<Nomina />} />
             <Route path="pagos" element={<Navigate to="/nomina" replace />} />
-            <Route path="rrhh" element={<Navigate to="/escoltas" replace />} />
+            <Route path="rrhh" element={<Rrhh />} />
+            <Route path="choferes" element={<Choferes />} />
             <Route path="usuarios" element={<Usuarios />} />
             <Route path="roles-permisos" element={<Navigate to="/usuarios?tab=roles" replace />} />
             <Route path="ajustes" element={<Ajustes />} />

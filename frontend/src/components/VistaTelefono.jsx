@@ -30,7 +30,7 @@ export default function VistaTelefono({ accesos, alNavegar, alAbrirMenu }) {
         {accesos.map(({ to, etiqueta, icon: Icono }) => (
           <Link key={to} to={to + "?telefono=1"} onClick={alNavegar} className={claseAcceso}>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800 border border-slate-700/60 text-[#ff8a00]">
-              <Icono className="h-5 w-5" aria-hidden="true" />
+              {Icono ? <Icono className="h-5 w-5" aria-hidden="true" /> : <ShieldCheck className="h-5 w-5" aria-hidden="true" />}
             </div>
             <span className="text-sm font-black text-slate-100">{etiqueta}</span>
           </Link>

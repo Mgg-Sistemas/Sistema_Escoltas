@@ -36,6 +36,7 @@ const SECCIONES_NAVEGACION = [
     items: [
       { to: '/', label: 'Dashboard', icon: LayoutDashboard, descripcion: 'Centro de control operativo', exacto: true },
       { to: '/escoltas', label: 'Personal', icon: UsersRound, descripcion: 'Expediente digital y fichas', modulo: 'escoltas' },
+      { to: '/choferes', label: 'Choferes y Flota', icon: Truck, descripcion: 'Conductores, viajes y unidades', modulo: 'choferes' },
       { to: '/distribucion', label: 'Turnos y Distribución', icon: CalendarRange, descripcion: 'Asignaciones y cobertura', modulo: 'distribucion' },
       { to: '/permisos', label: 'Descansos y Permisos', icon: ClipboardCheck, descripcion: 'Rotaciones y reposos', modulo: 'permisos' },
       { to: '/asistencias', label: 'Disponibilidad y Asistencia', icon: CalendarCheck2, descripcion: 'Entradas, salidas y guardias', modulo: 'asistencias' },
@@ -45,6 +46,7 @@ const SECCIONES_NAVEGACION = [
     titulo: 'Finanzas y Gestión',
     items: [
       { to: '/nomina', label: 'Nómina, Pagos y Recibos', icon: WalletCards, descripcion: 'Cálculos, transferencias y comprobantes', modulo: 'nomina' },
+      { to: '/rrhh', label: 'Recursos Humanos', icon: Briefcase, descripcion: 'Expedientes, tabulador y minutas', modulo: 'rrhh' },
     ],
   },
   {
