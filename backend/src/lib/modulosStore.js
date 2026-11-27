@@ -23,7 +23,6 @@ const SEED_DATA = {
   personal_sueldos: [],
   personal_cargos: [],
   anticipos_prestamos: [],
-  minutas: [],
   choferes_conductores: [],
   choferes_viajes: [],
   choferes_viaticos: [],

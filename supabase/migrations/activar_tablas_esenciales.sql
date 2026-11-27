@@ -155,19 +155,6 @@ CREATE TABLE IF NOT EXISTS public.anticipos_prestamos (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS public.minutas (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  numero text UNIQUE,
-  titulo text NOT NULL,
-  fecha date NOT NULL DEFAULT current_date,
-  lugar text,
-  asistentes jsonb NOT NULL DEFAULT '[]'::jsonb,
-  temas_tratados text NOT NULL,
-  acuerdos text,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-
 -- 4. Habilitar RLS y Políticas de lectura/escritura (SQL declarativo directo)
 ALTER TABLE public.custom_roles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.roles_permisos ENABLE ROW LEVEL SECURITY;
@@ -178,7 +165,6 @@ ALTER TABLE public.personal_sueldos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.personal_cargos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.rrhh_tabulador ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.anticipos_prestamos ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.minutas ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "custom_roles_read_auth" ON public.custom_roles;
 CREATE POLICY "custom_roles_read_auth" ON public.custom_roles FOR SELECT TO authenticated USING (true);
@@ -224,8 +210,3 @@ DROP POLICY IF EXISTS "anticipos_prestamos_read_auth" ON public.anticipos_presta
 CREATE POLICY "anticipos_prestamos_read_auth" ON public.anticipos_prestamos FOR SELECT TO authenticated USING (true);
 DROP POLICY IF EXISTS "anticipos_prestamos_write_staff" ON public.anticipos_prestamos;
 CREATE POLICY "anticipos_prestamos_write_staff" ON public.anticipos_prestamos FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
-
-DROP POLICY IF EXISTS "minutas_read_auth" ON public.minutas;
-CREATE POLICY "minutas_read_auth" ON public.minutas FOR SELECT TO authenticated USING (true);
-DROP POLICY IF EXISTS "minutas_write_staff" ON public.minutas;
-CREATE POLICY "minutas_write_staff" ON public.minutas FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());

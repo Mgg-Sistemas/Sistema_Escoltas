@@ -362,7 +362,7 @@ router.post(
 );
 
 // =====================================================================
-// EMPRESAS, TABULADOR, DESCANSOS Y MINUTAS
+// EMPRESAS, TABULADOR Y DESCANSOS
 // =====================================================================
 
 router.get(
@@ -429,60 +429,6 @@ router.post(
       throw mapSupabaseError(error, 'No fue posible guardar en tabulador.');
     }
     return ok(res, data);
-  })
-);
-
-router.get(
-  '/minutas',
-  asyncHandler(async (req, res) => {
-    const { data, error } = await supabase
-      .from('minutas')
-      .select('*')
-      .order('fecha', { ascending: false });
-
-    if (error) {
-      if (modulosStore.esErrorTablaInexistente(error)) {
-        return ok(res, modulosStore.listar('minutas'));
-      }
-      throw mapSupabaseError(error, 'No fue posible listar las minutas.');
-    }
-    return ok(res, data ?? []);
-  })
-);
-
-router.post(
-  '/minutas',
-  requireRole('admin', 'supervisor'),
-  asyncHandler(async (req, res) => {
-    const { fecha, turno, temas = [], acuerdos = [], avances = [], observaciones } = req.body;
-    const correlativo = `MIN-${new Date().getFullYear()}-${Date.now().toString().slice(-4)}`;
-
-    const minutaObj = {
-      correlativo,
-      fecha: fecha || new Date().toISOString().split('T')[0],
-      turno: turno || 'Diurno',
-      supervisor_id: req.user.id,
-      supervisor_nombre: req.user.full_name || req.user.email || 'Supervisor',
-      temas,
-      acuerdos,
-      avances,
-      observaciones,
-    };
-
-    const { data, error } = await supabase
-      .from('minutas')
-      .insert(minutaObj)
-      .select('*')
-      .single();
-
-    if (error) {
-      if (modulosStore.esErrorTablaInexistente(error)) {
-        const nueva = modulosStore.insertar('minutas', minutaObj);
-        return creado(res, nueva);
-      }
-      throw mapSupabaseError(error, 'No fue posible registrar la minuta.');
-    }
-    return creado(res, data);
   })
 );
 

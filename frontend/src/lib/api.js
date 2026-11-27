@@ -154,8 +154,6 @@ export const api = {
   listarEmpresas: () => apiFetch('/rrhh/empresas'),
   listarTabulador: () => apiFetch('/rrhh/tabulador'),
   guardarTabulador: (datos) => apiFetch('/rrhh/tabulador', { method: 'POST', body: datos }),
-  listarMinutas: () => apiFetch('/rrhh/minutas'),
-  crearMinuta: (datos) => apiFetch('/rrhh/minutas', { method: 'POST', body: datos }),
 
   // Choferes y Flota
   listarConductores: (params = {}) => {

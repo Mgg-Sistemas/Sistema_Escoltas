@@ -40,7 +40,6 @@ const PESTANAS = [
   { id: 'nomina', label: 'Nómina', icon: FileSpreadsheet, desc: 'Resumen y periodos' },
   { id: 'descansos', label: 'Descansos / Vacaciones', icon: Calendar, desc: 'Control de días' },
   { id: 'administrativo', label: 'Tabulador y Cargos', icon: Layers, desc: 'Escala y movimientos' },
-  { id: 'minutas', label: 'Minutas', icon: FileText, desc: 'Reuniones y acuerdos' },
 ];
 
 const FORM_PERSONAL_INICIAL = {
@@ -70,7 +69,6 @@ export default function Rrhh({ soloPersonal = false }) {
   const [anticipos, setAnticipos] = useState([]);
   const [exportandoAnticipos, setExportandoAnticipos] = useState(false);
   const [tabulador, setTabulador] = useState([]);
-  const [minutas, setMinutas] = useState([]);
   const [cargando, setCargando] = useState(true);
 
   // Modales
@@ -91,15 +89,6 @@ export default function Rrhh({ soloPersonal = false }) {
     motivo: '',
   });
 
-  const [modalMinutaAbierto, setModalMinutaAbierto] = useState(false);
-  const [formMinuta, setFormMinuta] = useState({
-    fecha: new Date().toISOString().split('T')[0],
-    turno: 'Diurno',
-    observaciones: '',
-    temas: '',
-    acuerdos: '',
-  });
-
   const cargarDatos = useCallback(async () => {
     setCargando(true);
     try {
@@ -108,16 +97,14 @@ export default function Rrhh({ soloPersonal = false }) {
         setPersonal(fichas || []);
         return;
       }
-      const [resPersonal, resAnticipos, resTabulador, resMinutas] = await Promise.all([
+      const [resPersonal, resAnticipos, resTabulador] = await Promise.all([
         api.listarPersonal({ empresa: empresaFiltro || undefined, q: busqueda || undefined }),
         api.listarAnticipos(),
         api.listarTabulador(),
-        api.listarMinutas(),
       ]);
       setPersonal(resPersonal || []);
       setAnticipos(resAnticipos || []);
       setTabulador(resTabulador || []);
-      setMinutas(resMinutas || []);
     } catch (err) {
       toast.error('Error al cargar datos de RRHH: ' + (err.message || 'Error de conexión'));
     } finally {
@@ -192,24 +179,6 @@ export default function Rrhh({ soloPersonal = false }) {
       cargarDatos();
     } catch (err) {
       toast.error(err.message || 'Error al registrar anticipo');
-    }
-  };
-
-  const handleGuardarMinuta = async (e) => {
-    e.preventDefault();
-    try {
-      await api.crearMinuta({
-        fecha: formMinuta.fecha,
-        turno: formMinuta.turno,
-        observaciones: formMinuta.observaciones,
-        temas: formMinuta.temas.split('\n').filter(Boolean).map((t) => ({ tema: t })),
-        acuerdos: formMinuta.acuerdos.split('\n').filter(Boolean).map((a) => ({ acuerdo: a })),
-      });
-      toast.success('Minuta de reunión registrada');
-      setModalMinutaAbierto(false);
-      cargarDatos();
-    } catch (err) {
-      toast.error(err.message || 'Error al registrar minuta');
     }
   };
 
@@ -335,9 +304,8 @@ export default function Rrhh({ soloPersonal = false }) {
           pdfPersonalizado={() => descargarAnticipos(anticipos)} deshabilitado={cargando} />
       ) : (
         <ReporteModulo titulo="Recursos humanos" archivo="rrhh"
-          columnas={pestanaActiva === 'minutas' ? ['Fecha', 'Minuta', 'Estado'] : ['Ficha', 'Nombre', 'Estado']}
-          filas={pestanaActiva === 'minutas' ? minutas.map((r) => [r.fecha, r.titulo, r.estado])
-            : personalFiltrado.map((r) => [r.ficha_nro, [r.nombre, r.apellido].filter(Boolean).join(' '), r.activo ? 'Activo' : 'Inactivo'])}
+          columnas={['Ficha', 'Nombre', 'Estado']}
+          filas={personalFiltrado.map((r) => [r.ficha_nro, [r.nombre, r.apellido].filter(Boolean).join(' '), r.activo ? 'Activo' : 'Inactivo'])}
           deshabilitado={cargando} />
       )}
       {/* Encabezado */}
@@ -345,7 +313,7 @@ export default function Rrhh({ soloPersonal = false }) {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-100">{soloPersonal ? "Fichas administrativas" : "Recursos Humanos"}</h1>
           <p className="mt-1 text-sm text-slate-400">
-            {soloPersonal ? "Datos laborales, cargos y sueldos del personal." : "Anticipos, nómina, descansos, tabulador y minutas."}
+            {soloPersonal ? "Datos laborales, cargos y sueldos del personal." : "Anticipos, nómina, descansos y tabulador."}
           </p>
         </div>
 
@@ -369,15 +337,6 @@ export default function Rrhh({ soloPersonal = false }) {
             onClick={() => setModalAnticipoAbierto(true)}
           >
             Registrar Anticipo
-          </Button>
-        )}
-        {pestanaActiva === 'minutas' && (
-          <Button
-            variant="primary"
-            leftIcon={Plus}
-            onClick={() => setModalMinutaAbierto(true)}
-          >
-            Nueva Minuta
           </Button>
         )}
       </div>
@@ -593,32 +552,6 @@ export default function Rrhh({ soloPersonal = false }) {
         </Card>
       )}
 
-      {/* PESTAÑA 6: MINUTAS */}
-      {pestanaActiva === 'minutas' && (
-        <Card bodyClassName="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-100">Minutas Operativas y Acuerdos</h2>
-            <div className="text-xs text-slate-400">Reuniones de coordinación y seguimiento</div>
-          </div>
-          <div className="space-y-3">
-            {minutas.length === 0 ? (
-              <p className="text-sm text-slate-400 py-6 text-center">No hay minutas registradas.</p>
-            ) : (
-              minutas.map((m) => (
-                <div key={m.id} className="p-4 rounded-xl border border-slate-700/60 bg-slate-800/40 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-bold text-brand-400">{m.correlativo}</span>
-                    <span className="text-xs text-slate-400">{formatoFecha(m.fecha)} · Turno {m.turno}</span>
-                  </div>
-                  <p className="text-sm text-slate-200">{m.observaciones || 'Sin observaciones generales.'}</p>
-                  <div className="text-xs text-slate-400">Supervisor: {m.supervisor_nombre || 'N/A'}</div>
-                </div>
-              ))
-            )}
-          </div>
-        </Card>
-      )}
-
       {/* MODAL PERSONAL */}
       <Modal
         abierto={modalPersonalAbierto}
@@ -804,68 +737,6 @@ export default function Rrhh({ soloPersonal = false }) {
             </Button>
             <Button variant="primary" type="submit">
               Guardar Anticipo
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* MODAL MINUTA */}
-      <Modal
-        abierto={modalMinutaAbierto}
-        alCerrar={() => setModalMinutaAbierto(false)}
-        titulo="Registrar Minuta de Reunión Operativa"
-      >
-        <form onSubmit={handleGuardarMinuta} className="space-y-4 text-slate-200">
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Fecha"
-              type="date"
-              required
-              value={formMinuta.fecha}
-              onChange={(e) => setFormMinuta({ ...formMinuta, fecha: e.target.value })}
-            />
-            <Select
-              label="Turno"
-              value={formMinuta.turno}
-              onChange={(e) => setFormMinuta({ ...formMinuta, turno: e.target.value })}
-              options={[
-                { value: 'Diurno', label: 'Diurno' },
-                { value: 'Nocturno', label: 'Nocturno' },
-                { value: 'Mixto', label: 'Mixto' },
-              ]}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Temas Tratados (1 por línea)</label>
-            <textarea
-              className="w-full rounded-xl border border-slate-700 bg-slate-900/80 p-3 text-sm text-slate-100 placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-              rows={3}
-              value={formMinuta.temas}
-              onChange={(e) => setFormMinuta({ ...formMinuta, temas: e.target.value.toLocaleUpperCase("es") })}
-              placeholder="Asignación de unidades blindadas&#10;Revisión de turnos de escolta"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Acuerdos y Responsables (1 por línea)</label>
-            <textarea
-              className="w-full rounded-xl border border-slate-700 bg-slate-900/80 p-3 text-sm text-slate-100 placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-              rows={3}
-              value={formMinuta.acuerdos}
-              onChange={(e) => setFormMinuta({ ...formMinuta, acuerdos: e.target.value.toLocaleUpperCase("es") })}
-              placeholder="Chequeo preventivo de vehículos los viernes"
-            />
-          </div>
-          <Input
-            label="Observaciones Generales"
-            value={formMinuta.observaciones}
-            onChange={(e) => setFormMinuta({ ...formMinuta, observaciones: e.target.value })}
-          />
-          <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" type="button" onClick={() => setModalMinutaAbierto(false)}>
-              Cancelar
-            </Button>
-            <Button variant="primary" type="submit">
-              Guardar Minuta
             </Button>
           </div>
         </form>

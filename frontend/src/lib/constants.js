@@ -13,7 +13,7 @@ export const ROLES_DESCRIPCION = {
   supervisor: 'Distribución de escoltas, rutas, asistencias y revisión de permisos.',
   contador: 'Periodos de nómina, cálculo de pagos y cierre de nómina.',
   escolta: 'Consultar tus datos, registrar asistencia y solicitar permisos.',
-  rrhh: 'Gestión de personal, expedientes, descansos, tabulador y minutas.',
+  rrhh: 'Gestión de personal, expedientes, descansos y tabulador.',
 };
 
 // Permisos de navegación por módulo: todos los módulos activados en el sistema
@@ -41,7 +41,7 @@ export const MODULOS_SISTEMA = [
   { key: 'asistencias', label: 'Asistencias', descripcion: 'Check-in y check-out.' },
   { key: 'nomina', label: 'Nómina', descripcion: 'Periodos y detalles.' },
   { key: 'pagos', label: 'Pagos', descripcion: 'Registro y confirmación.' },
-  { key: 'rrhh', label: 'Recursos Humanos', descripcion: 'Fichas de personal, contratos, anticipos y minutas.' },
+  { key: 'rrhh', label: 'Recursos Humanos', descripcion: 'Fichas de personal, contratos y anticipos.' },
   { key: 'usuarios', label: 'Usuarios', descripcion: 'Cuentas y claves.' },
   { key: 'roles', label: 'Roles', descripcion: 'Roles y matriz de acceso.' },
   { key: 'ajustes', label: 'Ajustes', descripcion: 'Configuración general.' },

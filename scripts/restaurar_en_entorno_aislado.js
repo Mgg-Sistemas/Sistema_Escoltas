@@ -325,21 +325,8 @@ async function restaurarEnAislado() {
       created_at TEXT,
       updated_at TEXT
     );
-
-    CREATE TABLE minutas (
-      id TEXT PRIMARY KEY,
-      numero TEXT UNIQUE,
-      titulo TEXT NOT NULL,
-      fecha TEXT,
-      lugar TEXT,
-      asistentes TEXT DEFAULT '[]',
-      temas_tratados TEXT NOT NULL,
-      acuerdos TEXT,
-      created_at TEXT,
-      updated_at TEXT
-    );
   `);
-  console.log('✓ Tablas creadas con éxito (19 base + 8 RR. HH./Seguridad).');
+  console.log('✓ Tablas creadas con éxito (19 base + 7 RR. HH./Seguridad).');
 
   // 4. Restaurar los datos en el orden de integridad
   console.log('\n--- RESTAURANDO DATOS DEL RESPALDO EN SQLITE ---');

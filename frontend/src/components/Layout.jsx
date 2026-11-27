@@ -45,7 +45,7 @@ const SECCIONES_NAVEGACION = [
     titulo: 'Finanzas y Gestión',
     items: [
       { to: '/nomina', label: 'Nómina, Pagos y Recibos', icon: WalletCards, descripcion: 'Cálculos, transferencias y comprobantes', modulo: 'nomina' },
-      { to: '/rrhh', label: 'Recursos Humanos', icon: Briefcase, descripcion: 'Expedientes, tabulador y minutas', modulo: 'rrhh' },
+      { to: '/rrhh', label: 'Recursos Humanos', icon: Briefcase, descripcion: 'Expedientes y tabulador salarial', modulo: 'rrhh' },
     ],
   },
   {
