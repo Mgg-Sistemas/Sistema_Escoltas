@@ -680,7 +680,6 @@ export default function Usuarios() {
             options={[
               { value: 'pagos', label: 'Pagos y Comprobantes' },
               { value: 'nomina', label: 'Cierre de Nómina' },
-              { value: 'choferes', label: 'Liquidación de Choferes' },
               { value: 'rrhh', label: 'Recursos Humanos y Sueldos' },
               { value: 'compras', label: 'Órdenes de Compra' },
             ]}

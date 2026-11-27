@@ -168,7 +168,7 @@ CREATE TABLE IF NOT EXISTS public.minutas (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
--- 4. Habilitar RLS y Políticas de lectura/escritura
+-- 4. Habilitar RLS y Políticas de lectura/escritura (SQL declarativo directo)
 ALTER TABLE public.custom_roles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.roles_permisos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.usuarios_autorizados ENABLE ROW LEVEL SECURITY;
@@ -180,20 +180,52 @@ ALTER TABLE public.rrhh_tabulador ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.anticipos_prestamos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.minutas ENABLE ROW LEVEL SECURITY;
 
-DO $$
-DECLARE
-  t text;
-  tablas text[] := ARRAY[
-    'custom_roles', 'roles_permisos', 'usuarios_autorizados', 'rrhh_empresas', 'personal',
-    'personal_sueldos', 'personal_cargos', 'rrhh_tabulador', 'anticipos_prestamos',
-    'minutas'
-  ];
-BEGIN
-  FOREACH t IN ARRAY tablas LOOP
-    EXECUTE format('DROP POLICY IF EXISTS "%s_read_auth" ON public.%I', t, t);
-    EXECUTE format('CREATE POLICY "%s_read_auth" ON public.%I FOR SELECT TO authenticated USING (true)', t, t);
+DROP POLICY IF EXISTS "custom_roles_read_auth" ON public.custom_roles;
+CREATE POLICY "custom_roles_read_auth" ON public.custom_roles FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "custom_roles_write_staff" ON public.custom_roles;
+CREATE POLICY "custom_roles_write_staff" ON public.custom_roles FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 
-    EXECUTE format('DROP POLICY IF EXISTS "%s_write_staff" ON public.%I', t, t);
-    EXECUTE format('CREATE POLICY "%s_write_staff" ON public.%I FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff())', t, t);
-  END LOOP;
-END $$;
+DROP POLICY IF EXISTS "roles_permisos_read_auth" ON public.roles_permisos;
+CREATE POLICY "roles_permisos_read_auth" ON public.roles_permisos FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "roles_permisos_write_staff" ON public.roles_permisos;
+CREATE POLICY "roles_permisos_write_staff" ON public.roles_permisos FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+DROP POLICY IF EXISTS "usuarios_autorizados_read_auth" ON public.usuarios_autorizados;
+CREATE POLICY "usuarios_autorizados_read_auth" ON public.usuarios_autorizados FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "usuarios_autorizados_write_staff" ON public.usuarios_autorizados;
+CREATE POLICY "usuarios_autorizados_write_staff" ON public.usuarios_autorizados FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+DROP POLICY IF EXISTS "rrhh_empresas_read_auth" ON public.rrhh_empresas;
+CREATE POLICY "rrhh_empresas_read_auth" ON public.rrhh_empresas FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "rrhh_empresas_write_staff" ON public.rrhh_empresas;
+CREATE POLICY "rrhh_empresas_write_staff" ON public.rrhh_empresas FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+DROP POLICY IF EXISTS "personal_read_auth" ON public.personal;
+CREATE POLICY "personal_read_auth" ON public.personal FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "personal_write_staff" ON public.personal;
+CREATE POLICY "personal_write_staff" ON public.personal FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+DROP POLICY IF EXISTS "personal_sueldos_read_auth" ON public.personal_sueldos;
+CREATE POLICY "personal_sueldos_read_auth" ON public.personal_sueldos FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "personal_sueldos_write_staff" ON public.personal_sueldos;
+CREATE POLICY "personal_sueldos_write_staff" ON public.personal_sueldos FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+DROP POLICY IF EXISTS "personal_cargos_read_auth" ON public.personal_cargos;
+CREATE POLICY "personal_cargos_read_auth" ON public.personal_cargos FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "personal_cargos_write_staff" ON public.personal_cargos;
+CREATE POLICY "personal_cargos_write_staff" ON public.personal_cargos FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+DROP POLICY IF EXISTS "rrhh_tabulador_read_auth" ON public.rrhh_tabulador;
+CREATE POLICY "rrhh_tabulador_read_auth" ON public.rrhh_tabulador FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "rrhh_tabulador_write_staff" ON public.rrhh_tabulador;
+CREATE POLICY "rrhh_tabulador_write_staff" ON public.rrhh_tabulador FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+DROP POLICY IF EXISTS "anticipos_prestamos_read_auth" ON public.anticipos_prestamos;
+CREATE POLICY "anticipos_prestamos_read_auth" ON public.anticipos_prestamos FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "anticipos_prestamos_write_staff" ON public.anticipos_prestamos;
+CREATE POLICY "anticipos_prestamos_write_staff" ON public.anticipos_prestamos FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+DROP POLICY IF EXISTS "minutas_read_auth" ON public.minutas;
+CREATE POLICY "minutas_read_auth" ON public.minutas FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "minutas_write_staff" ON public.minutas;
+CREATE POLICY "minutas_write_staff" ON public.minutas FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());

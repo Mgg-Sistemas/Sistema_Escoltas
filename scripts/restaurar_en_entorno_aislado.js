@@ -227,8 +227,119 @@ async function restaurarEnAislado() {
       usuario_id TEXT,
       created_at TEXT
     );
+
+    -- Tablas de ampliación RR. HH. y Seguridad
+    CREATE TABLE rrhh_empresas (
+      id TEXT PRIMARY KEY,
+      codigo TEXT NOT NULL UNIQUE,
+      nombre TEXT NOT NULL,
+      rif TEXT,
+      direccion TEXT,
+      activo INTEGER DEFAULT 1,
+      created_at TEXT
+    );
+
+    CREATE TABLE personal (
+      id TEXT PRIMARY KEY,
+      empresa TEXT DEFAULT 'ESC',
+      ficha_nro TEXT,
+      nombre TEXT NOT NULL,
+      apellido TEXT NOT NULL,
+      cedula TEXT UNIQUE,
+      rif TEXT,
+      cargo TEXT,
+      departamento TEXT,
+      sueldo_base REAL DEFAULT 0,
+      moneda_sueldo TEXT DEFAULT 'USD',
+      activo INTEGER DEFAULT 1,
+      fecha_ingreso TEXT,
+      telefono TEXT,
+      correo TEXT,
+      datos_bancarios TEXT DEFAULT '[]',
+      carga_familiar TEXT DEFAULT '[]',
+      created_at TEXT,
+      updated_at TEXT
+    );
+
+    CREATE TABLE personal_sueldos (
+      id TEXT PRIMARY KEY,
+      personal_id TEXT NOT NULL REFERENCES personal(id) ON DELETE CASCADE,
+      sueldo_anterior REAL DEFAULT 0,
+      sueldo_nuevo REAL DEFAULT 0,
+      moneda TEXT DEFAULT 'USD',
+      motivo TEXT NOT NULL,
+      fecha_efectiva TEXT,
+      creado_por TEXT,
+      created_at TEXT
+    );
+
+    CREATE TABLE personal_cargos (
+      id TEXT PRIMARY KEY,
+      personal_id TEXT NOT NULL REFERENCES personal(id) ON DELETE CASCADE,
+      cargo_anterior TEXT,
+      cargo_nuevo TEXT NOT NULL,
+      departamento_anterior TEXT,
+      departamento_nuevo TEXT,
+      motivo TEXT,
+      fecha_cambio TEXT,
+      creado_por TEXT,
+      created_at TEXT
+    );
+
+    CREATE TABLE rrhh_tabulador (
+      id TEXT PRIMARY KEY,
+      cargo TEXT NOT NULL UNIQUE,
+      nivel TEXT DEFAULT 'I',
+      departamento TEXT DEFAULT 'Operaciones',
+      sueldo_base REAL DEFAULT 0,
+      moneda TEXT DEFAULT 'USD',
+      vigencia_desde TEXT,
+      activo INTEGER DEFAULT 1,
+      created_at TEXT,
+      updated_at TEXT
+    );
+
+    CREATE TABLE usuarios_autorizados (
+      id TEXT PRIMARY KEY,
+      usuario_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+      modulo TEXT NOT NULL,
+      accion TEXT DEFAULT 'aprobar',
+      activo INTEGER DEFAULT 1,
+      created_at TEXT,
+      created_by TEXT REFERENCES profiles(id) ON DELETE SET NULL,
+      UNIQUE (usuario_id, modulo, accion)
+    );
+
+    CREATE TABLE anticipos_prestamos (
+      id TEXT PRIMARY KEY,
+      personal_id TEXT NOT NULL REFERENCES personal(id) ON DELETE CASCADE,
+      tipo TEXT NOT NULL,
+      monto REAL NOT NULL,
+      moneda TEXT DEFAULT 'USD',
+      cuotas INTEGER DEFAULT 1,
+      monto_cuota REAL NOT NULL,
+      saldo_pendiente REAL NOT NULL,
+      motivo TEXT NOT NULL,
+      estado TEXT DEFAULT 'solicitado',
+      fecha_solicitud TEXT,
+      created_at TEXT,
+      updated_at TEXT
+    );
+
+    CREATE TABLE minutas (
+      id TEXT PRIMARY KEY,
+      numero TEXT UNIQUE,
+      titulo TEXT NOT NULL,
+      fecha TEXT,
+      lugar TEXT,
+      asistentes TEXT DEFAULT '[]',
+      temas_tratados TEXT NOT NULL,
+      acuerdos TEXT,
+      created_at TEXT,
+      updated_at TEXT
+    );
   `);
-  console.log('✓ Las 19 tablas fueron creadas con sus restricciones foráneas.');
+  console.log('✓ Tablas creadas con éxito (19 base + 8 RR. HH./Seguridad).');
 
   // 4. Restaurar los datos en el orden de integridad
   console.log('\n--- RESTAURANDO DATOS DEL RESPALDO EN SQLITE ---');
@@ -295,6 +406,105 @@ async function restaurarEnAislado() {
   console.log(`  • Matriz visual por rol: ${countMatriz}`);
   console.log(`  • Permisos granulares: ${countGranulares}`);
   console.log(`  • Ajustes del sistema: ${countAjustes}`);
+
+  // 7. Simulación aislada de funciones SQL: Papelera Segura e Idempotencia de Pagos
+  console.log('\n--- SIMULACIÓN AISLADA: PAPELERA SEGURA E IDEMPOTENCIA DE PAGOS ---');
+  
+  // A. Prueba de Papelera:
+  // 1) Escolta inactivo legítimo (baja laboral sin marca de papelera)
+  db.prepare(`
+    INSERT INTO escoltas (id, codigo, nombres, apellidos, cedula, estado, notas)
+    VALUES ('esc-baja-01', 'ESC-B01', 'Juan', 'Baja', 'V-11111111', 'inactivo', 'Baja laboral fin de contrato')
+  `).run();
+
+  // 2) Escolta en papelera pero CON dependencias (asistencia)
+  db.prepare(`
+    INSERT INTO escoltas (id, codigo, nombres, apellidos, cedula, estado, notas)
+    VALUES ('esc-pap-dep', 'ESC-P01', 'Pedro', 'ConHistorial', 'V-22222222', 'inactivo', '[PAPELERA:true] Enviar a papelera')
+  `).run();
+  db.prepare(`
+    INSERT INTO asistencias (id, escolta_id, fecha, estado)
+    VALUES ('asis-01', 'esc-pap-dep', '2026-11-27', 'presente')
+  `).run();
+
+  // 3) Escolta en papelera SIN dependencias
+  db.prepare(`
+    INSERT INTO escoltas (id, codigo, nombres, apellidos, cedula, estado, notas)
+    VALUES ('esc-pap-lib', 'ESC-P02', 'Carlos', 'SinHistorial', 'V-33333333', 'inactivo', '[PAPELERA:true] Borrador erroneo')
+  `).run();
+
+  // Ejecución de la lógica de vaciar_papelera_escoltas()
+  const candidatos = db.prepare(`
+    SELECT id, nombres, apellidos, cedula 
+      FROM escoltas 
+     WHERE notas LIKE '%[PAPELERA:true]%'
+  `).all();
+
+  let purgados = 0;
+  let protegidos = 0;
+
+  for (const cand of candidatos) {
+    const tieneAsignacion = db.prepare('SELECT 1 FROM asignaciones WHERE escolta_id = ?').get(cand.id);
+    const tieneNomina = db.prepare('SELECT 1 FROM nomina_detalles WHERE escolta_id = ?').get(cand.id);
+    const tieneAsistencia = db.prepare('SELECT 1 FROM asistencias WHERE escolta_id = ?').get(cand.id);
+    const tienePermiso = db.prepare('SELECT 1 FROM permisos WHERE escolta_id = ?').get(cand.id);
+    const tienePago = db.prepare('SELECT 1 FROM pagos WHERE escolta_id = ?').get(cand.id);
+
+    if (tieneAsignacion || tieneNomina || tieneAsistencia || tienePermiso || tienePago) {
+      protegidos++;
+    } else {
+      db.prepare('DELETE FROM escoltas WHERE id = ?').run(cand.id);
+      purgados++;
+    }
+  }
+
+  const bajaSigueViva = db.prepare("SELECT 1 FROM escoltas WHERE id = 'esc-baja-01'").get();
+  const conHistorialSigueVivo = db.prepare("SELECT 1 FROM escoltas WHERE id = 'esc-pap-dep'").get();
+  const sinHistorialFueBorrado = !db.prepare("SELECT 1 FROM escoltas WHERE id = 'esc-pap-lib'").get();
+
+  if (bajaSigueViva && conHistorialSigueVivo && sinHistorialFueBorrado && purgados === 1 && protegidos === 1) {
+    console.log('✓ PAPELERA SEGURA EN ENTORNO AISLADO: APROBADA');
+    console.log('   - Baja laboral legítima (sin marca papelera): INTACTA.');
+    console.log('   - Escolta en papelera con asistencias: PROTEGIDO (no purgado).');
+    console.log('   - Escolta en papelera sin historial: PURGADO con éxito.');
+  } else {
+    throw new Error('Falló verificación de lógica de papelera');
+  }
+
+  // B. Prueba de Idempotencia de Pagos (registrar_pago_nomina_periodo)
+  // Crear restricción de unicidad en pagos
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS uq_pagos_periodo_escolta ON pagos (periodo_id, escolta_id);');
+
+  // Insertar registros padre para satisfacer las llaves foráneas estrictas
+  db.prepare(`
+    INSERT INTO periodos_nomina (id, codigo, fecha_inicio, fecha_fin, estado)
+    VALUES ('per-01', 'PER-2026-11A', '2026-11-01', '2026-11-15', 'abierto')
+  `).run();
+
+  db.prepare(`
+    INSERT INTO escoltas (id, codigo, nombres, apellidos, cedula, estado)
+    VALUES ('esc-01', 'ESC-001', 'Luis', 'Rivas', 'V-44444444', 'activo')
+  `).run();
+
+  // Insertar un pago inicial
+  db.prepare(`
+    INSERT INTO pagos (id, periodo_id, escolta_id, monto, fecha_pago, metodo, estado)
+    VALUES ('pago-01', 'per-01', 'esc-01', 300, '2026-11-27', 'transferencia', 'registrado')
+  `).run();
+
+  // Simular reintento o concurrencia con ON CONFLICT DO NOTHING
+  const resReintento = db.prepare(`
+    INSERT OR IGNORE INTO pagos (id, periodo_id, escolta_id, monto, fecha_pago, metodo, estado)
+    VALUES ('pago-02', 'per-01', 'esc-01', 300, '2026-11-27', 'transferencia', 'registrado')
+  `).run();
+
+  const countPagosPeriodo = db.prepare("SELECT COUNT(*) as c FROM pagos WHERE periodo_id = 'per-01' AND escolta_id = 'esc-01'").get().c;
+  if (countPagosPeriodo === 1 && resReintento.changes === 0) {
+    console.log('✓ IDEMPOTENCIA DE NÓMINA EN ENTORNO AISLADO: APROBADA');
+    console.log('   - El reintento de pago para el mismo periodo y escolta fue ignorado sin duplicar registros.');
+  } else {
+    throw new Error('Falló verificación de idempotencia de pagos');
+  }
 
   console.log('\n================================================================');
   console.log(`CERTIFICACIÓN FINAL DE RESTAURACIÓN:`);

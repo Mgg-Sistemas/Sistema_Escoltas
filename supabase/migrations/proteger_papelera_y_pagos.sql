@@ -32,18 +32,33 @@ DECLARE
   v_protegidos integer := 0;
   v_ids_purgados text[] := ARRAY[]::text[];
   v_tiene_deps boolean;
+  v_sesion_uid uuid;
+  v_rol_actor text;
 BEGIN
-  -- Validar autorización: permite p_actor_id verificado en perfiles o sesión auth.uid
-  IF p_actor_id IS NOT NULL THEN
-    IF NOT EXISTS (
-      SELECT 1 FROM public.profiles WHERE id = p_actor_id AND role = 'admin'
-    ) THEN
-      RAISE EXCEPTION 'Acceso denegado: El actor indicado no tiene rol administrador';
+  -- Detección de sesión activa (Supabase Auth)
+  v_sesion_uid := auth.uid();
+
+  IF v_sesion_uid IS NOT NULL THEN
+    -- Llamada desde sesión cliente autenticada: prohíbe suplantación de identidad
+    IF p_actor_id IS NOT NULL AND p_actor_id <> v_sesion_uid THEN
+      RAISE EXCEPTION 'Acceso denegado: El actor especificado (%) no coincide con la sesión autenticada (%)', p_actor_id, v_sesion_uid;
     END IF;
+    p_actor_id := v_sesion_uid;
   ELSE
-    IF NOT public.is_admin() THEN
-      RAISE EXCEPTION 'Acceso denegado: Solo administradores pueden vaciar la papelera';
+    -- Llamada sin sesión JWT (ej. backend Node con service_role o mantenimiento)
+    IF p_actor_id IS NULL THEN
+      RAISE EXCEPTION 'Acceso denegado: Se requiere especificar el identificador de actor para ejecución de servicio';
     END IF;
+  END IF;
+
+  -- Comprobar rol de administrador en public.profiles
+  SELECT role INTO v_rol_actor
+    FROM public.profiles
+   WHERE id = p_actor_id
+     AND activo = true;
+
+  IF v_rol_actor IS NULL OR v_rol_actor <> 'admin' THEN
+    RAISE EXCEPTION 'Acceso denegado: El actor (%) no tiene rol administrador activo', p_actor_id;
   END IF;
 
   -- Seleccionar EXCLUSIVAMENTE registros marcados explícitamente en papelera (evita tocar bajas laborales inactivas)
@@ -115,18 +130,33 @@ DECLARE
   v_pagos_creados integer := 0;
   v_total_pagado numeric(12,2) := 0;
   v_pago_id uuid;
+  v_sesion_uid uuid;
+  v_rol_usuario text;
 BEGIN
-  -- Validar autorización: permite p_user_id verificado en perfiles o sesión auth.uid
-  IF p_user_id IS NOT NULL THEN
-    IF NOT EXISTS (
-      SELECT 1 FROM public.profiles WHERE id = p_user_id AND role IN ('admin', 'contador')
-    ) THEN
-      RAISE EXCEPTION 'Acceso denegado: El usuario indicado no tiene rol administrador o contador';
+  -- Detección de sesión activa (Supabase Auth)
+  v_sesion_uid := auth.uid();
+
+  IF v_sesion_uid IS NOT NULL THEN
+    -- Llamada desde sesión cliente autenticada: prohíbe suplantación de identidad
+    IF p_user_id IS NOT NULL AND p_user_id <> v_sesion_uid THEN
+      RAISE EXCEPTION 'Acceso denegado: El usuario especificado (%) no coincide con la sesión autenticada (%)', p_user_id, v_sesion_uid;
     END IF;
+    p_user_id := v_sesion_uid;
   ELSE
-    IF NOT (public.is_admin() OR public.is_contador()) THEN
-      RAISE EXCEPTION 'Acceso denegado: Solo administradores o contadores pueden procesar pagos de nómina';
+    -- Llamada sin sesión JWT (ej. backend Node con service_role o integración)
+    IF p_user_id IS NULL THEN
+      RAISE EXCEPTION 'Acceso denegado: Se requiere especificar el identificador de usuario para ejecución de servicio';
     END IF;
+  END IF;
+
+  -- Comprobar rol de administrador o contador en public.profiles
+  SELECT role INTO v_rol_usuario
+    FROM public.profiles
+   WHERE id = p_user_id
+     AND activo = true;
+
+  IF v_rol_usuario IS NULL OR v_rol_usuario NOT IN ('admin', 'contador') THEN
+    RAISE EXCEPTION 'Acceso denegado: El usuario (%) no tiene rol administrador o contador activo', p_user_id;
   END IF;
 
   -- Bloquear el periodo para evitar pagos concurrentes simultáneos
@@ -185,10 +215,10 @@ BEGIN
 END;
 $$;
 
--- Restricciones de ejecución a nivel de base de datos
-REVOKE ALL ON FUNCTION public.vaciar_papelera_escoltas() FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.vaciar_papelera_escoltas() TO authenticated;
+-- 4. Restricciones de ejecución a nivel de base de datos
+REVOKE ALL ON FUNCTION public.vaciar_papelera_escoltas(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.vaciar_papelera_escoltas(uuid) TO service_role, authenticated;
 
 REVOKE ALL ON FUNCTION public.registrar_pago_nomina_periodo(uuid, text, text, date, uuid) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.registrar_pago_nomina_periodo(uuid, text, text, date, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.registrar_pago_nomina_periodo(uuid, text, text, date, uuid) TO service_role, authenticated;
 
