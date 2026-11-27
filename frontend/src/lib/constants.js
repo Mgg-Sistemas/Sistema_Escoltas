@@ -1,4 +1,4 @@
-export const ROLES = ['admin', 'supervisor', 'contador', 'escolta', 'rrhh'];
+export const ROLES = ['admin'];
 
 export const ROLES_LABELS = {
   admin: 'Administrador',
@@ -10,26 +10,24 @@ export const ROLES_LABELS = {
 
 export const ROLES_DESCRIPCION = {
   admin: 'Control total del sistema: usuarios, roles, personal y pagos.',
-  supervisor: 'Distribución de escoltas, rutas, asistencias y revisión de permisos.',
-  contador: 'Periodos de nómina, cálculo de pagos y cierre de nómina.',
-  escolta: 'Consultar tus datos, registrar asistencia y solicitar permisos.',
-  rrhh: 'Gestión de personal, expedientes, descansos y tabulador.',
 };
+
+const TODOS_LOS_ROLES = ['admin', 'supervisor', 'contador', 'escolta', 'rrhh'];
 
 // Permisos de navegación por módulo: todos los módulos activados en el sistema
 export const ROLES_POR_MODULO = {
-  escoltas: ROLES,
-  distribucion: ROLES,
-  permisos: ROLES,
-  asistencias: ROLES,
-  nomina: ROLES,
-  pagos: ROLES,
-  rrhh: ROLES,
-  usuarios: ROLES,
-  'roles-permisos': ROLES,
-  ajustes: ROLES,
-  ayuda: ROLES,
-  papelera: ROLES,
+  escoltas: TODOS_LOS_ROLES,
+  distribucion: TODOS_LOS_ROLES,
+  permisos: TODOS_LOS_ROLES,
+  asistencias: TODOS_LOS_ROLES,
+  nomina: TODOS_LOS_ROLES,
+  pagos: TODOS_LOS_ROLES,
+  rrhh: TODOS_LOS_ROLES,
+  usuarios: TODOS_LOS_ROLES,
+  'roles-permisos': TODOS_LOS_ROLES,
+  ajustes: TODOS_LOS_ROLES,
+  ayuda: TODOS_LOS_ROLES,
+  papelera: TODOS_LOS_ROLES,
 };
 
 // Módulos de la matriz de permisos traída de la base funcional GT.
