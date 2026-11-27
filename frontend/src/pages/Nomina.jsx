@@ -134,8 +134,8 @@ export function sugerirPeriodoQuincenal(periodosExistentes = []) {
 
 const FORM_PERIODO = { nombre: '', fecha_inicio: '', fecha_fin: '' };
 const FORM_DETALLE = {
-  escolta_id: '', sueldo_base: '0', bonos: '0', descuentos: '0',
-  horas_extras: '0', dias_trabajados: '30', estado: 'pendiente',
+  escolta_id: '', sueldo_base: '', bonos: '', descuentos: '',
+  horas_extras: '', dias_trabajados: '', estado: 'pendiente',
 };
 const FORM_PAGO = {
   periodo_id: '', escolta_id: '', monto: '', fecha_pago: hoyISO(),
@@ -406,11 +406,11 @@ export default function Nomina() {
     setEditandoDetalle(detalle);
     setFormDetalle({
       escolta_id: detalle.escolta_id,
-      sueldo_base: String(detalle.sueldo_base ?? '0'),
-      bonos: String(detalle.bonos ?? '0'),
-      descuentos: String(detalle.descuentos ?? '0'),
-      horas_extras: String(detalle.horas_extras ?? '0'),
-      dias_trabajados: String(detalle.dias_trabajados ?? '30'),
+      sueldo_base: String(detalle.sueldo_base ?? ''),
+      bonos: String(detalle.bonos ?? ''),
+      descuentos: String(detalle.descuentos ?? ''),
+      horas_extras: String(detalle.horas_extras ?? ''),
+      dias_trabajados: String(detalle.dias_trabajados ?? ''),
       estado: detalle.estado || 'pendiente',
     });
     setErrores({});
@@ -1217,8 +1217,7 @@ export default function Nomina() {
               setFormDetalle((d) => ({
                 ...d,
                 escolta_id: selId,
-                sueldo_base: esc?.sueldo_base != null ? String(esc.sueldo_base) : d.sueldo_base,
-                dias_trabajados: '15',
+                sueldo_base: esc?.sueldo_base != null ? String(esc.sueldo_base) : '',
               }));
             }}
             containerClassName="sm:col-span-2"
@@ -1233,6 +1232,8 @@ export default function Nomina() {
             type="number"
             min="0"
             step="0.01"
+            placeholder="0,00"
+            className="focus:placeholder-transparent"
             value={formDetalle.sueldo_base}
             onChange={(e) => setFormDetalle((d) => ({ ...d, sueldo_base: e.target.value }))}
           />
@@ -1241,6 +1242,8 @@ export default function Nomina() {
             type="number"
             min="0"
             step="0.01"
+            placeholder="0,00"
+            className="focus:placeholder-transparent"
             value={formDetalle.bonos}
             onChange={(e) => setFormDetalle((d) => ({ ...d, bonos: e.target.value }))}
           />
@@ -1249,6 +1252,8 @@ export default function Nomina() {
             type="number"
             min="0"
             step="0.01"
+            placeholder="0,00"
+            className="focus:placeholder-transparent"
             value={formDetalle.horas_extras}
             onChange={(e) => setFormDetalle((d) => ({ ...d, horas_extras: e.target.value }))}
           />
@@ -1257,6 +1262,8 @@ export default function Nomina() {
             type="number"
             min="0"
             step="0.01"
+            placeholder="0,00"
+            className="focus:placeholder-transparent"
             value={formDetalle.descuentos}
             onChange={(e) => setFormDetalle((d) => ({ ...d, descuentos: e.target.value }))}
           />
@@ -1265,6 +1272,8 @@ export default function Nomina() {
             type="number"
             min="0"
             max="31"
+            placeholder="Ej. 15"
+            className="focus:placeholder-transparent"
             value={formDetalle.dias_trabajados}
             onChange={(e) => setFormDetalle((d) => ({ ...d, dias_trabajados: e.target.value }))}
           />
