@@ -1,4 +1,4 @@
-import MatrizRoles from "../components/MatrizRoles.jsx";
+import MatrizRoles, { normalizarNiveles } from "../components/MatrizRoles.jsx";
 import ReporteModulo from "../components/ReporteModulo.jsx";
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { VISTAS_TELEFONO } from '../lib/vistasTelefono.js';
@@ -36,11 +36,10 @@ import { api } from '../lib/api.js';
 import { MODULOS_SISTEMA, ROLES_LABELS } from '../lib/constants.js';
 import { listar, nombreCompleto, TABLAS } from '../lib/data.js';
 
-const ROLES_ASIGNABLES = ['admin', 'escolta'];
+const ROLES_ASIGNABLES = ['admin'];
 const ROL_ADMINISTRACION = 'administracion';
 const MODULOS_OPERACION = ['dashboard', 'escoltas', 'distribucion', 'permisos', 'asistencias'];
 const MODULOS_GESTION = ['nomina', 'pagos', 'rrhh'];
-const LECTURA_PERSONALIZADA = ['escoltas', 'distribucion', 'asistencias', 'permisos'];
 const GRUPOS_PERMISOS = [
   { etiqueta: 'Operación', incluye: ({ key }) => MODULOS_OPERACION.includes(key) },
   { etiqueta: 'Gestión', incluye: ({ key }) => MODULOS_GESTION.includes(key) },
@@ -52,7 +51,7 @@ const FORMULARIO_VACIO = {
   nombre: '',
   apellido: '',
   telefono: '',
-  role: 'escolta',
+  role: 'admin',
   escolta_id: '',
 };
 
@@ -96,22 +95,37 @@ export default function Usuarios() {
   const [asignacionPersonalizada, setAsignacionPersonalizada] = useState({ habilitado: false, roles: [] });
   const [edicionRol, setEdicionRol] = useState(null);
   const opcionesRoles = [
-    ...ROLES_ASIGNABLES.map((rol) => ({ value: rol, label: ROLES_LABELS[rol] || rol })),
-    ...asignacionPersonalizada.roles.filter(({ key }) => key === ROL_ADMINISTRACION)
-      .map(({ key }) => ({ value: key, label: 'Administración' })),
+    { value: 'admin', label: 'Administrador' },
   ];
-  const catalogoRoles = [
-    ...opcionesRoles.map((rol) => ({
-      ...rol,
-      personalizado: !ROLES_ASIGNABLES.includes(rol.value),
-      descripcion: rolesPersonalizados.find(({ key }) => key === rol.value)?.descripcion
-        ?? roles.find(({ nombre }) => nombre === rol.value)?.descripcion,
-    })),
-    ...rolesPersonalizados.filter(({ key }) => key === ROL_ADMINISTRACION && !opcionesRoles.some(({ value }) => value === key))
-      .map(({ key, descripcion }) => ({ value: key, label: 'Administración', descripcion, pendiente: true, personalizado: true })),
-  ];
-  const rolPersonalizado = !ROLES_ASIGNABLES.includes(rolActivo);
-  const permiteLectura = (modulo) => !rolPersonalizado || LECTURA_PERSONALIZADA.includes(modulo);
+  const catalogoRoles = useMemo(() => {
+    const mapa = new Map();
+    // Roles del sistema cargados de la base de datos o fallback a constantes
+    const base = roles.length > 0 ? roles : Object.keys(ROLES_LABELS).map((k) => ({ nombre: k, es_sistema: true }));
+    for (const r of base) {
+      const clave = r.nombre || r.key;
+      mapa.set(clave, {
+        value: clave,
+        label: ROLES_LABELS[clave] || r.label || clave,
+        descripcion: r.descripcion || '',
+        personalizado: r.es_sistema === false,
+      });
+    }
+    // Roles personalizados
+    for (const cr of rolesPersonalizados) {
+      if (!mapa.has(cr.key)) {
+        mapa.set(cr.key, {
+          value: cr.key,
+          label: cr.label || cr.key,
+          descripcion: cr.descripcion || '',
+          personalizado: true,
+        });
+      }
+    }
+    return Array.from(mapa.values());
+  }, [roles, rolesPersonalizados]);
+
+  const rolPersonalizado = Boolean(catalogoRoles.find(({ value }) => value === rolActivo)?.personalizado);
+  const permiteLectura = () => true;
   const nombreRol = (clave) => catalogoRoles.find(({ value }) => value === clave)?.label || ROLES_LABELS[clave] || clave;
   const telefonoRol = configTelefono[rolActivo] ?? { vistas_telefono: [], solo_telefono: false };
 
@@ -256,20 +270,34 @@ export default function Usuarios() {
   const handleTogglePermiso = (moduloKey, nivel) => {
     setMatrices((actuales) => {
       const actualRol = actuales[rolActivo] ?? {};
-      const actualModulo = actualRol[moduloKey] ?? { lectura: false, escritura: false, full: false };
+      const actualModulo = normalizarNiveles(actualRol[moduloKey]);
       const nuevoValor = !actualModulo[nivel];
       const actualizado = { ...actualModulo, [nivel]: nuevoValor };
 
-      if (nivel === 'full' && nuevoValor) {
-        actualizado.lectura = true;
-        actualizado.escritura = true;
-      }
-      if (nivel === 'escritura' && nuevoValor) {
-        actualizado.lectura = true;
-      }
-      if (nivel === 'lectura' && !nuevoValor) {
-        actualizado.escritura = false;
-        actualizado.full = false;
+      if (nivel === 'full') {
+        if (nuevoValor) {
+          actualizado.lectura = true;
+          actualizado.escritura = true;
+          actualizado.full = true;
+        } else {
+          actualizado.full = false;
+        }
+      } else if (nivel === 'escritura') {
+        if (nuevoValor) {
+          actualizado.lectura = true;
+          actualizado.escritura = true;
+        } else {
+          actualizado.escritura = false;
+          actualizado.full = false;
+        }
+      } else if (nivel === 'lectura') {
+        if (!nuevoValor) {
+          actualizado.lectura = false;
+          actualizado.escritura = false;
+          actualizado.full = false;
+        } else {
+          actualizado.lectura = true;
+        }
       }
 
       return {
@@ -301,11 +329,17 @@ export default function Usuarios() {
   const handleGuardarPermisos = async () => {
     setGuardandoPermisos(true);
     try {
+      const permisosRaw = matrices[rolActivo] ?? {};
+      const permisosNormalizados = {};
+      for (const mod of MODULOS_SISTEMA) {
+        permisosNormalizados[mod.key] = normalizarNiveles(permisosRaw[mod.key]);
+      }
+
       await api.guardarPermisosRol({
         role: rolActivo,
-        permisos: matrices[rolActivo] ?? {},
+        permisos: permisosNormalizados,
         ...telefonoRol,
-        vistas_telefono: rolPersonalizado ? telefonoRol.vistas_telefono.filter((modulo) => matrices[rolActivo]?.[modulo]?.lectura) : telefonoRol.vistas_telefono,
+        vistas_telefono: telefonoRol.vistas_telefono ?? [],
       });
       toast.success(`Matriz de permisos de "${ROLES_LABELS[rolActivo] || rolActivo}" guardada.`);
     } catch (error) {

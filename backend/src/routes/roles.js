@@ -48,26 +48,20 @@ router.put(
   validate(esquemaRolPermisos),
   asyncHandler(async (req, res) => {
     const { role, permisos, vistas_telefono, solo_telefono } = req.body;
-    const personalizado = !ROLES_BASE.includes(role);
-    const modulosLectura = ['escoltas', 'distribucion', 'asistencias', 'permisos'];
-    if (personalizado && (
-      Object.entries(permisos).some(([modulo, nivel]) =>
-        nivel.escritura || nivel.full || (nivel.lectura && !modulosLectura.includes(modulo)),
-      ) || (vistas_telefono ?? []).some((modulo) => !modulosLectura.includes(modulo) || !permisos[modulo]?.lectura)
-    )) {
-      throw new ApiError(400, 'El rol personalizado solo admite lectura en Personal, Turnos, Asistencia y Permisos.', 'PERMISO_INVALIDO');
-    }
     const rolId = await resolverRolAsignable(role);
 
     const { error: matrixError } = await supabase
       .from('roles_permisos')
-      .update({
-        permisos,
-        vistas_telefono: vistas_telefono ?? [],
-        solo_telefono: solo_telefono ?? false,
-        updated_by: req.user.id,
-      })
-      .eq('role', role);
+      .upsert(
+        {
+          role,
+          permisos,
+          vistas_telefono: vistas_telefono ?? [],
+          solo_telefono: solo_telefono ?? false,
+          updated_by: req.user.id,
+        },
+        { onConflict: 'role' },
+      );
     if (matrixError) throw mapSupabaseError(matrixError, 'No fue posible guardar la matriz de permisos.');
 
     // Sincroniza códigos granulares usados por el backend.

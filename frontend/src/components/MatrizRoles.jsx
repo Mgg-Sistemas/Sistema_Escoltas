@@ -8,8 +8,28 @@ const NIVELES = [
   { clave: 'full', etiqueta: 'Control total' },
 ];
 
+export function normalizarNiveles(val) {
+  if (!val) return { lectura: false, escritura: false, full: false };
+  if (typeof val === 'string') {
+    return {
+      lectura: val === 'lectura' || val === 'escritura' || val === 'full',
+      escritura: val === 'escritura' || val === 'full',
+      full: val === 'full',
+    };
+  }
+  return {
+    lectura: Boolean(val.lectura || val.full),
+    escritura: Boolean(val.escritura || val.full),
+    full: Boolean(val.full),
+  };
+}
+
 function alcance(modulos, permisos, administrador) {
-  return modulos.filter(({ key }) => administrador || permisos[key]?.lectura || permisos[key]?.full).length;
+  return modulos.filter(({ key }) => {
+    if (administrador) return true;
+    const niveles = normalizarNiveles(permisos[key]);
+    return niveles.lectura || niveles.escritura || niveles.full;
+  }).length;
 }
 
 export default function MatrizRoles({
@@ -97,7 +117,6 @@ export default function MatrizRoles({
 
           {vista === 'modulos' ? (
             <div className="space-y-3">
-              {rol.personalizado && <p className="text-sm">Puedes conceder lectura en Personal, Turnos, Asistencia y Permisos.</p>}
               {grupos.map((grupo, indice) => {
                 const lista = modulos.filter(grupo.incluye);
                 return (
@@ -114,20 +133,23 @@ export default function MatrizRoles({
                           {NIVELES.map(({ clave, etiqueta }) => <th key={clave} scope="col" className="px-3 py-2 text-center">{etiqueta}</th>)}
                         </tr></thead>
                         <tbody>
-                          {lista.map((modulo) => (
-                            <tr key={modulo.key}>
-                              <th scope="row" className="px-4 py-3 font-medium">{modulo.label}</th>
-                              {NIVELES.map(({ clave, etiqueta }) => (
-                                <td key={clave} className="px-3 py-3 text-center">
-                                  <input type="checkbox" className="h-4 w-4 accent-brand-500"
-                                    aria-label={etiqueta + ' en ' + modulo.label}
-                                    checked={Boolean(administrador || permisos[modulo.key]?.[clave] || permisos[modulo.key]?.full)}
-                                    disabled={administrador || !permiteLectura(modulo.key) || (rol.personalizado && clave !== 'lectura')}
-                                    onChange={() => onPermiso(modulo.key, clave)} />
-                                </td>
-                              ))}
-                            </tr>
-                          ))}
+                          {lista.map((modulo) => {
+                            const niveles = normalizarNiveles(permisos[modulo.key]);
+                            return (
+                              <tr key={modulo.key}>
+                                <th scope="row" className="px-4 py-3 font-medium">{modulo.label}</th>
+                                {NIVELES.map(({ clave, etiqueta }) => (
+                                  <td key={clave} className="px-3 py-3 text-center">
+                                    <input type="checkbox" className="h-4 w-4 accent-brand-500 cursor-pointer disabled:cursor-not-allowed"
+                                      aria-label={etiqueta + ' en ' + modulo.label}
+                                      checked={Boolean(administrador || niveles[clave] || (clave !== 'full' && niveles.full))}
+                                      disabled={administrador}
+                                      onChange={() => onPermiso(modulo.key, clave)} />
+                                  </td>
+                                ))}
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
@@ -140,20 +162,27 @@ export default function MatrizRoles({
               <legend className="px-2 font-semibold">Pantallas de teléfono</legend>
               <p className="text-sm">Cada pantalla requiere permiso de lectura en su módulo.</p>
               <div className="flex flex-wrap gap-x-6 gap-y-3">
-                {vistas.filter(({ modulo }) => permiteLectura(modulo)).map(({ modulo, etiqueta }) => (
-                  <label key={modulo} className="flex min-h-10 items-center gap-2 text-sm">
-                    <input type="checkbox" className="accent-brand-500" checked={telefono.vistas_telefono.includes(modulo)}
-                      disabled={rol.personalizado && !permisos[modulo]?.lectura}
-                      onChange={(e) => onTelefono({ vistas_telefono: e.target.checked
-                        ? [...telefono.vistas_telefono, modulo]
-                        : telefono.vistas_telefono.filter((item) => item !== modulo) })} />
-                    {etiqueta}
-                  </label>
-                ))}
+                {vistas.map(({ modulo, etiqueta }) => {
+                  const niveles = normalizarNiveles(permisos[modulo]);
+                  const tieneLectura = administrador || niveles.lectura || niveles.full;
+                  return (
+                    <label key={modulo} className="flex min-h-10 items-center gap-2 text-sm cursor-pointer">
+                      <input type="checkbox" className="accent-brand-500 cursor-pointer"
+                        checked={Boolean(administrador || (telefono.vistas_telefono || []).includes(modulo))}
+                        disabled={administrador || !tieneLectura}
+                        onChange={(e) => onTelefono({
+                          vistas_telefono: e.target.checked
+                            ? [...(telefono.vistas_telefono || []), modulo]
+                            : (telefono.vistas_telefono || []).filter((item) => item !== modulo)
+                        })} />
+                      {etiqueta}
+                    </label>
+                  );
+                })}
               </div>
               {!administrador && (
                 <label className="flex min-h-10 items-center gap-2 text-sm">
-                  <input type="checkbox" className="accent-brand-500" checked={telefono.solo_telefono}
+                  <input type="checkbox" className="accent-brand-500 cursor-pointer" checked={telefono.solo_telefono}
                     onChange={(e) => onTelefono({ solo_telefono: e.target.checked })} />
                   Solo teléfono
                 </label>
