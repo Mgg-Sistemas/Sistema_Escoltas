@@ -142,19 +142,6 @@ export default function Layout() {
     };
   }, []);
 
-  // Filtramos por permisos respetando las secciones GT
-  const seccionesFiltradas = useMemo(() => {
-    return SECCIONES_NAVEGACION.map((sec) => ({
-      ...sec,
-      items: sec.items.filter((item) => !item.modulo || puede(item.modulo)),
-    })).filter((sec) => sec.items.length > 0);
-  }, [puede]);
-
-  const todosLosItems = useMemo(
-    () => seccionesFiltradas.flatMap((sec) => sec.items),
-    [seccionesFiltradas],
-  );
-
   useEffect(() => {
     setDrawerAbierto(false);
   }, [location.pathname]);
@@ -171,6 +158,22 @@ export default function Layout() {
   }, [user?.id, role]);
 
   const configuracion = configTelefono?.id === user?.id ? configTelefono?.datos : null;
+  const rolPersonalizado = !['admin', 'supervisor', 'contador', 'escolta', 'rrhh', 'chofer'].includes(role);
+  const seccionesFiltradas = useMemo(() => {
+    const operativos = ['escoltas', 'distribucion', 'asistencias', 'permisos'];
+    return SECCIONES_NAVEGACION.map((sec) => ({
+      ...sec,
+      items: sec.items.filter((item) => !item.modulo || (rolPersonalizado
+        ? item.modulo === 'ayuda' || (operativos.includes(item.modulo) && configuracion?.permisos?.[item.modulo]?.lectura === true)
+        : puede(item.modulo))),
+    })).filter((sec) => sec.items.length > 0);
+  }, [puede, rolPersonalizado, configuracion]);
+
+  const todosLosItems = useMemo(
+    () => seccionesFiltradas.flatMap((sec) => sec.items),
+    [seccionesFiltradas],
+  );
+
   const accesosTelefono = resolverVistasTelefono(todosLosItems, configuracion, role);
   const soloTelefono = configuracion?.solo_telefono === true;
   const solicitaTelefono = new URLSearchParams(location.search).get('telefono') === '1';

@@ -334,6 +334,8 @@ export const rolesSistema = z.enum(['admin', 'supervisor', 'contador', 'escolta'
   error: () => 'El rol debe ser admin, supervisor, contador o escolta.',
 });
 
+const claveRol = z.string().regex(/^[a-z][a-z0-9_]{1,39}$/, 'La clave del rol no es válida.');
+
 export const esquemaUsuarioCrear = z.object({
   usuario: texto(120),
   // Opcional: si no se envía, se genera un correo interno desde el usuario.
@@ -341,7 +343,7 @@ export const esquemaUsuarioCrear = z.object({
   nombre: nombrePersona,
   apellido: z.union([nombrePersona, z.literal('')]).nullish(),
   telefono: telefonoPersona,
-  role: rolesSistema.default('escolta'),
+  role: claveRol.default('escolta'),
   escolta_id: uuid.nullish(),
 });
 
@@ -350,13 +352,13 @@ export const esquemaUsuarioActualizar = z.object({
   nombre: nombrePersona.optional(),
   apellido: z.union([nombrePersona, z.literal('')]).nullish(),
   telefono: telefonoPersona,
-  role: rolesSistema.optional(),
+  role: claveRol.optional(),
   active: z.boolean().optional(),
   escolta_id: uuid.nullish(),
 });
 
 export const esquemaRolPermisos = z.object({
-  role: rolesSistema,
+  role: claveRol,
   permisos: z.record(
     z.object({
       lectura: z.boolean(),

@@ -185,6 +185,7 @@ export const api = {
 
   // Roles personalizados y autorizados
   listarRolesPersonalizados: () => apiFetch('/roles/custom'),
+  listarRolesPersonalizadosAsignables: () => apiFetch('/roles/custom/asignables'),
   guardarRolPersonalizado: (datos) => apiFetch('/roles/custom', { method: 'POST', body: datos }),
   eliminarRolPersonalizado: (key) => apiFetch(`/roles/custom/${key}`, { method: 'DELETE' }),
   listarAutorizados: () => apiFetch('/roles/autorizados'),

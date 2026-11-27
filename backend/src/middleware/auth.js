@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase.js';
 import { ApiError, mapSupabaseError } from '../lib/errors.js';
 import { asyncHandler } from '../lib/http.js';
+import { ROLES_BASE } from '../lib/roles.js';
 import { escoltaIdDelUsuario } from '../lib/scope.js';
 
 /** Verifica el JWT de Supabase y carga el perfil con su rol usando service-role. */
@@ -51,6 +52,11 @@ export const authenticate = asyncHandler(async (req, res, next) => {
       'Debes cambiar tu contraseña temporal antes de usar el sistema.',
       'CAMBIO_DE_CLAVE_REQUERIDO',
     );
+  }
+
+  // Los roles personalizados no heredan rutas privilegiadas de los roles del sistema.
+  if (!ROLES_BASE.includes(req.user.role) && !rutasPermitidas.includes(req.path)) {
+    throw new ApiError(403, 'Este rol no tiene acceso a esta operación.', 'PROHIBIDO');
   }
 
   if (req.user.role === 'escolta') {

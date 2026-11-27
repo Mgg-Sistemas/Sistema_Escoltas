@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase.js';
 import { audit } from '../lib/audit.js';
 import { ApiError, mapSupabaseError } from '../lib/errors.js';
 import { asyncHandler, ok } from '../lib/http.js';
+import { rolesPersonalizadosHabilitados, resolverRolAsignable, ROLES_BASE } from '../lib/roles.js';
 import { requireRole } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { esquemaRolPermisos } from '../schemas.js';
@@ -47,6 +48,16 @@ router.put(
   validate(esquemaRolPermisos),
   asyncHandler(async (req, res) => {
     const { role, permisos, vistas_telefono, solo_telefono } = req.body;
+    const personalizado = !ROLES_BASE.includes(role);
+    const modulosLectura = ['escoltas', 'distribucion', 'asistencias', 'permisos'];
+    if (personalizado && (
+      Object.entries(permisos).some(([modulo, nivel]) =>
+        nivel.escritura || nivel.full || (nivel.lectura && !modulosLectura.includes(modulo)),
+      ) || (vistas_telefono ?? []).some((modulo) => !modulosLectura.includes(modulo) || !permisos[modulo]?.lectura)
+    )) {
+      throw new ApiError(400, 'El rol personalizado solo admite lectura en Personal, Turnos, Asistencia y Permisos.', 'PERMISO_INVALIDO');
+    }
+    const rolId = await resolverRolAsignable(role);
 
     const { error: matrixError } = await supabase
       .from('roles_permisos')
@@ -64,8 +75,6 @@ router.put(
       .from('permisos_sistema')
       .select('id,codigo,modulo')
       .eq('activo', true);
-    const { data: roleRow } = await supabase.from('roles').select('id').eq('nombre', role).maybeSingle();
-    if (!roleRow) throw new ApiError(404, 'No se encontró el rol indicado.', 'NO_ENCONTRADO');
 
     const codigos = new Set();
     for (const [modulo, niveles] of Object.entries(permisos)) {
@@ -79,10 +88,10 @@ router.put(
       }
     }
 
-    await supabase.from('rol_permisos').delete().eq('rol_id', roleRow.id).eq('concedido', true);
+    await supabase.from('rol_permisos').delete().eq('rol_id', rolId).eq('concedido', true);
     if (codigos.size > 0) {
       const { error: granularError } = await supabase.from('rol_permisos').upsert(
-        [...codigos].map((permiso_id) => ({ rol_id: roleRow.id, permiso_id, concedido: true })),
+        [...codigos].map((permiso_id) => ({ rol_id: rolId, permiso_id, concedido: true })),
         { onConflict: 'rol_id,permiso_id' },
       );
       if (granularError) {
@@ -93,7 +102,7 @@ router.put(
     await audit({
       tabla: 'roles_permisos',
       operacion: 'UPDATE',
-      registro_id: roleRow.id,
+      registro_id: rolId,
       cambios: { role, modulos: Object.keys(permisos) },
       usuario_id: req.user.id,
     });
@@ -101,6 +110,16 @@ router.put(
     return ok(res, { role, permisos });
   }),
 );
+
+router.get('/custom/asignables', asyncHandler(async (req, res) => {
+  if (!await rolesPersonalizadosHabilitados()) return ok(res, { habilitado: false, roles: [] });
+  const { data, error } = await supabase.from('custom_roles')
+    .select('key,label,descripcion').eq('sistema', false).order('label');
+  if (error) throw mapSupabaseError(error, 'No fue posible consultar los roles asignables.');
+  return ok(res, { habilitado: true, roles: (data ?? []).filter(({ key }) =>
+    /^[a-z][a-z0-9_]{1,39}$/.test(key) && !ROLES_BASE.includes(key),
+  ) });
+}));
 
 /** Listar roles personalizados (custom_roles) */
 router.get(
@@ -133,7 +152,7 @@ router.post(
     if (!/^[a-z][a-z0-9_]{1,39}$/.test(clave) || !etiqueta || etiqueta.length > 120 || detalle.length > 500) {
       throw new ApiError(400, 'Indica una clave de 2 a 40 caracteres y un nombre de hasta 120 caracteres.');
     }
-    if (['admin', 'supervisor', 'contador', 'escolta', 'rrhh', 'chofer'].includes(clave)) {
+    if (ROLES_BASE.includes(clave)) {
       throw new ApiError(409, 'Esa clave está reservada para un rol del sistema.');
     }
 
@@ -152,7 +171,10 @@ router.delete(
   asyncHandler(async (req, res) => {
     const { key } = req.params;
     const { data: role } = await supabase.from('custom_roles').select('*').eq('key', key).single();
-    if (role?.sistema) throw new ApiError(400, 'No se pueden eliminar roles base del sistema.');
+    if (role?.sistema || ROLES_BASE.includes(key)) throw new ApiError(400, 'No se pueden eliminar roles base del sistema.');
+    if (await rolesPersonalizadosHabilitados()) {
+      throw new ApiError(409, 'La eliminación de roles requiere revisar sus asignaciones.', 'ROL_PROTEGIDO');
+    }
 
     await supabase.from('roles_permisos').delete().eq('role', key).catch(() => {});
     const { error } = await supabase.from('custom_roles').delete().eq('key', key);
