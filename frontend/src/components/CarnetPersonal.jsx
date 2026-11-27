@@ -340,16 +340,20 @@ export default function CarnetPersonal({ escolta, grado = 'Escolta Operativo', a
                   </div>
                 </div>
 
-                {/* QR Code con logo institucional al centro + ID Badge */}
+                {/* QR Code con logo institucional al centro + ID Badge (Generado Localmente) */}
                 <div className="flex flex-col items-center justify-center gap-2">
                   <div className="relative h-[116px] w-[116px] rounded-2xl border-2 border-[#ff8a00] bg-white p-1.5 shadow-xl flex items-center justify-center">
-                    <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
-                        `ESCOLTAS · CREDENCIAL OFICIAL\nTITULAR: ${nombre}\n${cedula}\nCODIGO: ${codigo}\nCARGO: ${cargo}\nESTADO: ACTIVO\nhttps://sistemaescoltas.com/`,
-                      )}`}
-                      alt={`QR Oficial ${codigo}`}
-                      className="h-full w-full object-contain"
-                    />
+                    {qrDataUrl ? (
+                      <img
+                        src={qrDataUrl}
+                        alt={`QR Oficial ${codigo}`}
+                        className="h-full w-full object-contain"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-[10px] text-slate-400 font-bold">
+                        Generando...
+                      </div>
+                    )}
                     {/* Escudo mini al centro del QR */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <div className="h-6 w-6 rounded-md bg-[#ff8a00] p-0.5 shadow flex items-center justify-center">

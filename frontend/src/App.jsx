@@ -19,6 +19,7 @@ import RolesPermisos from './pages/RolesPermisos.jsx';
 import Ajustes from './pages/Ajustes.jsx';
 import Ayuda from './pages/Ayuda.jsx';
 import Auditoria from './pages/Auditoria.jsx';
+import VerificarCarnet from './pages/VerificarCarnet.jsx';
 
 function PantallaCarga() {
   return (
@@ -82,6 +83,7 @@ export default function App() {
       <div className="flex-1">
         <Routes>
           <Route path="/login" element={autenticado ? <Navigate to="/" replace /> : <Login />} />
+          <Route path="/verificar" element={<VerificarCarnet />} />
           <Route
             path="/recuperar-clave"
             element={autenticado ? <Navigate to="/" replace /> : <RecuperarClave />}

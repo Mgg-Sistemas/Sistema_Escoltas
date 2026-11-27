@@ -343,16 +343,28 @@ export default function Escoltas() {
       let protegidos = 0;
 
       for (const item of papelera) {
-        // Verificar dependencias en Supabase antes de eliminar permanentemente
-        const [asig, nom, asis, perm, pag] = await Promise.all([
-          listar(TABLAS.asignaciones, { filtros: { escolta_id: item.id }, limite: 1 }).catch(() => []),
-          listar(TABLAS.detallesNomina, { filtros: { escolta_id: item.id }, limite: 1 }).catch(() => []),
-          listar(TABLAS.asistencias, { filtros: { escolta_id: item.id }, limite: 1 }).catch(() => []),
-          listar(TABLAS.permisos, { filtros: { escolta_id: item.id }, limite: 1 }).catch(() => []),
-          listar(TABLAS.pagos, { filtros: { escolta_id: item.id }, limite: 1 }).catch(() => []),
-        ]);
+        // Verificar dependencias en Supabase antes de eliminar permanentemente.
+        // Si cualquier consulta falla, se aborta la eliminación por seguridad (Fail-Safe).
+        let tieneHistorial = false;
+        try {
+          const [asig, nom, asis, perm, pag] = await Promise.all([
+            listar(TABLAS.asignaciones, { filtros: { escolta_id: item.id }, limite: 1 }),
+            listar(TABLAS.detallesNomina, { filtros: { escolta_id: item.id }, limite: 1 }),
+            listar(TABLAS.asistencias, { filtros: { escolta_id: item.id }, limite: 1 }),
+            listar(TABLAS.permisos, { filtros: { escolta_id: item.id }, limite: 1 }),
+            listar(TABLAS.pagos, { filtros: { escolta_id: item.id }, limite: 1 }),
+          ]);
 
-        if (asig.length > 0 || nom.length > 0 || asis.length > 0 || perm.length > 0 || pag.length > 0) {
+          if (asig.length > 0 || nom.length > 0 || asis.length > 0 || perm.length > 0 || pag.length > 0) {
+            tieneHistorial = true;
+          }
+        } catch (errConsulta) {
+          // Si falla la consulta a cualquiera de las tablas dependientes, se protege el registro
+          console.error(`Error consultando dependencias de ${item.codigo}:`, errConsulta);
+          tieneHistorial = true;
+        }
+
+        if (tieneHistorial) {
           protegidos++;
           continue;
         }
